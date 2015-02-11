@@ -3,11 +3,24 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <map>
 
 struct Vector2
 {
 	int X;
 	int Y;
+
+	Vector2()
+	{
+		X = 0;
+		Y = 0;
+	}
+
+	Vector2(int pX, int pY)
+	{
+		X = pX;
+		Y = pY;
+	}
 };
 
 struct KeyState
@@ -16,6 +29,31 @@ struct KeyState
 	bool Down;
 	bool Left;
 	bool Right;
+
+	KeyState()
+	{
+		Up = false;
+		Down = false;
+		Left = false;
+		Right = false;
+	}
+
+	KeyState(bool pUp, bool pDown, bool pLeft, bool pRight)
+	{
+		Up = pUp;
+		Down = pDown;
+		Left = pLeft;
+		Right = pRight;
+	}
+};
+
+struct Player
+{
+	Vector2 Position;
+	Vector2 Velocity;
+	Vector2 Acceleration;
+	int Speed;
+	Vector2 Dimensions;
 };
 
 inline int Abs(int pValue)
@@ -107,17 +145,16 @@ int main(int argc, char** argv)
 	if (texture == NULL)
 		return -1;
 
-	SDL_Rect source = { 0, 0, 128, 128 };
-	SDL_Rect destination = { 100, 100, 128, 128 };
-
 	SDL_Event evt;
 	bool running = true;
 
-	KeyState keyState = { false, false, false, false };
-	Vector2 position = { 100, 100 };
-	Vector2 other = { 400, 300 };
-	Vector2 dims = { 128, 128 };
-	int speed = 3;
+	KeyState keyState;
+	Player player;
+	player.Position = { 100, 100 };
+	player.Velocity = { 0, 0 };
+	player.Acceleration = { 0, 0 };
+	player.Speed = 10;
+	player.Dimensions = { 128, 128 };
 
 	const int width = 10;
 	const int height = 10;
@@ -135,10 +172,11 @@ int main(int argc, char** argv)
 	Uint32 prevTicks = 0;
 	Uint32 currTicks = SDL_GetTicks();
 
+	std::map<SDL_Keycode, bool> keys;
+
 	while (running)
 	{
 		frames++;
-
 		currTicks = SDL_GetTicks();
 		if (currTicks > prevTicks + 1000)
 		{
@@ -156,45 +194,10 @@ int main(int argc, char** argv)
 					running = false;
 					break;
 				case SDL_KEYDOWN:
-					switch (evt.key.keysym.sym)
-					{
-						case SDLK_ESCAPE:
-							running = false;
-							break;
-						case SDLK_UP:
-							keyState.Up = true;
-							break;
-						case SDLK_DOWN:
-							keyState.Down = true;
-							break;
-						case SDLK_LEFT:
-							keyState.Left = true;
-							break;
-						case SDLK_RIGHT:
-							keyState.Right = true;
-							break;
-						default:
-							break;
-					}
+					keys[evt.key.keysym.sym] = true;
 					break;
 				case SDL_KEYUP:
-					switch (evt.key.keysym.sym)
-					{
-						case SDLK_UP:
-							keyState.Up = false;
-							break;
-						case SDLK_DOWN:
-							keyState.Down = false;
-							break;
-						case SDLK_LEFT:
-							keyState.Left = false;
-							break;
-						case SDLK_RIGHT:
-							keyState.Right = false;
-							break;
-						default:
-							break;
-					}
+					keys[evt.key.keysym.sym] = false;
 					break;
 				default:
 					break;
@@ -202,14 +205,33 @@ int main(int argc, char** argv)
 		}
 
 		// update loop
-		if (keyState.Up)
-			position.Y -= speed;
-		if (keyState.Down)
-			position.Y += speed;
-		if (keyState.Left)
-			position.X -= speed;
-		if (keyState.Right)
-			position.X += speed;
+		player.Acceleration = { 0, 0 };
+		if (keys[SDLK_UP])
+			player.Acceleration.Y -= 5;
+		if (keys[SDLK_DOWN])
+			player.Acceleration.Y += 5;
+		if (keys[SDLK_LEFT])
+			player.Acceleration.X -= 5;
+		if (keys[SDLK_RIGHT])
+			player.Acceleration.X += 5;
+
+		player.Velocity.X += player.Acceleration.X;
+		if (player.Velocity.X > player.Speed)
+			player.Velocity.X = player.Speed;
+		else if (player.Velocity.X < -player.Speed)
+			player.Velocity.X = -player.Speed;
+
+		player.Velocity.Y += player.Acceleration.Y;
+		if (player.Velocity.Y > player.Speed)
+			player.Velocity.Y = player.Speed;
+		else if (player.Velocity.Y < -player.Speed)
+			player.Velocity.Y = -player.Speed;
+
+		player.Position.X += player.Velocity.X;
+		player.Position.Y += player.Velocity.Y;
+
+		player.Velocity.X /= 2;
+		player.Velocity.Y /= 2;
 
 		for (int x = 0; x < width; ++x)
 		{
@@ -217,15 +239,23 @@ int main(int argc, char** argv)
 			{
 				if (map[x * 10 + y] == 1)
 				{
-					Vector2 p = { position.X + dims.X, position.Y + dims.Y };
+					Vector2 p = { player.Position.X + player.Dimensions.X, player.Position.Y + player.Dimensions.Y };
 					Vector2 tileMin = { x * size, y * size };
 					Vector2 tileMax = { (x + 1) * size, (y + 1) * size };
 
 					Vector2 translate;
-					if (IsCollidingWithResponse(position, p, tileMin, tileMax, translate))
+					if (IsCollidingWithResponse(player.Position, p, tileMin, tileMax, translate))
 					{
-						position.X += translate.X;
-						position.Y += translate.Y;
+						if (translate.X < 0 || translate.X > 0)
+						{
+							player.Position.X += translate.X;
+							player.Velocity.X = 0;
+						}
+						if (translate.Y < 0 || translate.Y > 0)
+						{
+							player.Position.Y += translate.Y;
+							player.Velocity.Y = 0;
+						}
 					}
 				}
 			}
@@ -236,9 +266,9 @@ int main(int argc, char** argv)
 		if (SDL_RenderClear(renderer) < 0)
 			return -1;
 
-		if (DrawTexture(renderer, texture, position.X, position.Y, dims.X, dims.Y, 0, 0, dims.X, dims.Y) < 0)
+		if (DrawTexture(renderer, texture, player.Position.X, player.Position.Y, player.Dimensions.X, player.Dimensions.Y, 0, 0, player.Dimensions.X, player.Dimensions.Y) < 0)
 			return -1;
-		if (DrawBounds(renderer, position, dims) < 0)
+		if (DrawBounds(renderer, player.Position, player.Dimensions) < 0)
 			return -1;
 
 		for (int x = 0; x < width; ++x)
