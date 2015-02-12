@@ -1,67 +1,24 @@
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
 
+#include "Vector2.hpp"
+
 #include <stdio.h>
 #include <math.h>
 #include <map>
 
-struct Vector2
-{
-	int X;
-	int Y;
-
-	Vector2()
-	{
-		X = 0;
-		Y = 0;
-	}
-
-	Vector2(int pX, int pY)
-	{
-		X = pX;
-		Y = pY;
-	}
-};
-
-struct KeyState
-{
-	bool Up;
-	bool Down;
-	bool Left;
-	bool Right;
-
-	KeyState()
-	{
-		Up = false;
-		Down = false;
-		Left = false;
-		Right = false;
-	}
-
-	KeyState(bool pUp, bool pDown, bool pLeft, bool pRight)
-	{
-		Up = pUp;
-		Down = pDown;
-		Left = pLeft;
-		Right = pRight;
-	}
-};
-
 struct Player
 {
-	Vector2 Position;
-	Vector2 Velocity;
-	Vector2 Acceleration;
-	int Speed;
-	Vector2 Dimensions;
+	HGF::Vector2 Position;
+	HGF::Vector2 Velocity;
+	HGF::Vector2 Acceleration;
+	float Speed;
+	HGF::Vector2 Dimensions;
+	bool IsGrounded;
+	bool IsJumping;
 };
 
-inline int Abs(int pValue)
-{
-	return (pValue < 0) ? -pValue : pValue;
-}
-
-bool IsColliding(const Vector2& pMinA, const Vector2& pMaxA, const Vector2& pMinB, const Vector2& pMaxB)
+bool IsColliding(const HGF::Vector2& pMinA, const HGF::Vector2& pMaxA, const HGF::Vector2& pMinB, const HGF::Vector2& pMaxB)
 {
 	if (pMaxA.X < pMinB.X || pMaxA.Y < pMinB.Y || pMinA.X > pMaxB.X || pMinA.Y > pMaxB.Y)
 		return false;
@@ -69,29 +26,63 @@ bool IsColliding(const Vector2& pMinA, const Vector2& pMaxA, const Vector2& pMin
 	return true;
 }
 
-bool IsCollidingWithResponse(const Vector2& pMinA, const Vector2& pMaxA, const Vector2& pMinB, const Vector2& pMaxB, Vector2& pTranslation)
+bool IsCollidingWithResponse(const HGF::Vector2& pMinA, const HGF::Vector2& pMaxA, const HGF::Vector2& pMinB, const HGF::Vector2& pMaxB, HGF::Vector2& pTranslation)
 {
-	int left = pMinB.X - pMaxA.X;
-	int right = pMaxB.X - pMinA.X;
-	int top = pMinB.Y - pMaxA.Y;
-	int bottom = pMaxB.Y - pMinA.Y;
+	float left = pMinB.X - pMaxA.X;
+	float right = pMaxB.X - pMinA.X;
+	float top = pMinB.Y - pMaxA.Y;
+	float bottom = pMaxB.Y - pMinA.Y;
 
 	if (left > 0.0f || right < 0.0f || top > 0.0f || bottom < 0.0f)
 		return false;
 
 	// minimum X-axis
-	pTranslation.X = (Abs(left) < Abs(right)) ? left : right;
+	pTranslation.X = (fabsf(left) < fabsf(right)) ? left : right;
 
 	// minimum Y-axis
-	pTranslation.Y = (Abs(top) < Abs(bottom)) ? top : bottom;
+	pTranslation.Y = (fabsf(top) < fabsf(bottom)) ? top : bottom;
 
 	// minimal axis
-	if (Abs(pTranslation.X) < Abs(pTranslation.Y))
-		pTranslation.Y = 0;
+	if (fabsf(pTranslation.X) < fabsf(pTranslation.Y))
+		pTranslation.Y = 0.0f;
 	else
-		pTranslation.X = 0;
+		pTranslation.X = 0.0f;
 
 	return true;
+}
+
+void HandleWorldCollisionForPlayer(Player& pPlayer, int* pMap, int pWidth, int pHeight, int pSize)
+{
+	for (int x = 0; x < pWidth; ++x)
+	{
+		for (int y = 0; y < pHeight; ++y)
+		{
+			if (pMap[x * pHeight + y] == 1)
+			{
+				HGF::Vector2 tileMin = HGF::Vector2(x * pSize, y * pSize);
+				HGF::Vector2 tileMax = HGF::Vector2((x + 1) * pSize, (y + 1) * pSize);
+
+				HGF::Vector2 translate;
+				if (IsCollidingWithResponse(pPlayer.Position, pPlayer.Position + pPlayer.Dimensions, tileMin, tileMax, translate))
+				{
+					if (translate.X != 0.0f)
+					{
+						pPlayer.Position.X += translate.X;
+						pPlayer.Velocity.X = 0.0f;
+					}
+					if (translate.Y != 0.0f)
+					{
+						pPlayer.Position.Y += translate.Y;
+						pPlayer.Velocity.Y = 0.0f;
+						if (translate.Y < 0.0f)
+						{
+							pPlayer.IsGrounded = true;
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 SDL_Texture* LoadTexture(SDL_Renderer* pRenderer, const char* pFilename)
@@ -103,22 +94,22 @@ SDL_Texture* LoadTexture(SDL_Renderer* pRenderer, const char* pFilename)
 	return texture;
 }
 
-int DrawTexture(SDL_Renderer* pRenderer, SDL_Texture* pTexture, int pPositionX, int pPositionY, int pWidth, int pHeight, int pClipX, int pClipY, int pClipWidth, int pClipHeight)
+int DrawTexture(SDL_Renderer* pRenderer, SDL_Texture* pTexture, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipLocation, HGF::Vector2 pClipSize)
 {
-	SDL_Rect source = { pClipX, pClipY, pClipWidth, pClipHeight };
-	SDL_Rect destination = { pPositionX, pPositionY, pWidth, pHeight };
+	SDL_Rect source = { (int)pClipLocation.X, (int)pClipLocation.Y, (int)pClipSize.X, (int)pClipSize.Y };
+	SDL_Rect destination = { (int)pPosition.X, (int)pPosition.Y, (int)pDimensions.X, (int)pDimensions.Y };
 	
 	return SDL_RenderCopy(pRenderer, pTexture, &source, &destination);
 }
 
-int DrawBounds(SDL_Renderer* pRenderer, Vector2 pPosition, Vector2 pDimensions)
+int DrawBounds(SDL_Renderer* pRenderer, HGF::Vector2 pPosition, HGF::Vector2 pDimensions)
 {
 	SDL_Point points[5] = {
-		{ pPosition.X,                 pPosition.Y },
-		{ pPosition.X + pDimensions.X, pPosition.Y },
-		{ pPosition.X + pDimensions.X, pPosition.Y + pDimensions.Y },
-		{ pPosition.X,                 pPosition.Y + pDimensions.Y },
-		{ pPosition.X,                 pPosition.Y }
+		{ (int)pPosition.X,                   (int)pPosition.Y },
+		{ (int)(pPosition.X + pDimensions.X), (int)pPosition.Y },
+		{ (int)(pPosition.X + pDimensions.X), (int)(pPosition.Y + pDimensions.Y) },
+		{ (int)pPosition.X,                   (int)(pPosition.Y + pDimensions.Y) },
+		{ (int)pPosition.X,                   (int)pPosition.Y }
 	};
 
 	SDL_SetRenderDrawColor(pRenderer, 255, 0, 255, 255);
@@ -146,33 +137,32 @@ int main(int argc, char** argv)
 		return -1;
 
 	SDL_Event evt;
+	std::map<SDL_Keycode, bool> keys;
 	bool running = true;
+	int frames = 0;
+	Uint32 prevTicks = 0;
+	Uint32 currTicks = SDL_GetTicks();
 
-	KeyState keyState;
 	Player player;
-	player.Position = { 100, 100 };
-	player.Velocity = { 0, 0 };
-	player.Acceleration = { 0, 0 };
-	player.Speed = 10;
-	player.Dimensions = { 128, 128 };
+	player.Position = HGF::Vector2(100.0f, 100.0f);
+	player.Velocity = HGF::Vector2::Zero;
+	player.Acceleration = HGF::Vector2::Zero;
+	player.Speed = 2.0f;
+	player.Dimensions = HGF::Vector2(128.0f, 128.0f);
+	player.IsGrounded = false;
+	player.IsJumping = false;
 
-	const int width = 10;
-	const int height = 10;
-	const int size = 64;
+	const int width = 25;
+	const int height = 20;
+	const int size = 32;
 	int map[width * height];
 	for (int x = 0; x < width; ++x)
 	{
 		for (int y = 0; y < height; ++y)
 		{
-			map[x * 10 + y] = (x == 0 || x == width - 1 || y == 0 || y == height - 1) ? 1 : 0;
+			map[x * height + y] = (x == 0 || x == width - 1 || y == 0 || y == height - 1) ? 1 : 0;
 		}
 	}
-
-	int frames = 0;
-	Uint32 prevTicks = 0;
-	Uint32 currTicks = SDL_GetTicks();
-
-	std::map<SDL_Keycode, bool> keys;
 
 	while (running)
 	{
@@ -204,69 +194,38 @@ int main(int argc, char** argv)
 			}
 		}
 
-		// update loop
-		player.Acceleration = { 0, 0 };
+		// handle input
+		if (keys[SDLK_ESCAPE])
+			running = false;
+
+		player.Acceleration = HGF::Vector2::Zero;
 		if (keys[SDLK_UP])
-			player.Acceleration.Y -= 5;
+			player.Acceleration.Y -= player.Speed;
 		if (keys[SDLK_DOWN])
-			player.Acceleration.Y += 5;
+			player.Acceleration.Y += player.Speed;
 		if (keys[SDLK_LEFT])
-			player.Acceleration.X -= 5;
+			player.Acceleration.X -= player.Speed;
 		if (keys[SDLK_RIGHT])
-			player.Acceleration.X += 5;
+			player.Acceleration.X += player.Speed;
 
-		player.Velocity.X += player.Acceleration.X;
-		if (player.Velocity.X > player.Speed)
-			player.Velocity.X = player.Speed;
-		else if (player.Velocity.X < -player.Speed)
-			player.Velocity.X = -player.Speed;
+		float gravity = 0.5f;
+		// update movement
+		//player.Acceleration.Normalize();
+		//player.Acceleration *= player.Speed;
+		player.Acceleration.Y += gravity;
+		player.Velocity += player.Acceleration;
+		player.Position += player.Velocity;
+		player.Velocity *= 0.75f;
 
-		player.Velocity.Y += player.Acceleration.Y;
-		if (player.Velocity.Y > player.Speed)
-			player.Velocity.Y = player.Speed;
-		else if (player.Velocity.Y < -player.Speed)
-			player.Velocity.Y = -player.Speed;
-
-		player.Position.X += player.Velocity.X;
-		player.Position.Y += player.Velocity.Y;
-
-		player.Velocity.X /= 2;
-		player.Velocity.Y /= 2;
-
-		for (int x = 0; x < width; ++x)
-		{
-			for (int y = 0; y < height; ++y)
-			{
-				if (map[x * 10 + y] == 1)
-				{
-					Vector2 p = { player.Position.X + player.Dimensions.X, player.Position.Y + player.Dimensions.Y };
-					Vector2 tileMin = { x * size, y * size };
-					Vector2 tileMax = { (x + 1) * size, (y + 1) * size };
-
-					Vector2 translate;
-					if (IsCollidingWithResponse(player.Position, p, tileMin, tileMax, translate))
-					{
-						if (translate.X < 0 || translate.X > 0)
-						{
-							player.Position.X += translate.X;
-							player.Velocity.X = 0;
-						}
-						if (translate.Y < 0 || translate.Y > 0)
-						{
-							player.Position.Y += translate.Y;
-							player.Velocity.Y = 0;
-						}
-					}
-				}
-			}
-		}
+		// handle collision
+		HandleWorldCollisionForPlayer(player, map, width, height, size);
 
 		// render loop
 		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		if (SDL_RenderClear(renderer) < 0)
 			return -1;
 
-		if (DrawTexture(renderer, texture, player.Position.X, player.Position.Y, player.Dimensions.X, player.Dimensions.Y, 0, 0, player.Dimensions.X, player.Dimensions.Y) < 0)
+		if (DrawTexture(renderer, texture, player.Position, player.Dimensions, HGF::Vector2::Zero, player.Dimensions) < 0)
 			return -1;
 		if (DrawBounds(renderer, player.Position, player.Dimensions) < 0)
 			return -1;
@@ -275,9 +234,9 @@ int main(int argc, char** argv)
 		{
 			for (int y = 0; y < height; ++y)
 			{
-				if (map[x * 10 + y] == 1)
+				if (map[x * height + y] == 1)
 				{
-					if (DrawTexture(renderer, texture, x * size, y * size, size, size, 0, 0, 128, 128) < 0)
+					if (DrawTexture(renderer, texture, HGF::Vector2(x * size, y * size), HGF::Vector2(size, size), HGF::Vector2::Zero, HGF::Vector2(128.0f, 128.0f)) < 0)
 						return -1;
 				}
 			}
