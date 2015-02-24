@@ -10,6 +10,28 @@
 #include <time.h>
 #include <vector>
 
+enum MarkerIndex
+{
+	MRK_HOTSPOT,
+	MRK_FOOT_LEFT,
+	MRK_FOOT_RIGHT,
+	MRK_LEFT_TOP,
+	MRK_LEFT_CENTER,
+	MRK_LEFT_BOTTOM,
+	MRK_RIGHT_TOP,
+	MRK_RIGHT_CENTER,
+	MRK_RIGHT_BOTTOM,
+	MRK_HEAD_LEFT,
+	MRK_HEAD_RIGHT,
+	MRK_MAX_MARKER_COUNT
+};
+
+struct CollisionMarker
+{
+	HGF::Vector2 Position;
+	bool IsTouching;
+};
+
 struct Player
 {
 	SDL_Texture* Texture;
@@ -23,9 +45,7 @@ struct Player
 	HGF::Vector2 Dimensions;
 	bool IsGrounded;
 	bool IsJumping;
-	HGF::Vector2 HotSpot;
-	HGF::Vector2 FloorLeft;
-	HGF::Vector2 FloorRight;
+	CollisionMarker* CollisionMarkers;
 };
 
 struct Tileset
@@ -137,12 +157,14 @@ int RenderPlayer(SDL_Renderer* pRenderer, const Player& pPlayer)
 		return -1;
 
 	// collision points
-	if (RenderPoint(pRenderer, pPlayer.Position + pPlayer.HotSpot, 4.0f, 255, 0, 0) < 0)
-		return -1;
-	if (RenderPoint(pRenderer, pPlayer.Position + pPlayer.FloorLeft, 4.0f, 255, 255, 0) < 0)
-		return -1;
-	if (RenderPoint(pRenderer, pPlayer.Position + pPlayer.FloorRight, 4.0f, 255, 255, 0) < 0)
-		return -1;
+	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
+	{
+		int r = 50; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
+		int g = 75; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
+		int b = 80; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
+		if (RenderPoint(pRenderer, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 4.0f, r, g, b) < 0)
+			return -1;
+	}
 
 	return 0;
 }
@@ -271,9 +293,69 @@ void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
 	}
 }
 
+bool CheckPoint(const HGF::Vector2& pPosition, const Map& pMap)
+{
+	int x = (int)roundf(pPosition.X) / pMap.Tileset.Size;
+	int y = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
+
+	if (x < 0 || x >= pMap.Width || y < 0 || y >= pMap.Height)
+		return false;
+
+	return pMap.Data[x * pMap.Height + y] >= 0;
+}
+
 void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 {
+	pPlayer.Position += pPlayer.Velocity;
 
+	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
+		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position, pMap);
+
+	// bottom collision
+	if (pPlayer.Velocity.Y > 0.0f)
+	{
+		// NOTE: this is really dumb, I'll fix later
+		if (pPlayer.CollisionMarkers[MRK_HOTSPOT].IsTouching)
+		{
+			float offset = -1.0f;
+			while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position + HGF::Vector2(0.0f, offset), pMap))
+			{
+				offset -= 1.0f;
+			}
+
+			pPlayer.Position.Y += offset;
+			pPlayer.Velocity.Y = 0.0f;
+			pPlayer.IsGrounded = true;
+		}
+		else if (pPlayer.CollisionMarkers[MRK_FOOT_LEFT].IsTouching)
+		{
+			float offset = -1.0f;
+			while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[MRK_FOOT_LEFT].Position + HGF::Vector2(0.0f, offset), pMap))
+			{
+				offset -= 1.0f;
+			}
+
+			pPlayer.Position.Y += offset;
+			pPlayer.Velocity.Y = 0.0f;
+			pPlayer.IsGrounded = true;
+		}
+		else if (pPlayer.CollisionMarkers[MRK_FOOT_RIGHT].IsTouching)
+		{
+			float offset = -1.0f;
+			while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[MRK_FOOT_RIGHT].Position + HGF::Vector2(0.0f, offset), pMap))
+			{
+				offset -= 1.0f;
+			}
+
+			pPlayer.Position.Y += offset;
+			pPlayer.Velocity.Y = 0.0f;
+			pPlayer.IsGrounded = true;
+		}
+		else
+		{
+			pPlayer.IsGrounded = false;
+		}
+	}
 }
 
 int main(int argc, char** argv)
@@ -298,24 +380,6 @@ int main(int argc, char** argv)
 	Uint32 prevTicks = 0;
 	Uint32 currTicks = SDL_GetTicks();
 
-	Player player;
-	player.Texture = LoadTexture(renderer, "data/img/player.png");
-	if (player.Texture == NULL)
-		return -1;
-	player.Position = HGF::Vector2(100.0f, 100.0f);
-	player.Velocity = HGF::Vector2::Zero;
-	player.Acceleration = HGF::Vector2::Zero;
-	player.IsFacingLeft = false;
-	player.MovementSpeed = 0.35f;
-	player.JumpingSpeed = 1.875f;
-	player.Gravity = 0.045f;
-	player.Dimensions = HGF::Vector2(70.0f, 92.0f);
-	player.IsGrounded = false;
-	player.IsJumping = false;
-	player.HotSpot = HGF::Vector2(player.Dimensions.X / 2.0f, player.Dimensions.Y);
-	player.FloorLeft = HGF::Vector2(player.Dimensions.X / 8.0f * 1.0f, player.Dimensions.Y);
-	player.FloorRight = HGF::Vector2(player.Dimensions.X / 8.0f * 7.0f, player.Dimensions.Y);
-
 	Map map;
 	map.Tileset.Texture = LoadTexture(renderer, "data/img/tiles.png");
 	if (map.Tileset.Texture == NULL)
@@ -328,14 +392,34 @@ int main(int argc, char** argv)
 	map.Data = new int[map.Width * map.Height];
 	GenerateMap(map);
 
-	/*
-	BitArray bits(32);
-	bits.Set(4, true);
-	bool tempA = bits.Get(4);
-	bool tempB = bits.Get(5);
-	std::vector<bool> vits(32);
-	vits[4] = true;
-	*/
+	Player player;
+	player.Texture = LoadTexture(renderer, "data/img/player.png");
+	if (player.Texture == NULL)
+		return -1;
+	player.Position = HGF::Vector2(100.0f, 100.0f);
+	player.Velocity = HGF::Vector2::Zero;
+	player.Acceleration = HGF::Vector2::Zero;
+	player.IsFacingLeft = false;
+	player.MovementSpeed = 0.35f;
+	player.JumpingSpeed = 2.25f;
+	player.Gravity = 0.075f;
+	player.Dimensions = HGF::Vector2(map.Tileset.Size * 2, map.Tileset.Size * 3);
+	player.IsGrounded = false;
+	player.IsJumping = false;
+	player.CollisionMarkers = new CollisionMarker[MRK_MAX_MARKER_COUNT];
+	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
+		player.CollisionMarkers[i].IsTouching = false;
+	player.CollisionMarkers[MRK_HOTSPOT].Position = HGF::Vector2(player.Dimensions.X / 2.0f, player.Dimensions.Y + 1.0f);
+	player.CollisionMarkers[MRK_FOOT_LEFT].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 8.0f, player.Dimensions.Y + 1.0f);
+	player.CollisionMarkers[MRK_FOOT_RIGHT].Position = HGF::Vector2(player.Dimensions.X * 7.0f / 8.0f, player.Dimensions.Y + 1.0f);
+	player.CollisionMarkers[MRK_HEAD_LEFT].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 3.0f, -1.0f);
+	player.CollisionMarkers[MRK_HEAD_RIGHT].Position = HGF::Vector2(player.Dimensions.X * 2.0f / 3.0f, -1.0f);
+	player.CollisionMarkers[MRK_LEFT_TOP].Position = HGF::Vector2(-1.0f, player.Dimensions.Y * 1.0f / 6.0f);
+	player.CollisionMarkers[MRK_LEFT_CENTER].Position = HGF::Vector2(-1.0f, player.Dimensions.Y * 3.0f / 6.0f);
+	player.CollisionMarkers[MRK_LEFT_BOTTOM].Position = HGF::Vector2(-1.0f, player.Dimensions.Y * 5.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_TOP].Position = HGF::Vector2(player.Dimensions.X + 1.0f, player.Dimensions.Y * 1.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_CENTER].Position = HGF::Vector2(player.Dimensions.X + 1.0f, player.Dimensions.Y * 3.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(player.Dimensions.X + 1.0f, player.Dimensions.Y * 5.0f / 6.0f);
 
 	while (running)
 	{
@@ -354,23 +438,29 @@ int main(int argc, char** argv)
 		{
 			switch (evt.type)
 			{
-				case SDL_QUIT:
-					running = false;
-					break;
-				case SDL_KEYDOWN:
-					keys[evt.key.keysym.sym] = true;
-					break;
-				case SDL_KEYUP:
-					keys[evt.key.keysym.sym] = false;
-					break;
-				default:
-					break;
+			case SDL_QUIT:
+				running = false;
+				break;
+			case SDL_KEYDOWN:
+				keys[evt.key.keysym.sym] = true;
+				break;
+			case SDL_KEYUP:
+				keys[evt.key.keysym.sym] = false;
+				break;
+			default:
+				break;
 			}
 		}
 
 		// debug
 		if (keys[SDLK_RETURN])
+		{
 			GenerateMap(map);
+		}
+		if (keys[SDLK_BACKSPACE])
+		{
+			player.Position = HGF::Vector2(100.0f, 100.0f);
+		}
 
 		// handle input
 		if (keys[SDLK_ESCAPE])
@@ -395,14 +485,17 @@ int main(int argc, char** argv)
 		}
 
 		// update movement
-		player.Acceleration.Y += player.Gravity;
+		if (!player.IsGrounded)
+		{
+			player.Acceleration.Y += player.Gravity;
+		}
 		player.Velocity += player.Acceleration;
 		player.Velocity.X *= 0.75f;
 		player.Acceleration *= 0.75f;
 
 		// handle collision
-		HandleWorldCollisionViaAABB(player, map);
-		//HandleWorldCollisionViaPoints(player, map);
+		//HandleWorldCollisionViaAABB(player, map);
+		HandleWorldCollisionViaPoints(player, map);
 
 		// clear
 		SDL_SetRenderDrawColor(renderer, 150, 175, 225, 255);
@@ -410,9 +503,9 @@ int main(int argc, char** argv)
 			return -1;
 
 		// render loop
-		if (RenderPlayer(renderer, player) < 0)
-			return -1;
 		if (RenderMap(renderer, map) < 0)
+			return -1;
+		if (RenderPlayer(renderer, player) < 0)
 			return -1;
 
 		// flip
@@ -423,6 +516,7 @@ int main(int argc, char** argv)
 
 	// free memory
 	delete [] map.Data;
+	delete [] player.CollisionMarkers;
 
 	// clean up
 	SDL_DestroyTexture(player.Texture);
