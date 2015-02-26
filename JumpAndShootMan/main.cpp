@@ -48,6 +48,13 @@ struct Player
 	CollisionMarker* CollisionMarkers;
 };
 
+struct Camera
+{
+	HGF::Vector2 Position;
+	float Rotation;
+	float Zoom;
+};
+
 struct Tileset
 {
 	SDL_Texture* Texture;
@@ -74,7 +81,7 @@ void GenerateMap(Map& pMap)
 
 			if (x == 0 || x == pMap.Width - 1 || y == 0 || y == pMap.Height - 1)
 				*tile = 0;
-			else if (rand() % 14 == 0)
+			else if (rand() % 12 == 0)
 				*tile = rand() % (pMap.Tileset.X * pMap.Tileset.Y - 1) + 1;
 			else
 				*tile = -1;
@@ -95,13 +102,13 @@ SDL_Texture* LoadTexture(SDL_Renderer* pRenderer, const char* pFilename)
 	return texture;
 }
 
-int RenderPoint(SDL_Renderer* pRenderer, HGF::Vector2 pPosition, float pSize = 1.0f, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
+int RenderPoint(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, float pSize = 1.0f, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
 {
 	SDL_Rect rect = {
-		(int)roundf(pPosition.X - pSize / 2.0f),
-		(int)roundf(pPosition.Y - pSize / 2.0f),
-		(int)pSize,
-		(int)pSize
+		(int)(roundf(pPosition.X + pCamera.Position.X - pSize / 2.0f) * pCamera.Zoom),
+		(int)(roundf(pPosition.Y + pCamera.Position.Y - pSize / 2.0f) * pCamera.Zoom),
+		(int)(pSize * pCamera.Zoom),
+		(int)(pSize * pCamera.Zoom)
 	};
 
 	SDL_SetRenderDrawColor(pRenderer, pRed, pGreen, pBlue, pAlpha);
@@ -111,14 +118,14 @@ int RenderPoint(SDL_Renderer* pRenderer, HGF::Vector2 pPosition, float pSize = 1
 	return 0;
 }
 
-int RenderRectangle(SDL_Renderer* pRenderer, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
+int RenderRectangle(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
 {
 	SDL_Point points[5] = {
-		{ (int)roundf(pPosition.X),					(int)roundf(pPosition.Y) },
-		{ (int)roundf(pPosition.X + pDimensions.X), (int)roundf(pPosition.Y) },
-		{ (int)roundf(pPosition.X + pDimensions.X), (int)roundf(pPosition.Y + pDimensions.Y) },
-		{ (int)roundf(pPosition.X),					(int)roundf(pPosition.Y + pDimensions.Y) },
-		{ (int)roundf(pPosition.X),					(int)roundf(pPosition.Y) }
+		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)(roundf(pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)(roundf(pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)(roundf(pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) }
 	};
 
 	SDL_SetRenderDrawColor(pRenderer, pRed, pGreen, pBlue, pAlpha);
@@ -128,7 +135,7 @@ int RenderRectangle(SDL_Renderer* pRenderer, HGF::Vector2 pPosition, HGF::Vector
 	return 0;
 }
 
-int RenderTexture(SDL_Renderer* pRenderer, SDL_Texture* pTexture, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipLocation, HGF::Vector2 pClipSize, bool pFlip = false)
+int RenderTexture(SDL_Renderer* pRenderer, const Camera& pCamera, SDL_Texture* pTexture, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipLocation, HGF::Vector2 pClipSize, bool pFlip = false)
 {
 	SDL_Rect source = {
 		(int)roundf(pClipLocation.X),
@@ -137,23 +144,23 @@ int RenderTexture(SDL_Renderer* pRenderer, SDL_Texture* pTexture, HGF::Vector2 p
 		(int)roundf(pClipSize.Y)
 	};
 	SDL_Rect destination = {
-		(int)roundf(pPosition.X),
-		(int)roundf(pPosition.Y),
-		(int)roundf(pDimensions.X),
-		(int)roundf(pDimensions.Y)
+		(int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),
+		(int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		(int)(roundf(pDimensions.X) * pCamera.Zoom),
+		(int)(roundf(pDimensions.Y) * pCamera.Zoom)
 	};
 
 	return SDL_RenderCopyEx(pRenderer, pTexture, &source, &destination, 0.0, NULL, pFlip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
 }
 
-int RenderPlayer(SDL_Renderer* pRenderer, const Player& pPlayer)
+int RenderPlayer(SDL_Renderer* pRenderer, const Camera& pCamera, const Player& pPlayer)
 {
 	// texture
-	if (RenderTexture(pRenderer, pPlayer.Texture, pPlayer.Position, pPlayer.Dimensions, HGF::Vector2::Zero, HGF::Vector2(140.0f, 184.0f), pPlayer.IsFacingLeft) < 0)
+	if (RenderTexture(pRenderer, pCamera, pPlayer.Texture, pPlayer.Position, pPlayer.Dimensions, HGF::Vector2::Zero, HGF::Vector2(140.0f, 184.0f), pPlayer.IsFacingLeft) < 0)
 		return -1;
 
 	// AABB
-	if (RenderRectangle(pRenderer, pPlayer.Position, pPlayer.Dimensions, 0, 255, 0) < 0)
+	if (RenderRectangle(pRenderer, pCamera, pPlayer.Position, pPlayer.Dimensions, 0, 255, 0) < 0)
 		return -1;
 
 	// collision points
@@ -162,14 +169,14 @@ int RenderPlayer(SDL_Renderer* pRenderer, const Player& pPlayer)
 		int r = 50; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
 		int g = 75; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
 		int b = 80; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
-		if (RenderPoint(pRenderer, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 4.0f, r, g, b) < 0)
+		if (RenderPoint(pRenderer, pCamera, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 2.0f, r, g, b) < 0)
 			return -1;
 	}
 
 	return 0;
 }
 
-int RenderMap(SDL_Renderer* pRenderer, const Map& pMap)
+int RenderMap(SDL_Renderer* pRenderer, const Camera& pCamera, const Map& pMap)
 {
 	for (int x = 0; x < pMap.Width; ++x)
 	{
@@ -179,6 +186,7 @@ int RenderMap(SDL_Renderer* pRenderer, const Map& pMap)
 			if (value >= 0)
 			{
 				if (RenderTexture(pRenderer,
+								  pCamera,
 								  pMap.Tileset.Texture,
 								  HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size),
 								  HGF::Vector2(pMap.Tileset.Size, pMap.Tileset.Size),
@@ -412,7 +420,10 @@ int main(int argc, char** argv)
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return -1;
 
-	SDL_Window* window = SDL_CreateWindow("JUMP AND SHOOT MAN", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1024, 768, SDL_WINDOW_SHOWN);
+	int windowWidth = 1024;
+	int windowHeight = 768;
+
+	SDL_Window* window = SDL_CreateWindow("JUMP AND SHOOT MAN", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
 	if (window == NULL)
 		return -1;
 	
@@ -428,29 +439,29 @@ int main(int argc, char** argv)
 	Uint32 currTicks = SDL_GetTicks();
 
 	Map map;
-	map.Tileset.Texture = LoadTexture(renderer, "data/img/tiles.png");
+	map.Tileset.Texture = LoadTexture(renderer, "data/img/tileset.png");
 	if (map.Tileset.Texture == NULL)
 		return -1;
 	map.Tileset.X = 3;
 	map.Tileset.Y = 3;
-	map.Tileset.Size = 32;
-	map.Width = 32;
-	map.Height = 24;
+	map.Tileset.Size = 16;
+	map.Width = 64;
+	map.Height = 48;
 	map.Data = new int[map.Width * map.Height];
 	GenerateMap(map);
 
 	Player player;
-	player.Texture = LoadTexture(renderer, "data/img/player.png");
+	player.Texture = LoadTexture(renderer, "data/img/megamanx.png");
 	if (player.Texture == NULL)
 		return -1;
 	player.Position = HGF::Vector2(100.0f, 100.0f);
 	player.Velocity = HGF::Vector2::Zero;
 	player.Acceleration = HGF::Vector2::Zero;
 	player.IsFacingLeft = false;
-	player.MovementSpeed = 0.35f;
-	player.JumpingSpeed = 2.25f;
-	player.Gravity = 0.075f;
-	player.Dimensions = HGF::Vector2(70.0f, 92.0f);
+	player.MovementSpeed = 0.185f;
+	player.JumpingSpeed = 1.15f;
+	player.Gravity = 0.035f;
+	player.Dimensions = HGF::Vector2(30, 34);
 	player.IsGrounded = false;
 	player.IsJumping = false;
 	player.CollisionMarkers = new CollisionMarker[MRK_MAX_MARKER_COUNT];
@@ -467,6 +478,11 @@ int main(int argc, char** argv)
 	player.CollisionMarkers[MRK_RIGHT_TOP].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 1.0f / 6.0f);
 	player.CollisionMarkers[MRK_RIGHT_CENTER].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 3.0f / 6.0f);
 	player.CollisionMarkers[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 5.0f / 6.0f);
+
+	Camera camera;
+	camera.Position = HGF::Vector2(0.0f, 0.0f);
+	camera.Rotation = 0.0f;
+	camera.Zoom = 2.0f;
 
 	while (running)
 	{
@@ -514,7 +530,7 @@ int main(int argc, char** argv)
 		{
 			running = false;
 		}
-		if (keys[SDLK_SPACE] && player.IsGrounded)
+		if (keys[SDLK_SPACE] && player.IsGrounded && !player.CollisionMarkers[MRK_HEAD_LEFT].IsTouching && !player.CollisionMarkers[MRK_HEAD_RIGHT].IsTouching)
 		{
 			player.Velocity.Y = 0.0f;
 			player.Acceleration.Y -= player.JumpingSpeed;
@@ -544,15 +560,18 @@ int main(int argc, char** argv)
 		//HandleWorldCollisionViaAABB(player, map);
 		HandleWorldCollisionViaPoints(player, map);
 
+		camera.Position.X = -player.Position.X + windowWidth / 4;
+		camera.Position.Y = -player.Position.Y + windowHeight / 4;
+
 		// clear
 		SDL_SetRenderDrawColor(renderer, 150, 175, 225, 255);
 		if (SDL_RenderClear(renderer) < 0)
 			return -1;
 
 		// render loop
-		if (RenderMap(renderer, map) < 0)
+		if (RenderMap(renderer, camera, map) < 0)
 			return -1;
-		if (RenderPlayer(renderer, player) < 0)
+		if (RenderPlayer(renderer, camera, player) < 0)
 			return -1;
 
 		// flip
