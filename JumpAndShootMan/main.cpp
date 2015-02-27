@@ -166,9 +166,9 @@ int RenderPlayer(SDL_Renderer* pRenderer, const Camera& pCamera, const Player& p
 	// collision points
 	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
 	{
-		int r = 50; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
-		int g = 75; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
-		int b = 80; // pPlayer.CollisionMarkers[i].IsTouching ? 0 : 255;
+		int r = pPlayer.CollisionMarkers[i].IsTouching ? 150 : 50;
+		int g = pPlayer.CollisionMarkers[i].IsTouching ? 175 : 75;
+		int b = pPlayer.CollisionMarkers[i].IsTouching ? 180 : 80;
 		if (RenderPoint(pRenderer, pCamera, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 2.0f, r, g, b) < 0)
 			return -1;
 	}
@@ -301,15 +301,37 @@ void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
 	}
 }
 
-bool CheckPoint(const HGF::Vector2& pPosition, const Map& pMap)
+struct HitType
 {
-	int x = (int)roundf(pPosition.X) / pMap.Tileset.Size;
-	int y = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
+	bool IsHit;
+	int TileX;
+	int TileY;
+	int PixelX;
+	int PixelY;
+	int Type;
+};
 
-	if (x < 0 || x >= pMap.Width || y < 0 || y >= pMap.Height)
+bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition, HitType& pHitType)
+{
+	pHitType.IsHit = false;
+	pHitType.TileX = (int)roundf(pPosition.X) / pMap.Tileset.Size;
+	pHitType.TileY = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
+	pHitType.PixelX = (int)roundf(pPosition.X) % pMap.Tileset.Size;
+	pHitType.PixelY = (int)roundf(pPosition.Y) % pMap.Tileset.Size;
+
+	if (pHitType.TileX < 0 || pHitType.TileX >= pMap.Width || pHitType.TileX < 0 || pHitType.TileX >= pMap.Height)
 		return false;
 
-	return pMap.Data[x * pMap.Height + y] >= 0;
+	pHitType.Type = pMap.Data[pHitType.TileX * pMap.Height + pHitType.TileY];
+	pHitType.IsHit = (pHitType.Type >= 0);
+
+	return pHitType.IsHit;
+}
+
+bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition)
+{
+	HitType hit;
+	return CheckPoint(pMap, pPosition, hit);
 }
 
 void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
@@ -319,7 +341,7 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 	pPlayer.Position.X += pPlayer.Velocity.X;
 
 	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
-		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position, pMap);
+		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position);
 
 	// left collision
 	for (int i = 3; i <= 5; ++i)
@@ -330,7 +352,7 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		if (pPlayer.CollisionMarkers[i].IsTouching)
 		{
 			float offset = 1.0f;
-			while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f), pMap))
+			while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f)))
 			{
 				offset += 1.0f;
 			}
@@ -350,7 +372,7 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		if (pPlayer.CollisionMarkers[i].IsTouching)
 		{
 			float offset = -1.0f;
-			while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f), pMap))
+			while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f)))
 			{
 				offset -= 1.0f;
 			}
@@ -364,29 +386,35 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 	pPlayer.Position.Y += pPlayer.Velocity.Y;
 
 	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
-		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position, pMap);
+		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position);
 
 	// bottom/top collision
 	if (pPlayer.Velocity.Y > 0.0f)
 	{
 		bool hit = false;
-		for (int i = 0; i <= 2; ++i)
+		if (pPlayer.CollisionMarkers[MRK_HOTSPOT].IsTouching)
 		{
-			// 0 = MRK_HOTSPOT
-			// 1 = MRK_FOOT_LEFT
-			// 2 = MRK_FOOT_RIGHT
-			if (pPlayer.CollisionMarkers[i].IsTouching)
+			HitType hitType;
+			if (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position, hitType))
 			{
-				float offset = -1.0f;
-				while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(0.0f, offset), pMap))
-				{
-					offset -= 1.0f;
-				}
-
-				pPlayer.Position.Y += offset;
+				pPlayer.Position.Y = (hitType.TileY - 2) * pMap.Tileset.Size - 1;
 				pPlayer.Velocity.Y = 0.0f;
 				hit = true;
-				break;
+			}
+		}
+		else
+		{
+			for (int i = 1; i <= 2; ++i)
+			{
+				// 1 = MRK_FOOT_LEFT
+				// 2 = MRK_FOOT_RIGHT
+				HitType hitType;
+				if (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, hitType))
+				{
+					pPlayer.Position.Y = (hitType.TileY - 2) * pMap.Tileset.Size - 1;
+					pPlayer.Velocity.Y = 0.0f;
+					hit = true;
+				}
 			}
 		}
 		pPlayer.IsGrounded = hit;
@@ -400,7 +428,7 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 			if (pPlayer.CollisionMarkers[i].IsTouching)
 			{
 				float offset = 1.0f;
-				while (CheckPoint(pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(0.0f, offset), pMap))
+				while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(0.0f, offset)))
 				{
 					offset += 1.0f;
 				}
@@ -439,7 +467,7 @@ int main(int argc, char** argv)
 	Uint32 currTicks = SDL_GetTicks();
 
 	Map map;
-	map.Tileset.Texture = LoadTexture(renderer, "data/img/tileset.png");
+	map.Tileset.Texture = LoadTexture(renderer, "data/img/tileset2.png");
 	if (map.Tileset.Texture == NULL)
 		return -1;
 	map.Tileset.X = 3;
@@ -472,12 +500,12 @@ int main(int argc, char** argv)
 	player.CollisionMarkers[MRK_FOOT_RIGHT].Position = HGF::Vector2(player.Dimensions.X * 7.0f / 8.0f, player.Dimensions.Y);
 	player.CollisionMarkers[MRK_HEAD_LEFT].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 3.0f, 0.0f);
 	player.CollisionMarkers[MRK_HEAD_RIGHT].Position = HGF::Vector2(player.Dimensions.X * 2.0f / 3.0f, 0.0f);
-	player.CollisionMarkers[MRK_LEFT_TOP].Position = HGF::Vector2(0.0f, player.Dimensions.Y * 1.0f / 6.0f);
-	player.CollisionMarkers[MRK_LEFT_CENTER].Position = HGF::Vector2(0.0f, player.Dimensions.Y * 3.0f / 6.0f);
-	player.CollisionMarkers[MRK_LEFT_BOTTOM].Position = HGF::Vector2(0.0f, player.Dimensions.Y * 5.0f / 6.0f);
-	player.CollisionMarkers[MRK_RIGHT_TOP].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 1.0f / 6.0f);
-	player.CollisionMarkers[MRK_RIGHT_CENTER].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 3.0f / 6.0f);
-	player.CollisionMarkers[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(player.Dimensions.X, player.Dimensions.Y * 5.0f / 6.0f);
+	player.CollisionMarkers[MRK_LEFT_TOP].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 16.0f, player.Dimensions.Y * 1.0f / 6.0f);
+	player.CollisionMarkers[MRK_LEFT_CENTER].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 16.0f, player.Dimensions.Y * 3.0f / 6.0f);
+	player.CollisionMarkers[MRK_LEFT_BOTTOM].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 16.0f, player.Dimensions.Y * 5.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_TOP].Position = HGF::Vector2(player.Dimensions.X * 15.0f / 16.0f, player.Dimensions.Y * 1.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_CENTER].Position = HGF::Vector2(player.Dimensions.X * 15.0f / 16.0f, player.Dimensions.Y * 3.0f / 6.0f);
+	player.CollisionMarkers[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(player.Dimensions.X * 15.0f / 16.0f, player.Dimensions.Y * 5.0f / 6.0f);
 
 	Camera camera;
 	camera.Position = HGF::Vector2(0.0f, 0.0f);
