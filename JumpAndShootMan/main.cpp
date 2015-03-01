@@ -10,20 +10,22 @@
 #include <time.h>
 #include <vector>
 
+const float EPSILON = 0.0001f;
+const int MAX_MARKER_COUNT = 11;
+
 enum MarkerIndex
 {
 	MRK_HOTSPOT,
 	MRK_FOOT_LEFT,
 	MRK_FOOT_RIGHT,
-	MRK_LEFT_TOP,
 	MRK_LEFT_CENTER,
+	MRK_LEFT_TOP,
 	MRK_LEFT_BOTTOM,
-	MRK_RIGHT_TOP,
 	MRK_RIGHT_CENTER,
+	MRK_RIGHT_TOP,
 	MRK_RIGHT_BOTTOM,
 	MRK_HEAD_LEFT,
-	MRK_HEAD_RIGHT,
-	MRK_MAX_MARKER_COUNT
+	MRK_HEAD_RIGHT
 };
 
 struct CollisionMarker
@@ -45,7 +47,7 @@ struct Player
 	HGF::Vector2 Dimensions;
 	bool IsGrounded;
 	bool IsJumping;
-	CollisionMarker* CollisionMarkers;
+	CollisionMarker CollisionMarkers[MAX_MARKER_COUNT];
 };
 
 struct Camera
@@ -63,28 +65,116 @@ struct Tileset
 	int Size;
 };
 
+struct Tile
+{
+	int TextureID;
+	int CollisionID;
+};
+
 struct Map
 {
 	Tileset Tileset;
 	int Width;
 	int Height;
-	int* Data;
+	Tile* Data;
+	std::vector<std::vector<bool>> BitMasks;
 };
+
+struct HitData
+{
+	int TileX;
+	int TileY;
+	int PixelX;
+	int PixelY;
+};
+
+Uint32 GetPixel(SDL_Surface* pSurface, int pX, int pY)
+{
+	Uint8* pixel = (Uint8*)pSurface->pixels + pY * pSurface->pitch + pX * pSurface->format->BytesPerPixel;
+
+	switch (pSurface->format->BytesPerPixel)
+	{
+		case 1:
+			return *pixel;
+		case 2:
+			return *(Uint16*)pixel;
+		case 3:
+			if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+				return pixel[0] << 16 | pixel[1] << 8 | pixel[2];
+			else
+				return pixel[0] | pixel[1] << 8 | pixel[2] << 16;
+		case 4:
+			return *(Uint32*)pixel;
+		default:
+			return 0;
+	}
+}
 
 void GenerateMap(Map& pMap)
 {
-	for (int x = 0; x < pMap.Width; ++x)
+	SDL_Surface* surface = IMG_Load("data/img/bitfield.png");
+	if (surface != NULL)
 	{
-		for (int y = 0; y < pMap.Height; ++y)
+		int cx = surface->w / pMap.Tileset.Size;
+		int cy = surface->h / pMap.Tileset.Size;
+
+		for (int ty = 0; ty < cy; ++ty)
 		{
-			int* tile = &pMap.Data[x * pMap.Height + y];
+			for (int tx = 0; tx < cx; ++tx)
+			{
+				std::vector<bool> bits;
+
+				for (int py = 0; py < pMap.Tileset.Size; ++py)
+				{
+					for (int px = 0; px < pMap.Tileset.Size; ++px)
+					{
+						Uint32 color = GetPixel(surface, tx * pMap.Tileset.Size + px, ty * pMap.Tileset.Size + py);
+						Uint8 r, g, b, a;
+						SDL_GetRGBA(color, surface->format, &r, &g, &b, &a);
+						bits.push_back(r == 0 && g == 0 && b == 0);
+					}
+				}
+
+				pMap.BitMasks.push_back(bits);
+			}
+		}
+
+		SDL_FreeSurface(surface);
+	}
+
+	for (int y = 0; y < pMap.Height; ++y)
+	{
+		for (int x = 0; x < pMap.Width; ++x)
+		{
+			Tile* tile = &pMap.Data[x * pMap.Height + y];
 
 			if (x == 0 || x == pMap.Width - 1 || y == 0 || y == pMap.Height - 1)
-				*tile = 0;
+			{
+				tile->TextureID = 0;
+				tile->CollisionID = 0;
+			}
 			else if (rand() % 12 == 0)
-				*tile = rand() % (pMap.Tileset.X * pMap.Tileset.Y - 1) + 1;
+			{
+				tile->TextureID = rand() % (pMap.Tileset.X * pMap.Tileset.Y - 1) + 1;
+
+				if (tile->TextureID == 7)
+				{
+					tile->CollisionID = 1;
+				}
+				else if (tile->TextureID == 8)
+				{
+					tile->CollisionID = 2;
+				}
+				else
+				{
+					tile->CollisionID = 0;
+				}
+			}
 			else
-				*tile = -1;
+			{
+				tile->TextureID = -1;
+				tile->CollisionID = -1;
+			}
 		}
 	}
 }
@@ -164,7 +254,7 @@ int RenderPlayer(SDL_Renderer* pRenderer, const Camera& pCamera, const Player& p
 		return -1;
 
 	// collision points
-	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
+	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
 	{
 		int r = pPlayer.CollisionMarkers[i].IsTouching ? 150 : 50;
 		int g = pPlayer.CollisionMarkers[i].IsTouching ? 175 : 75;
@@ -178,11 +268,11 @@ int RenderPlayer(SDL_Renderer* pRenderer, const Camera& pCamera, const Player& p
 
 int RenderMap(SDL_Renderer* pRenderer, const Camera& pCamera, const Map& pMap)
 {
-	for (int x = 0; x < pMap.Width; ++x)
+	for (int y = 0; y < pMap.Height; ++y)
 	{
-		for (int y = 0; y < pMap.Height; ++y)
+		for (int x = 0; x < pMap.Width; ++x)
 		{
-			int value = pMap.Data[x * pMap.Height + y];
+			int value = pMap.Data[x * pMap.Height + y].TextureID;
 			if (value >= 0)
 			{
 				if (RenderTexture(pRenderer,
@@ -250,11 +340,11 @@ void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
 
 	pPlayer.Position.X += pPlayer.Velocity.X;
 
-	for (int x = startX; x <= endX; ++x)
+	for (int y = startY; y <= endY; ++y)
 	{
-		for (int y = startY; y <= endY; ++y)
+		for (int x = startX; x <= endX; ++x)
 		{
-			if (pMap.Data[x * pMap.Height + y] >= 0)
+			if (pMap.Data[x * pMap.Height + y].TextureID >= 0)
 			{
 				HGF::Vector2 tileMin = HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
 				HGF::Vector2 tileMax = HGF::Vector2((x + 1) * pMap.Tileset.Size, (y + 1) * pMap.Tileset.Size);
@@ -274,11 +364,11 @@ void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
 
 	pPlayer.Position.Y += pPlayer.Velocity.Y;
 
-	for (int x = startX; x <= endX; ++x)
+	for (int y = startY; y <= endY; ++y)
 	{
-		for (int y = startY; y <= endY; ++y)
+		for (int x = startX; x <= endX; ++x)
 		{
-			if (pMap.Data[x * pMap.Height + y] >= 0)
+			if (pMap.Data[x * pMap.Height + y].TextureID >= 0)
 			{
 				HGF::Vector2 tileMin = HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
 				HGF::Vector2 tileMax = HGF::Vector2((x + 1) * pMap.Tileset.Size, (y + 1) * pMap.Tileset.Size);
@@ -301,144 +391,189 @@ void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
 	}
 }
 
-struct HitType
+bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition, HitData& pHitData)
 {
-	bool IsHit;
-	int TileX;
-	int TileY;
-	int PixelX;
-	int PixelY;
-	int Type;
-};
+	pHitData.TileX = (int)roundf(pPosition.X) / pMap.Tileset.Size;
+	pHitData.TileY = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
+	pHitData.PixelX = (int)roundf(pPosition.X) % pMap.Tileset.Size;
+	pHitData.PixelY = (int)roundf(pPosition.Y) % pMap.Tileset.Size;
 
-bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition, HitType& pHitType)
-{
-	pHitType.IsHit = false;
-	pHitType.TileX = (int)roundf(pPosition.X) / pMap.Tileset.Size;
-	pHitType.TileY = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
-	pHitType.PixelX = (int)roundf(pPosition.X) % pMap.Tileset.Size;
-	pHitType.PixelY = (int)roundf(pPosition.Y) % pMap.Tileset.Size;
-
-	if (pHitType.TileX < 0 || pHitType.TileX >= pMap.Width || pHitType.TileX < 0 || pHitType.TileX >= pMap.Height)
+	if (pHitData.TileX < 0 || pHitData.TileX >= pMap.Width || pHitData.TileY < 0 || pHitData.TileY >= pMap.Height)
 		return false;
 
-	pHitType.Type = pMap.Data[pHitType.TileX * pMap.Height + pHitType.TileY];
-	pHitType.IsHit = (pHitType.Type >= 0);
+	Tile* tile = &pMap.Data[pHitData.TileX * pMap.Height + pHitData.TileY];
 
-	return pHitType.IsHit;
+	if (tile->CollisionID < 0)
+		return false;
+
+	return pMap.BitMasks[tile->CollisionID][pHitData.PixelX * pMap.Tileset.Size + pHitData.PixelY];
 }
 
-bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition)
+bool IsBitMaskHit(const Map& pMap, int pX, int pY, int& pCollisionID)
 {
-	HitType hit;
-	return CheckPoint(pMap, pPosition, hit);
+	int tileX = pX / pMap.Tileset.Size;
+	int tileY = pY / pMap.Tileset.Size;
+	int pixelX = pX % pMap.Tileset.Size;
+	int pixelY = pY % pMap.Tileset.Size;
+
+	if (tileX < 0 || tileX >= pMap.Width || tileY < 0 || tileY >= pMap.Height)
+		return false;
+
+	Tile* tile = &pMap.Data[tileX * pMap.Height + tileY];
+	if (tile->CollisionID < 0)
+		return false;
+
+	pCollisionID = tile->CollisionID;
+
+	return pMap.BitMasks[pCollisionID][pixelX + pixelY * pMap.Tileset.Size];
 }
 
 void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 {
-	// NOTE: this is really dumb, I'll fix later
+	/*
+	pPlayer.Position += pPlayer.Velocity;
+	HitData hitData[MAX_MARKER_COUNT];
+	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
+		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, hitData[i]);
+	*/
 
-	pPlayer.Position.X += pPlayer.Velocity.X;
+	int id = -1;
 
-	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
-		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position);
-
-	// left collision
-	for (int i = 3; i <= 5; ++i)
+	// left/right collision
+	bool hitHorz = false;
+	if (pPlayer.Velocity.X < -EPSILON)
 	{
-		// 3 = MRK_LEFT_TOP
-		// 4 = MRK_LEFT_CENTER
-		// 5 = MRK_LEFT_BOTTOM
-		if (pPlayer.CollisionMarkers[i].IsTouching)
+		// left collision
+		for (int i = 3; i <= 5; ++i)
 		{
-			float offset = 1.0f;
-			while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f)))
+			// 3 = MRK_LEFT_CENTER
+			// 4 = MRK_LEFT_TOP
+			// 5 = MRK_LEFT_BOTTOM
+			int initial = (int)pPlayer.Position.X;
+			int start = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+			int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionMarkers[i].Position.X);
+			int y = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			for (int x = start; x >= finish; --x)
 			{
-				offset += 1.0f;
-			}
-
-			pPlayer.Position.X += offset;
-			pPlayer.Velocity.X = 0.0f;
-			break;
-		}
-	}
-
-	// right collision
-	for (int i = 6; i <= 8; ++i)
-	{
-		// 6 = MRK_RIGHT_TOP
-		// 7 = MRK_RIGHT_CENTER
-		// 8 = MRK_RIGHT_BOTTOM
-		if (pPlayer.CollisionMarkers[i].IsTouching)
-		{
-			float offset = -1.0f;
-			while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(offset, 0.0f)))
-			{
-				offset -= 1.0f;
-			}
-
-			pPlayer.Position.X += offset;
-			pPlayer.Velocity.X = 0.0f;
-			break;
-		}
-	}
-
-	pPlayer.Position.Y += pPlayer.Velocity.Y;
-
-	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
-		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position);
-
-	// bottom/top collision
-	if (pPlayer.Velocity.Y > 0.0f)
-	{
-		bool hit = false;
-		if (pPlayer.CollisionMarkers[MRK_HOTSPOT].IsTouching)
-		{
-			HitType hitType;
-			if (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position, hitType))
-			{
-				pPlayer.Position.Y = (hitType.TileY - 2) * pMap.Tileset.Size - 1;
-				pPlayer.Velocity.Y = 0.0f;
-				hit = true;
-			}
-		}
-		else
-		{
-			for (int i = 1; i <= 2; ++i)
-			{
-				// 1 = MRK_FOOT_LEFT
-				// 2 = MRK_FOOT_RIGHT
-				HitType hitType;
-				if (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, hitType))
+				if (IsBitMaskHit(pMap, x, y, id))
 				{
-					pPlayer.Position.Y = (hitType.TileY - 2) * pMap.Tileset.Size - 1;
-					pPlayer.Velocity.Y = 0.0f;
-					hit = true;
+					if (id == 0)
+					{
+						pPlayer.Position.X = (float)(x - (initial - start));
+						pPlayer.Velocity.X = 0.0f;
+						hitHorz = true;
+						break;
+					}
 				}
 			}
+			if (hitHorz)
+				break;
 		}
-		pPlayer.IsGrounded = hit;
 	}
-	else if (pPlayer.Velocity.Y < 0.0f)
+	else if (pPlayer.Velocity.X > EPSILON)
 	{
+		// right collision
+		for (int i = 6; i <= 8; ++i)
+		{
+			bool hit = false;
+			// 6 = MRK_RIGHT_CENTER
+			// 7 = MRK_RIGHT_TOP
+			// 8 = MRK_RIGHT_BOTTOM
+			int initial = (int)pPlayer.Position.X;
+			int start = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+			int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionMarkers[i].Position.X);
+			int y = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			for (int x = start; x <= finish; ++x)
+			{
+				if (IsBitMaskHit(pMap, x, y, id))
+				{
+					if (id == 0)
+					{
+						pPlayer.Position.X = (float)(x - (start - initial));
+						pPlayer.Velocity.X = 0.0f;
+						hitHorz = true;
+						break;
+					}
+				}
+			}
+			if (hitHorz)
+				break;
+		}
+	}
+
+	if (!hitHorz)
+		pPlayer.Position.X += pPlayer.Velocity.X;
+
+	// bottom/top collision
+	bool hitVert = false;
+	if (pPlayer.Velocity.Y > EPSILON)
+	{
+		// bottom collision
+		for (int i = 0; i <= 2; ++i)
+		{
+			// 0 = MRK_HOTSPOT
+			// 1 = MRK_FOOT_LEFT
+			// 2 = MRK_FOOT_RIGHT
+			int initial = (int)pPlayer.Position.Y;
+			int start = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			int x = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+			for (int y = start; y <= finish; ++y)
+			{
+				if (IsBitMaskHit(pMap, x, y, id))
+				{
+					if (!((i == 1 || i == 2) && id != 0))
+					{
+						pPlayer.Position.Y = (float)(y + (initial - start));
+						pPlayer.Velocity.Y = 0.0f;
+						hitVert = true;
+						break;
+					}
+				}
+			}
+			if (hitVert)
+				break;
+		}
+		pPlayer.IsGrounded = hitVert;
+	}
+	else if (pPlayer.Velocity.Y < -EPSILON)
+	{
+		// top collision
 		for (int i = 9; i <= 10; ++i)
 		{
 			// 9 = MRK_HEAD_LEFT
 			// 10 = MRK_HEAD_RIGHT
-			if (pPlayer.CollisionMarkers[i].IsTouching)
+			int initial = (int)pPlayer.Position.Y;
+			int start = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionMarkers[i].Position.Y);
+			int x = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+			for (int y = start; y >= finish; --y)
 			{
-				float offset = 1.0f;
-				while (CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position + HGF::Vector2(0.0f, offset)))
+				if (IsBitMaskHit(pMap, x, y, id))
 				{
-					offset += 1.0f;
+					pPlayer.Position.Y = (float)(y - (initial - start));
+					pPlayer.Velocity.Y = 0.0f;
+					hitVert = true;
+					break;
 				}
-
-				pPlayer.Position.Y += offset;
-				pPlayer.Velocity.Y = 0.0f;
-				break;
 			}
+			if (hitVert)
+				break;
 		}
 	}
+
+	if (!hitVert)
+		pPlayer.Position.Y += pPlayer.Velocity.Y;
+
+	// temp to fix tunneling
+	int tempX = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position.X);
+	int tempY = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position.Y);
+	int origY = tempY;
+	while (IsBitMaskHit(pMap, tempX, tempY, id))
+	{
+		tempY--;
+	}
+	pPlayer.Position.Y -= (origY - tempY);
 }
 
 int main(int argc, char** argv)
@@ -473,9 +608,9 @@ int main(int argc, char** argv)
 	map.Tileset.X = 3;
 	map.Tileset.Y = 3;
 	map.Tileset.Size = 16;
-	map.Width = 64;
-	map.Height = 48;
-	map.Data = new int[map.Width * map.Height];
+	map.Width = 16;
+	map.Height = 12;
+	map.Data = new Tile[map.Width * map.Height];
 	GenerateMap(map);
 
 	Player player;
@@ -492,8 +627,7 @@ int main(int argc, char** argv)
 	player.Dimensions = HGF::Vector2(30, 34);
 	player.IsGrounded = false;
 	player.IsJumping = false;
-	player.CollisionMarkers = new CollisionMarker[MRK_MAX_MARKER_COUNT];
-	for (int i = 0; i < MRK_MAX_MARKER_COUNT; ++i)
+	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
 		player.CollisionMarkers[i].IsTouching = false;
 	player.CollisionMarkers[MRK_HOTSPOT].Position = HGF::Vector2(player.Dimensions.X / 2.0f, player.Dimensions.Y);
 	player.CollisionMarkers[MRK_FOOT_LEFT].Position = HGF::Vector2(player.Dimensions.X * 1.0f / 8.0f, player.Dimensions.Y);
@@ -576,7 +710,7 @@ int main(int argc, char** argv)
 		}
 
 		// update movement
-		if (!player.IsGrounded)
+		//if (!player.IsGrounded)
 		{
 			player.Acceleration.Y += player.Gravity;
 		}
@@ -585,7 +719,6 @@ int main(int argc, char** argv)
 		player.Acceleration *= 0.75f;
 
 		// handle collision
-		//HandleWorldCollisionViaAABB(player, map);
 		HandleWorldCollisionViaPoints(player, map);
 
 		camera.Position.X = -player.Position.X + windowWidth / 4;
@@ -610,7 +743,6 @@ int main(int argc, char** argv)
 
 	// free memory
 	delete [] map.Data;
-	delete [] player.CollisionMarkers;
 
 	// clean up
 	SDL_DestroyTexture(player.Texture);
