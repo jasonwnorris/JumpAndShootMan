@@ -4,8 +4,7 @@
 #include "BitArray.hpp"
 #include "Vector2.hpp"
 
-#include <stdio.h>
-#include <math.h>
+#include <iostream>
 #include <map>
 #include <time.h>
 #include <vector>
@@ -87,6 +86,36 @@ struct HitData
 	int PixelX;
 	int PixelY;
 };
+
+int Abs(int pValue)
+{
+	return (pValue < 0) ? -pValue : pValue;
+}
+
+int Min(int pValueA, int pValueB)
+{
+	return (pValueA < pValueB) ? pValueA : pValueB;
+}
+
+int Max(int pValueA, int pValueB)
+{
+	return (pValueA > pValueB) ? pValueA : pValueB;
+}
+
+float Abs(float pValue)
+{
+	return (pValue < 0.0f) ? -pValue : pValue;
+}
+
+float Min(float pValueA, float pValueB)
+{
+	return (pValueA < pValueB) ? pValueA : pValueB;
+}
+
+float Max(float pValueA, float pValueB)
+{
+	return (pValueA > pValueB) ? pValueA : pValueB;
+}
 
 Uint32 GetPixel(SDL_Surface* pSurface, int pX, int pY)
 {
@@ -195,8 +224,8 @@ SDL_Texture* LoadTexture(SDL_Renderer* pRenderer, const char* pFilename)
 int RenderPoint(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, float pSize = 1.0f, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
 {
 	SDL_Rect rect = {
-		(int)(roundf(pPosition.X + pCamera.Position.X - pSize / 2.0f) * pCamera.Zoom),
-		(int)(roundf(pPosition.Y + pCamera.Position.Y - pSize / 2.0f) * pCamera.Zoom),
+		(int)((pPosition.X + pCamera.Position.X - pSize / 2.0f) * pCamera.Zoom),
+		(int)((pPosition.Y + pCamera.Position.Y - pSize / 2.0f) * pCamera.Zoom),
 		(int)(pSize * pCamera.Zoom),
 		(int)(pSize * pCamera.Zoom)
 	};
@@ -211,11 +240,11 @@ int RenderPoint(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPo
 int RenderRectangle(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
 {
 	SDL_Point points[5] = {
-		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)(roundf(pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)(roundf(pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)(roundf(pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),				  (int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) }
+		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)((pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
+		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) }
 	};
 
 	SDL_SetRenderDrawColor(pRenderer, pRed, pGreen, pBlue, pAlpha);
@@ -228,16 +257,16 @@ int RenderRectangle(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2
 int RenderTexture(SDL_Renderer* pRenderer, const Camera& pCamera, SDL_Texture* pTexture, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipLocation, HGF::Vector2 pClipSize, bool pFlip = false)
 {
 	SDL_Rect source = {
-		(int)roundf(pClipLocation.X),
-		(int)roundf(pClipLocation.Y),
-		(int)roundf(pClipSize.X),
-		(int)roundf(pClipSize.Y)
+		(int)(pClipLocation.X),
+		(int)(pClipLocation.Y),
+		(int)(pClipSize.X),
+		(int)(pClipSize.Y)
 	};
 	SDL_Rect destination = {
-		(int)(roundf(pPosition.X + pCamera.Position.X) * pCamera.Zoom),
-		(int)(roundf(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		(int)(roundf(pDimensions.X) * pCamera.Zoom),
-		(int)(roundf(pDimensions.Y) * pCamera.Zoom)
+		(int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),
+		(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		(int)((pDimensions.X) * pCamera.Zoom),
+		(int)((pDimensions.Y) * pCamera.Zoom)
 	};
 
 	return SDL_RenderCopyEx(pRenderer, pTexture, &source, &destination, 0.0, NULL, pFlip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
@@ -290,113 +319,12 @@ int RenderMap(SDL_Renderer* pRenderer, const Camera& pCamera, const Map& pMap)
 	return 0;
 }
 
-bool IsColliding(const HGF::Vector2& pMinA, const HGF::Vector2& pMaxA, const HGF::Vector2& pMinB, const HGF::Vector2& pMaxB)
-{
-	if (pMaxA.X < pMinB.X || pMaxA.Y < pMinB.Y || pMinA.X > pMaxB.X || pMinA.Y > pMaxB.Y)
-		return false;
-
-	return true;
-}
-
-bool IsCollidingWithResponse(const HGF::Vector2& pMinA, const HGF::Vector2& pMaxA, const HGF::Vector2& pMinB, const HGF::Vector2& pMaxB, HGF::Vector2& pTranslation)
-{
-	float left = pMinB.X - pMaxA.X;
-	float right = pMaxB.X - pMinA.X;
-	float top = pMinB.Y - pMaxA.Y;
-	float bottom = pMaxB.Y - pMinA.Y;
-
-	if (left > 0.0f || right < 0.0f || top > 0.0f || bottom < 0.0f)
-		return false;
-
-	// minimum X-axis
-	pTranslation.X = (fabsf(left) < fabsf(right)) ? left : right;
-
-	// minimum Y-axis
-	pTranslation.Y = (fabsf(top) < fabsf(bottom)) ? top : bottom;
-
-	// minimal axis
-	if (fabsf(pTranslation.X) < fabsf(pTranslation.Y))
-		pTranslation.Y = 0.0f;
-	else
-		pTranslation.X = 0.0f;
-
-	return true;
-}
-
-void HandleWorldCollisionViaAABB(Player& pPlayer, const Map& pMap)
-{
-	bool horizontalMovement = pPlayer.Velocity.X < 0.0f || pPlayer.Velocity.X > 0.0f;
-	bool verticalMovement = pPlayer.Velocity.Y < 0.0f || pPlayer.Velocity.Y > 0.0f;
-
-	float minX = fminf(pPlayer.Position.X, pPlayer.Position.X + pPlayer.Velocity.X);
-	float maxX = fmaxf(pPlayer.Position.X + pPlayer.Dimensions.X + pPlayer.Velocity.X, pPlayer.Position.X + pPlayer.Dimensions.X);
-	float minY = fminf(pPlayer.Position.Y, pPlayer.Position.Y + pPlayer.Velocity.Y);
-	float maxY = fmaxf(pPlayer.Position.Y + pPlayer.Dimensions.Y + pPlayer.Velocity.Y, pPlayer.Position.Y + pPlayer.Dimensions.Y);
-
-	int startX = (int)minX / pMap.Tileset.Size;
-	int endX = (int)maxX / pMap.Tileset.Size;
-	int startY = (int)minY / pMap.Tileset.Size;
-	int endY = (int)maxY / pMap.Tileset.Size;
-
-	pPlayer.Position.X += pPlayer.Velocity.X;
-
-	for (int y = startY; y <= endY; ++y)
-	{
-		for (int x = startX; x <= endX; ++x)
-		{
-			if (pMap.Data[x * pMap.Height + y].TextureID >= 0)
-			{
-				HGF::Vector2 tileMin = HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
-				HGF::Vector2 tileMax = HGF::Vector2((x + 1) * pMap.Tileset.Size, (y + 1) * pMap.Tileset.Size);
-
-				HGF::Vector2 translate;
-				if (IsCollidingWithResponse(pPlayer.Position, pPlayer.Position + pPlayer.Dimensions, tileMin, tileMax, translate))
-				{
-					if (translate.X != 0.0f)
-					{
-						pPlayer.Position.X += translate.X;
-						pPlayer.Velocity.X = 0.0f;
-					}
-				}
-			}
-		}
-	}
-
-	pPlayer.Position.Y += pPlayer.Velocity.Y;
-
-	for (int y = startY; y <= endY; ++y)
-	{
-		for (int x = startX; x <= endX; ++x)
-		{
-			if (pMap.Data[x * pMap.Height + y].TextureID >= 0)
-			{
-				HGF::Vector2 tileMin = HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
-				HGF::Vector2 tileMax = HGF::Vector2((x + 1) * pMap.Tileset.Size, (y + 1) * pMap.Tileset.Size);
-
-				HGF::Vector2 translate;
-				if (IsCollidingWithResponse(pPlayer.Position, pPlayer.Position + pPlayer.Dimensions, tileMin, tileMax, translate))
-				{
-					if (translate.Y != 0.0f)
-					{
-						pPlayer.Position.Y += translate.Y;
-						pPlayer.Velocity.Y = 0.0f;
-						if (translate.Y < 0.0f)
-						{
-							pPlayer.IsGrounded = true;
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
 bool CheckPoint(const Map& pMap, const HGF::Vector2& pPosition, HitData& pHitData)
 {
-	pHitData.TileX = (int)roundf(pPosition.X) / pMap.Tileset.Size;
-	pHitData.TileY = (int)roundf(pPosition.Y) / pMap.Tileset.Size;
-	pHitData.PixelX = (int)roundf(pPosition.X) % pMap.Tileset.Size;
-	pHitData.PixelY = (int)roundf(pPosition.Y) % pMap.Tileset.Size;
+	pHitData.TileX = (int)(pPosition.X) / pMap.Tileset.Size;
+	pHitData.TileY = (int)(pPosition.Y) / pMap.Tileset.Size;
+	pHitData.PixelX = (int)(pPosition.X) % pMap.Tileset.Size;
+	pHitData.PixelY = (int)(pPosition.Y) % pMap.Tileset.Size;
 
 	if (pHitData.TileX < 0 || pHitData.TileX >= pMap.Width || pHitData.TileY < 0 || pHitData.TileY >= pMap.Height)
 		return false;
@@ -430,13 +358,6 @@ bool IsBitMaskHit(const Map& pMap, int pX, int pY, int& pCollisionID)
 
 void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 {
-	/*
-	pPlayer.Position += pPlayer.Velocity;
-	HitData hitData[MAX_MARKER_COUNT];
-	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
-		pPlayer.CollisionMarkers[i].IsTouching = CheckPoint(pMap, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, hitData[i]);
-	*/
-
 	int id = -1;
 
 	// left/right collision
@@ -566,14 +487,62 @@ void HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		pPlayer.Position.Y += pPlayer.Velocity.Y;
 
 	// temp to fix tunneling
-	int tempX = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position.X);
-	int tempY = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[MRK_HOTSPOT].Position.Y);
-	int origY = tempY;
-	while (IsBitMaskHit(pMap, tempX, tempY, id))
+	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
 	{
-		tempY--;
+		int x = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+		int y = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+		int original = 0;
+		switch (i)
+		{
+			case MRK_HOTSPOT:
+			case MRK_FOOT_LEFT:
+			case MRK_FOOT_RIGHT:
+				original = y;
+				while (IsBitMaskHit(pMap, x, y, id))
+				{
+					if (i != MRK_HOTSPOT && id != 0)
+						break;
+					y--;
+				}
+				pPlayer.Position.Y -= (original - y);
+				break;
+			case MRK_LEFT_CENTER:
+			case MRK_LEFT_TOP:
+			case MRK_LEFT_BOTTOM:
+				original = x;
+				while (IsBitMaskHit(pMap, x, y, id))
+				{
+					if (id != 0)
+						break;
+					x++;
+				}
+				pPlayer.Position.X += (x - original);
+				break;
+			case MRK_RIGHT_CENTER:
+			case MRK_RIGHT_TOP:
+			case MRK_RIGHT_BOTTOM:
+				original = x;
+				while (IsBitMaskHit(pMap, x, y, id))
+				{
+					if (id != 0)
+						break;
+					x--;
+				}
+				pPlayer.Position.X -= (original - x);
+				break;
+			case MRK_HEAD_LEFT:
+			case MRK_HEAD_RIGHT:
+				original = y;
+				while (IsBitMaskHit(pMap, x, y, id))
+				{
+					y++;
+				}
+				pPlayer.Position.Y += (y - original);
+				break;
+			default:
+				break;
+		}
 	}
-	pPlayer.Position.Y -= (origY - tempY);
 }
 
 int main(int argc, char** argv)
@@ -653,7 +622,7 @@ int main(int argc, char** argv)
 		currTicks = SDL_GetTicks();
 		if (currTicks > prevTicks + 1000)
 		{
-			printf("FPS: %d\n", frames);
+			std::cout << "FPS: " << frames << std::endl;
 			prevTicks = currTicks;
 			frames = 0;
 		}
@@ -663,17 +632,17 @@ int main(int argc, char** argv)
 		{
 			switch (evt.type)
 			{
-			case SDL_QUIT:
-				running = false;
-				break;
-			case SDL_KEYDOWN:
-				keys[evt.key.keysym.sym] = true;
-				break;
-			case SDL_KEYUP:
-				keys[evt.key.keysym.sym] = false;
-				break;
-			default:
-				break;
+				case SDL_QUIT:
+					running = false;
+					break;
+				case SDL_KEYDOWN:
+					keys[evt.key.keysym.sym] = true;
+					break;
+				case SDL_KEYUP:
+					keys[evt.key.keysym.sym] = false;
+					break;
+				default:
+					break;
 			}
 		}
 
@@ -721,6 +690,7 @@ int main(int argc, char** argv)
 		// handle collision
 		HandleWorldCollisionViaPoints(player, map);
 
+		// focus camera
 		camera.Position.X = -player.Position.X + windowWidth / 4;
 		camera.Position.Y = -player.Position.Y + windowHeight / 4;
 
