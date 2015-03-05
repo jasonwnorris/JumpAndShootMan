@@ -1,5 +1,6 @@
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
+#include <SDL2\SDL_opengl.h>
 
 #include "BitArray.hpp"
 #include "Vector2.hpp"
@@ -35,7 +36,7 @@ struct CollisionMarker
 
 struct Player
 {
-	SDL_Texture* Texture;
+	unsigned int TextureID;
 	HGF::Vector2 Position;
 	HGF::Vector2 Velocity;
 	HGF::Vector2 Acceleration;
@@ -58,7 +59,7 @@ struct Camera
 
 struct Tileset
 {
-	SDL_Texture* Texture;
+	unsigned int TextureID;
 	int X;
 	int Y;
 	int Size;
@@ -208,109 +209,135 @@ void GenerateMap(Map& pMap)
 	}
 }
 
-SDL_Texture* LoadTexture(SDL_Renderer* pRenderer, const char* pFilename)
+unsigned int LoadTexture(const char* pFilename)
 {
-	SDL_Texture* texture = NULL;
+	unsigned int id = -1;
 	SDL_Surface* surface = IMG_Load(pFilename);
 	if (surface != NULL)
 	{
-		texture = SDL_CreateTextureFromSurface(pRenderer, surface);
+		int mode = surface->format->BitsPerPixel == 32 ? GL_RGBA : GL_RGB;
+
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
+		glTexImage2D(GL_TEXTURE_2D, 0, mode, surface->w, surface->h, 0, mode, GL_UNSIGNED_BYTE, surface->pixels);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
 		SDL_FreeSurface(surface);
 	}
 
-	return texture;
+	return id;
 }
 
-int RenderPoint(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, float pSize = 1.0f, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
+int RenderPoint(const Camera& pCamera, HGF::Vector2 pPosition, float pSize = 1.0f, float pRed = 1.0f, float pGreen = 1.0f, float pBlue = 1.0f, float pAlpha = 1.0f)
 {
-	SDL_Rect rect = {
-		(int)((pPosition.X + pCamera.Position.X - pSize / 2.0f) * pCamera.Zoom),
-		(int)((pPosition.Y + pCamera.Position.Y - pSize / 2.0f) * pCamera.Zoom),
-		(int)(pSize * pCamera.Zoom),
-		(int)(pSize * pCamera.Zoom)
-	};
-
-	SDL_SetRenderDrawColor(pRenderer, pRed, pGreen, pBlue, pAlpha);
-	if (SDL_RenderFillRect(pRenderer, &rect) < 0)
-		return -1;
+	glPointSize(pSize);
+	glColor4f(pRed, pGreen, pBlue, pAlpha);
+	glBegin(GL_POINTS);
+		glVertex2f((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom);
+	glEnd();
 
 	return 0;
 }
 
-int RenderRectangle(SDL_Renderer* pRenderer, const Camera& pCamera, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, Uint8 pRed = 255, Uint8 pGreen = 255, Uint8 pBlue = 255, Uint8 pAlpha = 255)
+int RenderRectangle(const Camera& pCamera, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, float pRed = 1.0f, float pGreen = 1.0f, float pBlue = 1.0f, float pAlpha = 1.0f)
 {
-	SDL_Point points[5] = {
-		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom), (int)((pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom) },
-		{ (int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),					(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom) }
+	HGF::Vector2 points[4] = {
+		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom,					(pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom,					(pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom)
 	};
 
-	SDL_SetRenderDrawColor(pRenderer, pRed, pGreen, pBlue, pAlpha);
-	if (SDL_RenderDrawLines(pRenderer, points, 5) < 0)
-		return -1;
+	glLineWidth(1.0f);
+	glColor4f(pRed, pGreen, pBlue, pAlpha);
+	glBegin(GL_LINE_LOOP);
+	for (int i = 0; i < 4; ++i)
+		glVertex2f(points[i].X, points[i].Y);
+	glEnd();
 
 	return 0;
 }
 
-int RenderTexture(SDL_Renderer* pRenderer, const Camera& pCamera, SDL_Texture* pTexture, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipLocation, HGF::Vector2 pClipSize, bool pFlip = false)
+int RenderTexture(const Camera& pCamera, unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip = false)
 {
-	SDL_Rect source = {
-		(int)(pClipLocation.X),
-		(int)(pClipLocation.Y),
-		(int)(pClipSize.X),
-		(int)(pClipSize.Y)
-	};
-	SDL_Rect destination = {
-		(int)((pPosition.X + pCamera.Position.X) * pCamera.Zoom),
-		(int)((pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		(int)((pDimensions.X) * pCamera.Zoom),
-		(int)((pDimensions.Y) * pCamera.Zoom)
+	HGF::Vector2 xys[4] = {
+		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom),
+		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom)
 	};
 
-	return SDL_RenderCopyEx(pRenderer, pTexture, &source, &destination, 0.0, NULL, pFlip ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
+	HGF::Vector2 uvs[4];
+	if (pFlip)
+	{
+		uvs[0] = HGF::Vector2(pClipMax.X, pClipMin.Y);
+		uvs[1] = HGF::Vector2(pClipMin.X, pClipMin.Y);
+		uvs[2] = HGF::Vector2(pClipMax.X, pClipMax.Y);
+		uvs[3] = HGF::Vector2(pClipMin.X, pClipMax.Y);
+	}
+	else
+	{
+		uvs[0] = HGF::Vector2(pClipMin.X, pClipMin.Y);
+		uvs[1] = HGF::Vector2(pClipMax.X, pClipMin.Y);
+		uvs[2] = HGF::Vector2(pClipMin.X, pClipMax.Y);
+		uvs[3] = HGF::Vector2(pClipMax.X, pClipMax.Y);
+	}
+
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, pTextureID);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glBegin(GL_TRIANGLE_STRIP);
+	for (int i = 0; i < 4; ++i)
+	{
+		glTexCoord2f(uvs[i].X, uvs[i].Y);
+		glVertex2f(xys[i].X, xys[i].Y);
+	}
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+
+	return 0;
 }
 
-int RenderPlayer(SDL_Renderer* pRenderer, const Camera& pCamera, const Player& pPlayer)
+int RenderPlayer(const Camera& pCamera, const Player& pPlayer)
 {
 	// texture
-	if (RenderTexture(pRenderer, pCamera, pPlayer.Texture, pPlayer.Position, pPlayer.Dimensions, HGF::Vector2::Zero, HGF::Vector2(140.0f, 184.0f), pPlayer.IsFacingLeft) < 0)
+	if (RenderTexture(pCamera, pPlayer.TextureID, pPlayer.Position, pPlayer.Dimensions, HGF::Vector2::Zero, HGF::Vector2::One, pPlayer.IsFacingLeft) < 0)
 		return -1;
 
 	// AABB
-	if (RenderRectangle(pRenderer, pCamera, pPlayer.Position, pPlayer.Dimensions, 0, 255, 0) < 0)
+	if (RenderRectangle(pCamera, pPlayer.Position, pPlayer.Dimensions, 0.0f, 1.0f, 0.0f) < 0)
 		return -1;
 
 	// collision points
 	for (int i = 0; i < MAX_MARKER_COUNT; ++i)
 	{
-		int r = pPlayer.CollisionMarkers[i].IsTouching ? 150 : 50;
-		int g = pPlayer.CollisionMarkers[i].IsTouching ? 175 : 75;
-		int b = pPlayer.CollisionMarkers[i].IsTouching ? 180 : 80;
-		if (RenderPoint(pRenderer, pCamera, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 2.0f, r, g, b) < 0)
+		float r = pPlayer.CollisionMarkers[i].IsTouching ? 150.0f / 255.0f : 50.0f / 255.0f;
+		float g = pPlayer.CollisionMarkers[i].IsTouching ? 175.0f / 255.0f : 75.0f / 255.0f;
+		float b = pPlayer.CollisionMarkers[i].IsTouching ? 180.0f / 255.0f : 80.0f / 255.0f;
+		if (RenderPoint(pCamera, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 4.0f, r, g, b) < 0)
 			return -1;
 	}
 
 	return 0;
 }
 
-int RenderMap(SDL_Renderer* pRenderer, const Camera& pCamera, const Map& pMap)
+int RenderMap(const Camera& pCamera, const Map& pMap)
 {
 	for (int y = 0; y < pMap.Height; ++y)
 	{
 		for (int x = 0; x < pMap.Width; ++x)
-		{
+		{			
 			int value = pMap.Data[x * pMap.Height + y].TextureID;
 			if (value >= 0)
 			{
-				if (RenderTexture(pRenderer,
-								  pCamera,
-								  pMap.Tileset.Texture,
-								  HGF::Vector2(x * pMap.Tileset.Size, y * pMap.Tileset.Size),
-								  HGF::Vector2(pMap.Tileset.Size, pMap.Tileset.Size),
-								  HGF::Vector2((value % pMap.Tileset.Y) * pMap.Tileset.Size, (value / pMap.Tileset.Y) * pMap.Tileset.Size),
-								  HGF::Vector2(pMap.Tileset.Size, pMap.Tileset.Size)) < 0)
+				HGF::Vector2 position(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
+				HGF::Vector2 dimensions(pMap.Tileset.Size, pMap.Tileset.Size);
+				HGF::Vector2 min((value % pMap.Tileset.Y) / (float)pMap.Tileset.X, (value / pMap.Tileset.Y) / (float)pMap.Tileset.Y);
+				HGF::Vector2 max(((value % pMap.Tileset.Y) + 1) / (float)pMap.Tileset.X, ((value / pMap.Tileset.Y) + 1) / (float)pMap.Tileset.Y);
+
+				if (RenderTexture(pCamera, pMap.Tileset.TextureID, position, dimensions, min, max) < 0)
 					return -1;
 			}
 		}
@@ -555,13 +582,30 @@ int main(int argc, char** argv)
 	int windowWidth = 1024;
 	int windowHeight = 768;
 
-	SDL_Window* window = SDL_CreateWindow("JUMP AND SHOOT MAN", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+
+	SDL_Window* window = SDL_CreateWindow("JUMP AND SHOOT MAN", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, windowWidth, windowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 	if (window == NULL)
 		return -1;
-	
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	if (renderer == NULL)
+
+	SDL_GLContext context = SDL_GL_CreateContext(window);
+	if (context == NULL)
 		return -1;
+
+	if (SDL_GL_SetSwapInterval(1) < 0)
+		return -1;
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, windowWidth, windowHeight, 0, -1, 1);
+
+	glViewport(0, 0, windowWidth, windowHeight);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
 	SDL_Event evt;
 	std::map<SDL_Keycode, bool> keys;
@@ -571,8 +615,8 @@ int main(int argc, char** argv)
 	Uint32 currTicks = SDL_GetTicks();
 
 	Map map;
-	map.Tileset.Texture = LoadTexture(renderer, "data/img/tileset2.png");
-	if (map.Tileset.Texture == NULL)
+	map.Tileset.TextureID = LoadTexture("data/img/tileset2.png");
+	if (map.Tileset.TextureID < 0)
 		return -1;
 	map.Tileset.X = 3;
 	map.Tileset.Y = 3;
@@ -583,8 +627,8 @@ int main(int argc, char** argv)
 	GenerateMap(map);
 
 	Player player;
-	player.Texture = LoadTexture(renderer, "data/img/megamanx.png");
-	if (player.Texture == NULL)
+	player.TextureID = LoadTexture("data/img/megamanx.png");
+	if (player.TextureID < 0)
 		return -1;
 	player.Position = HGF::Vector2(100.0f, 100.0f);
 	player.Velocity = HGF::Vector2::Zero;
@@ -645,7 +689,7 @@ int main(int argc, char** argv)
 					break;
 			}
 		}
-
+		
 		// debug
 		if (keys[SDLK_RETURN])
 		{
@@ -679,7 +723,7 @@ int main(int argc, char** argv)
 		}
 
 		// update movement
-		//if (!player.IsGrounded)
+		if (!player.IsGrounded)
 		{
 			player.Acceleration.Y += player.Gravity;
 		}
@@ -691,22 +735,21 @@ int main(int argc, char** argv)
 		HandleWorldCollisionViaPoints(player, map);
 
 		// focus camera
-		camera.Position.X = -player.Position.X + windowWidth / 4;
-		camera.Position.Y = -player.Position.Y + windowHeight / 4;
-
+		camera.Position.X = windowWidth / 4.0f - player.Position.X - player.Dimensions.X / 2.0f;
+		camera.Position.Y = windowHeight / 4.0f - player.Position.Y - player.Dimensions.Y / 2.0f;
+		
 		// clear
-		SDL_SetRenderDrawColor(renderer, 150, 175, 225, 255);
-		if (SDL_RenderClear(renderer) < 0)
-			return -1;
-
+		glClearColor(150.0f / 255.0f, 175.0f / 255.0f, 225.0f / 255.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
 		// render loop
-		if (RenderMap(renderer, camera, map) < 0)
+		if (RenderMap(camera, map) < 0)
 			return -1;
-		if (RenderPlayer(renderer, camera, player) < 0)
+		if (RenderPlayer(camera, player) < 0)
 			return -1;
 
 		// flip
-		SDL_RenderPresent(renderer);
+		SDL_GL_SwapWindow(window);
 
 		SDL_Delay(10);
 	}
@@ -714,10 +757,12 @@ int main(int argc, char** argv)
 	// free memory
 	delete [] map.Data;
 
+	// delete textures
+	glDeleteTextures(1, &player.TextureID);
+	glDeleteTextures(1, &map.Tileset.TextureID);
+
 	// clean up
-	SDL_DestroyTexture(player.Texture);
-	SDL_DestroyTexture(map.Tileset.Texture);
-	SDL_DestroyRenderer(renderer);
+	SDL_GL_DeleteContext(context);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
