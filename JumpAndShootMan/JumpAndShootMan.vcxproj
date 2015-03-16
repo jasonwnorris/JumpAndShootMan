@@ -81,12 +81,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BitArray.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Map.cpp" />
+    <ClCompile Include="MathHelper.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Vector2.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitArray.hpp" />
+    <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="Game.hpp" />
+    <ClInclude Include="Map.hpp" />
+    <ClInclude Include="MathHelper.hpp" />
+    <ClInclude Include="Player.hpp" />
+    <ClInclude Include="Renderer.hpp" />
+    <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Vector2.hpp" />
+    <ClInclude Include="World.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
