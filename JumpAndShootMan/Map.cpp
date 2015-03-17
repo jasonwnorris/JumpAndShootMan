@@ -1,4 +1,5 @@
 #include "Map.hpp"
+#include "Renderer.hpp"
 
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
@@ -29,12 +30,56 @@ Uint32 GetPixel(SDL_Surface* pSurface, int pX, int pY)
 
 Map::Map()
 {
+}
+
+Map::~Map()
+{
+	// Free map data.
+	for (int x = 0; x < Width; ++x)
+	{
+		if (Data[x])
+		{
+			delete [] Data[x];
+		}
+	}
+	if (Data)
+	{
+		delete [] Data;
+	}
+
+	// Free map bitmasks.
+	for (int i = 0; i < BitMaskCount; ++i)
+	{
+		for (int x = 0; x < Tileset.Size; ++x)
+		{
+			if (BitMasks[i][x])
+			{
+				delete [] BitMasks[i][x];
+			}
+		}
+		if (BitMasks[i])
+		{
+			delete [] BitMasks[i];
+		}
+	}
+	if (BitMasks)
+	{
+		delete [] BitMasks;
+	}
+}
+
+bool Map::Load(const std::string& pFilename)
+{
+	// Temp default values.
+	if (!Tileset.Texture.Load("data/img/tileset2.png"))
+		return false;
 	Tileset.X = 3;
 	Tileset.Y = 3;
 	Tileset.Size = 16;
 	Width = 16;
 	Height = 12;
 
+	// Load bitmask tiles.
 	SDL_Surface* surface = IMG_Load("data/img/bitfield.png");
 	if (surface != NULL)
 	{
@@ -103,25 +148,34 @@ Map::Map()
 			}
 		}
 	}
+
+	return true;
 }
 
-Map::~Map()
+bool Map::IsTraversable(int pX, int pY)
 {
-	// Free map data.
-	for (int x = 0; x < Width; ++x)
-	{
-		delete[] Data[x];
-	}
-	delete[] Data;
+	return true;
+}
 
-	// Free map bitmasks.
-	for (int i = 0; i < BitMaskCount; ++i)
+bool Map::Render(const Renderer& pRenderer)
+{
+	for (int y = 0; y < Height; ++y)
 	{
-		for (int x = 0; x < Tileset.Size; ++x)
+		for (int x = 0; x < Width; ++x)
 		{
-			delete[] BitMasks[i][x];
+			int value = Data[x][y].TextureID;
+			if (value >= 0)
+			{
+				HGF::Vector2 position(x * Tileset.Size, y * Tileset.Size);
+				HGF::Vector2 dimensions(Tileset.Size, Tileset.Size);
+				HGF::Vector2 min((value % Tileset.Y) / (float)Tileset.X, (value / Tileset.Y) / (float)Tileset.Y);
+				HGF::Vector2 max(((value % Tileset.Y) + 1) / (float)Tileset.X, ((value / Tileset.Y) + 1) / (float)Tileset.Y);
+
+				if (pRenderer.RenderTexture(Tileset.Texture.GetID(), position, dimensions, min, max) < 0)
+					return false;
+			}
 		}
-		delete[] BitMasks[i];
 	}
-	delete[] BitMasks;
+
+	return true;
 }

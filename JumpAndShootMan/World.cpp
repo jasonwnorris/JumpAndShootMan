@@ -12,6 +12,7 @@ World::~World()
 
 void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 {
+	/*
 	HitData hitData;
 	bool hitHorz = false;
 	bool hitVert = false;
@@ -23,15 +24,15 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		// 4 = MRK_LEFT_TOP
 		// 5 = MRK_LEFT_BOTTOM
 		int start = (int)(pPlayer.Position.X + pPlayer.Dimensions.X / 2.0f);
-		int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionMarkers[i].Position.X);
-		int y = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+		int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionRays[i].Position.X);
+		int y = (int)(pPlayer.Position.Y + pPlayer.CollisionRays[i].Position.Y);
 		for (int x = start; x >= finish; --x)
 		{
 			if (CheckPoint(pMap, x, y, hitData))
 			{
 				if (pMap.Data[hitData.TileX][hitData.TileY].CollisionID == 0)
 				{
-					pPlayer.Position.X = (float)(x - 3) + pPlayer.CollisionMarkers[i].Position.X;
+					pPlayer.Position.X = (float)(x - 3) + pPlayer.CollisionRays[i].Position.X;
 					pPlayer.Velocity.X = 0.0f;
 					hitHorz = true;
 					break;
@@ -49,15 +50,15 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		// 7 = MRK_RIGHT_TOP
 		// 8 = MRK_RIGHT_BOTTOM
 		int start = (int)(pPlayer.Position.X + pPlayer.Dimensions.X / 2.0f);
-		int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionMarkers[i].Position.X);
-		int y = (int)(pPlayer.Position.Y + pPlayer.CollisionMarkers[i].Position.Y);
+		int finish = (int)(pPlayer.Position.X + pPlayer.Velocity.X + pPlayer.CollisionRays[i].Position.X);
+		int y = (int)(pPlayer.Position.Y + pPlayer.CollisionRays[i].Position.Y);
 		for (int x = start; x <= finish; ++x)
 		{
 			if (CheckPoint(pMap, x, y, hitData))
 			{
 				if (pMap.Data[hitData.TileX][hitData.TileY].CollisionID == 0)
 				{
-					pPlayer.Position.X = (float)x - pPlayer.CollisionMarkers[i].Position.X;
+					pPlayer.Position.X = (float)x - pPlayer.CollisionRays[i].Position.X;
 					pPlayer.Velocity.X = 0.0f;
 					hitHorz = true;
 					break;
@@ -79,8 +80,8 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		// 1 = MRK_FOOT_LEFT
 		// 2 = MRK_FOOT_RIGHT
 		int start = (int)(pPlayer.Position.Y + pPlayer.Dimensions.Y / 2.0f);
-		int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionMarkers[i].Position.Y);
-		int x = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+		int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionRays[i].Position.Y);
+		int x = (int)(pPlayer.Position.X + pPlayer.CollisionRays[i].Position.X);
 		for (int y = start; y <= finish; ++y)
 		{
 			if (CheckPoint(pMap, x, y, hitData))
@@ -90,7 +91,7 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 				{
 					if (pMap.BitMasks[id][hitData.PixelX][hitData.PixelY])
 					{
-						pPlayer.Position.Y = (float)y - pPlayer.CollisionMarkers[i].Position.Y;
+						pPlayer.Position.Y = (float)y - pPlayer.CollisionRays[i].Position.Y;
 						pPlayer.Velocity.Y = 0.0f;
 						hitVert = true;
 						pPlayer.IsGrounded = true;
@@ -110,13 +111,13 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 		// 10 = MRK_HEAD_LEFT
 		// 11 = MRK_HEAD_RIGHT
 		int start = (int)(pPlayer.Position.Y + pPlayer.Dimensions.Y / 2.0f);
-		int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionMarkers[i].Position.Y);
-		int x = (int)(pPlayer.Position.X + pPlayer.CollisionMarkers[i].Position.X);
+		int finish = (int)(pPlayer.Position.Y + pPlayer.Velocity.Y + pPlayer.CollisionRays[i].Position.Y);
+		int x = (int)(pPlayer.Position.X + pPlayer.CollisionRays[i].Position.X);
 		for (int y = start; y >= finish; --y)
 		{
 			if (CheckPoint(pMap, x, y, hitData))
 			{
-				pPlayer.Position.Y = (float)(y + 1) + pPlayer.CollisionMarkers[i].Position.Y;
+				pPlayer.Position.Y = (float)(y + 1) + pPlayer.CollisionRays[i].Position.Y;
 				pPlayer.Velocity.Y = 0.0f;
 				hitVert = true;
 				break;
@@ -129,10 +130,12 @@ void World::HandleWorldCollisionViaPoints(Player& pPlayer, const Map& pMap)
 	// progress with vertical movement if no collision
 	if (!hitVert)
 		pPlayer.Position.Y += pPlayer.Velocity.Y;
+	*/
 }
 
 bool World::CheckPoint(const Map& pMap, int pX, int pY, HitData& pHitData)
 {
+	/*
 	// Get the tile coordinates.
 	pHitData.TileX = pX / pMap.Tileset.Size;
 	pHitData.TileY = pY / pMap.Tileset.Size;
@@ -151,4 +154,7 @@ bool World::CheckPoint(const Map& pMap, int pX, int pY, HitData& pHitData)
 
 	// Check against bitmask.
 	return pMap.BitMasks[tile->CollisionID][pHitData.PixelX][pHitData.PixelY];
+	*/
+
+	return false;
 }

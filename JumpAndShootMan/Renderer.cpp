@@ -17,45 +17,36 @@ Renderer::~Renderer()
 
 }
 
-unsigned int Renderer::LoadTexture(const char* pFilename)
-{
-	unsigned int id = -1;
-	SDL_Surface* surface = IMG_Load(pFilename);
-	if (surface != NULL)
-	{
-		int mode = surface->format->BitsPerPixel == 32 ? GL_RGBA : GL_RGB;
-
-		glGenTextures(1, &id);
-		glBindTexture(GL_TEXTURE_2D, id);
-		glTexImage2D(GL_TEXTURE_2D, 0, mode, surface->w, surface->h, 0, mode, GL_UNSIGNED_BYTE, surface->pixels);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		SDL_FreeSurface(surface);
-	}
-
-	return id;
-}
-
-int Renderer::RenderPoint(const Camera& pCamera, HGF::Vector2 pPosition, float pSize, float pRed, float pGreen, float pBlue, float pAlpha)
+int Renderer::RenderPoint(HGF::Vector2 pPosition, float pSize, float pRed, float pGreen, float pBlue, float pAlpha) const
 {
 	glPointSize(pSize);
 	glColor4f(pRed, pGreen, pBlue, pAlpha);
 	glBegin(GL_POINTS);
-	glVertex2f((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom);
+		glVertex2f(pPosition.X, pPosition.Y);
 	glEnd();
 
 	return 0;
 }
 
-int Renderer::RenderRectangle(const Camera& pCamera, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, float pRed, float pGreen, float pBlue, float pAlpha)
+int Renderer::RenderLine(HGF::Vector2 pStart, HGF::Vector2 pEnd, float pSize, float pRed, float pGreen, float pBlue, float pAlpha) const
+{
+	glLineWidth(pSize);
+	glColor4f(pRed, pGreen, pBlue, pAlpha);
+	glBegin(GL_LINES);
+		glVertex2f(pStart.X, pStart.Y);
+		glVertex2f(pEnd.X, pEnd.Y);
+	glEnd();
+
+	return 0;
+}
+
+int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, float pRed, float pGreen, float pBlue, float pAlpha) const
 {
 	HGF::Vector2 points[4] = {
-		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom)
+		HGF::Vector2(pPosition.X,				  pPosition.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y + pDimensions.Y),
+		HGF::Vector2(pPosition.X,				  pPosition.Y + pDimensions.Y)
 	};
 
 	glLineWidth(1.0f);
@@ -68,13 +59,13 @@ int Renderer::RenderRectangle(const Camera& pCamera, HGF::Vector2 pPosition, HGF
 	return 0;
 }
 
-int Renderer::RenderTexture(const Camera& pCamera, unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip)
+int Renderer::RenderTexture(unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip) const
 {
 	HGF::Vector2 xys[4] = {
-		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom),
-		HGF::Vector2((pPosition.X + pDimensions.X + pCamera.Position.X) * pCamera.Zoom, (pPosition.Y + pDimensions.Y + pCamera.Position.Y) * pCamera.Zoom)
+		HGF::Vector2(pPosition.X,				  pPosition.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y),
+		HGF::Vector2(pPosition.X,				  pPosition.Y + pDimensions.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y + pDimensions.Y)
 	};
 
 	HGF::Vector2 uvs[4];
@@ -104,52 +95,6 @@ int Renderer::RenderTexture(const Camera& pCamera, unsigned int pTextureID, HGF:
 	}
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
-
-	return 0;
-}
-
-int Renderer::RenderPlayer(const Camera& pCamera, const Player& pPlayer)
-{
-	// texture
-	if (RenderTexture(pCamera, pPlayer.TextureID, pPlayer.Position, pPlayer.Dimensions, HGF::Vector2::Zero, HGF::Vector2::One, pPlayer.IsFacingLeft) < 0)
-		return -1;
-
-	// AABB
-	if (RenderRectangle(pCamera, pPlayer.Position, pPlayer.Dimensions, 0.0f, 1.0f, 0.0f) < 0)
-		return -1;
-
-	// collision points
-	for (int i = 0; i < Player::MaxMarkerCount; ++i)
-	{
-		float r = pPlayer.CollisionMarkers[i].IsTouching ? 150.0f / 255.0f : 50.0f / 255.0f;
-		float g = pPlayer.CollisionMarkers[i].IsTouching ? 175.0f / 255.0f : 75.0f / 255.0f;
-		float b = pPlayer.CollisionMarkers[i].IsTouching ? 180.0f / 255.0f : 80.0f / 255.0f;
-		if (RenderPoint(pCamera, pPlayer.Position + pPlayer.CollisionMarkers[i].Position, 4.0f, r, g, b) < 0)
-			return -1;
-	}
-
-	return 0;
-}
-
-int Renderer::RenderMap(const Camera& pCamera, const Map& pMap)
-{
-	for (int y = 0; y < pMap.Height; ++y)
-	{
-		for (int x = 0; x < pMap.Width; ++x)
-		{
-			int value = pMap.Data[x][y].TextureID;
-			if (value >= 0)
-			{
-				HGF::Vector2 position(x * pMap.Tileset.Size, y * pMap.Tileset.Size);
-				HGF::Vector2 dimensions(pMap.Tileset.Size, pMap.Tileset.Size);
-				HGF::Vector2 min((value % pMap.Tileset.Y) / (float)pMap.Tileset.X, (value / pMap.Tileset.Y) / (float)pMap.Tileset.Y);
-				HGF::Vector2 max(((value % pMap.Tileset.Y) + 1) / (float)pMap.Tileset.X, ((value / pMap.Tileset.Y) + 1) / (float)pMap.Tileset.Y);
-
-				if (RenderTexture(pCamera, pMap.Tileset.TextureID, position, dimensions, min, max) < 0)
-					return -1;
-			}
-		}
-	}
 
 	return 0;
 }

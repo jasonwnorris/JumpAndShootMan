@@ -2,8 +2,10 @@
 #define __GAME_HPP__
 
 #include "Timer.hpp"
-#include "World.hpp"
+#include "Camera.hpp"
 #include "Renderer.hpp"
+#include "Map.hpp"
+#include "Player.hpp"
 
 #include <map>
 
@@ -35,11 +37,10 @@ class Game
 		SDL_GLContext mContext;
 		bool mIsRunning;
 		Timer mTimer;
-		World mWorld;
 		Camera mCamera;
 		Renderer mRenderer;
-		Player mPlayer;
 		Map mMap;
+		Player mPlayer;
 };
 
 #endif

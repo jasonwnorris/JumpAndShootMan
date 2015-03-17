@@ -1,22 +1,36 @@
 #ifndef __PLAYER_HPP__
 #define __PLAYER_HPP__
 
+#include "Texture.hpp"
 #include "Vector2.hpp"
 
-struct CollisionMarker
+enum class Direction
 {
-	HGF::Vector2 Position;
-	bool IsTouching;
+	Up,
+	Down,
+	Left,
+	Right
 };
 
+struct RayInfo
+{
+	HGF::Vector2 Position;
+	Direction Direction;
+	float Distance;
+};
+
+class Renderer;
 class Player
 {
 	public:
 		Player();
 		~Player();
 
-		static const int MaxMarkerCount;
-		enum MarkerIndex
+		bool Load(const std::string& pFilename);
+		bool Render(const Renderer& pRenderer);
+
+		static const int MaxRayCount;
+		enum RayIndex
 		{
 			MRK_HOTSPOT,
 			MRK_FOOT_LEFT,
@@ -32,7 +46,7 @@ class Player
 			MRK_HEAD_RIGHT
 		};
 
-		unsigned int TextureID;
+		HGF::Texture Texture;
 		HGF::Vector2 Position;
 		HGF::Vector2 Velocity;
 		HGF::Vector2 Acceleration;
@@ -43,7 +57,7 @@ class Player
 		HGF::Vector2 Dimensions;
 		bool IsGrounded;
 		bool IsJumping;
-		CollisionMarker* CollisionMarkers;
+		RayInfo* CollisionRays;
 };
 
 #endif

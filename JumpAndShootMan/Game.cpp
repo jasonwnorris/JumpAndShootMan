@@ -82,23 +82,14 @@ int Game::Initialize()
 	mPreviousTicks = 0;
 	mCurrentTicks = SDL_GetTicks();
 
-	mPlayer.TextureID = mRenderer.LoadTexture("data/img/megamanx.png");
-	if (mPlayer.TextureID < 0)
-		return -1;
-
-	mMap.Tileset.TextureID = mRenderer.LoadTexture("data/img/tileset2.png");
-	if (mMap.Tileset.TextureID < 0)
-		return -1;
+	mMap.Load("hello");
+	mPlayer.Load("world");
 
 	return 0;
 }
 
 int Game::Finalize()
 {
-	// delete textures
-	glDeleteTextures(1, &mPlayer.TextureID);
-	glDeleteTextures(1, &mMap.Tileset.TextureID);
-
 	// clean up
 	SDL_GL_DeleteContext(mContext);
 	SDL_DestroyWindow(mWindow);
@@ -143,7 +134,7 @@ int Game::HandleInput()
 	{
 		mIsRunning = false;
 	}
-	if (mKeys[SDLK_SPACE] && mPlayer.IsGrounded && !mPlayer.CollisionMarkers[Player::MRK_HEAD_LEFT].IsTouching && !mPlayer.CollisionMarkers[Player::MRK_HEAD_RIGHT].IsTouching)
+	if (mKeys[SDLK_SPACE] && mPlayer.IsGrounded)
 	{
 		mPlayer.Velocity.Y = 0.0f;
 		mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
@@ -183,25 +174,28 @@ int Game::Update(float pDeltaTime)
 		mFrameCount = 0;
 	}
 
-	mWorld.HandleWorldCollisionViaPoints(mPlayer, mMap);
-
 	return 0;
 }
 
 int Game::Render()
 {
-	// focus camera
-	mCamera.Position.X = mWindowWidth / 4.0f - mPlayer.Position.X - mPlayer.Dimensions.X / 2.0f;
-	mCamera.Position.Y = mWindowHeight / 4.0f - mPlayer.Position.Y - mPlayer.Dimensions.Y / 2.0f;
-
 	// clear
 	glClearColor(150.0f / 255.0f, 175.0f / 255.0f, 225.0f / 255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// focus camera
+	mCamera.Position.X = mWindowWidth / 2.0f - (mPlayer.Position.X + mPlayer.Dimensions.X / 2.0f) * mCamera.Zoom;
+	mCamera.Position.Y = mWindowHeight / 2.0f - (mPlayer.Position.Y + mPlayer.Dimensions.Y / 2.0f) * mCamera.Zoom;
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(mCamera.Position.X, mCamera.Position.Y, 0.0f);
+	glRotatef(mCamera.Rotation, 0.0f, 0.0f, 1.0f);
+	glScalef(mCamera.Zoom, mCamera.Zoom, 0.0f);
+	
 	// render loop
-	if (mRenderer.RenderMap(mCamera, mMap) < 0)
+	if (!mMap.Render(mRenderer))
 		return -1;
-	if (mRenderer.RenderPlayer(mCamera, mPlayer) < 0)
+	if (!mPlayer.Render(mRenderer))
 		return -1;
 
 	// flip
