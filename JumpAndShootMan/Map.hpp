@@ -2,6 +2,7 @@
 #define __MAP_HPP__
 
 #include "Texture.hpp"
+#include "Vector2.hpp"
 
 #include <string>
 
@@ -27,7 +28,9 @@ class Map
 		~Map();
 
 		bool Load(const std::string& pFilename);
-		bool IsTraversable(int pX, int pY);
+		bool Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, float pDistance, HGF::Vector2& pOutHit);
+		bool IsTileEmpty(int pTileX, int pTileY);
+		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
 		bool Render(const Renderer& pRenderer);
 
 		Tileset Tileset;

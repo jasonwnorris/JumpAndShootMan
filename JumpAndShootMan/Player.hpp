@@ -4,19 +4,12 @@
 #include "Texture.hpp"
 #include "Vector2.hpp"
 
-enum class Direction
-{
-	Up,
-	Down,
-	Left,
-	Right
-};
-
 struct RayInfo
 {
 	HGF::Vector2 Position;
-	Direction Direction;
+	HGF::Vector2 Direction;
 	float Distance;
+	HGF::Vector2 OutHit;
 };
 
 class Renderer;

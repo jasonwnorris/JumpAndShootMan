@@ -11,10 +11,10 @@ namespace HGF
 
 	Texture::~Texture()
 	{
-		// free the surface
+		// Free the surface.
 		SDL_FreeSurface(mSurface);
 
-		// delete the texture
+		// Delete the texture.
 		glDeleteTextures(1, &mID);
 	}
 
@@ -50,39 +50,69 @@ namespace HGF
 
 	bool Texture::Load(const std::string& pFilename)
 	{
-		// load the surface
+		// Load the surface.
 		mSurface = IMG_Load(pFilename.c_str());
 
-		// break out if surface is null
+		// Break out if surface is NULL.
 		if (mSurface == NULL)
 			return false;
 
-		// generate the texture
+		// Generate the texture.
 		glGenTextures(1, &mID);
 
-		// bind the texture
+		// Bind the texture.
 		glBindTexture(GL_TEXTURE_2D, mID);
 
-		// get the width, height, and bits-per-pixel
+		// Get the width, height, and bits-per-pixel.
 		mWidth = mSurface->w;
 		mHeight = mSurface->h;
 		mBPP = mSurface->format->BitsPerPixel;
 
-		// see if the surface contains and alpha channel
+		// See if the surface contains an alpha channel.
 		int mode = GL_RGB;
 		if (mBPP == 32)
 			mode = GL_RGBA;
 
-		// create a texture from the surface's pixels array
+		// Create a texture from the surface's pixels array.
 		glTexImage2D(GL_TEXTURE_2D, 0, mode, mWidth, mHeight, 0, mode, GL_UNSIGNED_BYTE, mSurface->pixels);
 
-		// set min and mag filters to linear
+		// Set min and mag filters to nearest.
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-		// unbind the texture
+		// Unbind the texture.
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		return true;
+	}
+
+	void Texture::GetColor(int pX, int pY, Uint8& pRed, Uint8& pGreen, Uint8& pBlue, Uint8& pAlpha)
+	{
+		Uint8* pixel = (Uint8*)mSurface->pixels + pY * mSurface->pitch + pX * mSurface->format->BytesPerPixel;
+		Uint32 color = 0;
+
+		switch (mSurface->format->BytesPerPixel)
+		{
+			case 1:
+				color = *pixel;
+				break;
+			case 2:
+				color = *(Uint16*)pixel;
+				break;
+			case 3:
+				if (SDL_BYTEORDER == SDL_BIG_ENDIAN)
+					color = pixel[0] << 16 | pixel[1] << 8 | pixel[2];
+				else
+					color = pixel[0] | pixel[1] << 8 | pixel[2] << 16;
+				break;
+			case 4:
+				color = *(Uint32*)pixel;
+				break;
+			default:
+				color = 0;
+				break;
+		}
+
+		SDL_GetRGBA(color, mSurface->format, &pRed, &pGreen, &pBlue, &pAlpha);
 	}
 }

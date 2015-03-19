@@ -129,11 +129,34 @@ int Game::HandleInput()
 		mPlayer.Position = HGF::Vector2(100.0f, 100.0f);
 	}
 
-	// handle input
+	// exit
 	if (mKeys[SDLK_ESCAPE])
 	{
 		mIsRunning = false;
 	}
+
+	// movement
+	if (mKeys[SDLK_UP])
+	{
+		mPlayer.Position.Y -= mPlayer.MovementSpeed;
+	}
+	if (mKeys[SDLK_DOWN])
+	{
+		mPlayer.Position.Y += mPlayer.MovementSpeed;
+	}
+	if (mKeys[SDLK_LEFT])
+	{
+		mPlayer.Position.X -= mPlayer.MovementSpeed;
+		mPlayer.IsFacingLeft = true;
+	}
+	if (mKeys[SDLK_RIGHT])
+	{
+		mPlayer.Position.X += mPlayer.MovementSpeed;
+		mPlayer.IsFacingLeft = false;
+	}
+
+	/*
+	// handle input
 	if (mKeys[SDLK_SPACE] && mPlayer.IsGrounded)
 	{
 		mPlayer.Velocity.Y = 0.0f;
@@ -159,6 +182,7 @@ int Game::HandleInput()
 	mPlayer.Velocity += mPlayer.Acceleration;
 	mPlayer.Velocity.X *= 0.75f;
 	mPlayer.Acceleration *= 0.75f;
+	*/
 
 	return 0;
 }
@@ -172,6 +196,11 @@ int Game::Update(float pDeltaTime)
 		std::cout << "FPS: " << mFrameCount << std::endl;
 		mPreviousTicks = mCurrentTicks;
 		mFrameCount = 0;
+	}
+
+	for (int i = 0; i < Player::MaxRayCount; ++i)
+	{
+		mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i].Position, mPlayer.CollisionRays[i].Direction, mPlayer.CollisionRays[i].Distance, mPlayer.CollisionRays[i].OutHit);
 	}
 
 	return 0;
