@@ -7,8 +7,14 @@
 #include <cstdlib>
 #include <iostream>
 
+template<typename T> bool VECTORHELPER_Contains(const std::vector<T>& pVector, T pItem)
+{
+	return std::find(pVector.begin(), pVector.end(), pItem) != pVector.end();
+}
+
 Map::Map()
 {
+	mIsLoaded = false;
 }
 
 Map::~Map()
@@ -49,9 +55,13 @@ Map::~Map()
 
 bool Map::Load(const std::string& pFilename)
 {
+	if (mIsLoaded)
+		return false;
+
 	// Temp default values.
 	if (!Tileset.Texture.Load("data/img/tileset2.png"))
 		return false;
+
 	Tileset.X = 3;
 	Tileset.Y = 3;
 	Tileset.Size = 16;
@@ -144,10 +154,51 @@ bool Map::Load(const std::string& pFilename)
 		}
 	}
 
+	mIsLoaded = true;
+
+	return mIsLoaded;
+}
+
+bool Map::Randomize()
+{
+	if (!mIsLoaded)
+		return false;
+
+	for (int x = 1; x < Width - 1; ++x)
+	{
+		for (int y = 1; y < Height - 1; ++y)
+		{
+			Tile* tile = &Data[x][y];
+
+			if (rand() % 12 == 0)
+			{
+				tile->TextureID = rand() % (Tileset.X * Tileset.Y - 1) + 1;
+
+				if (tile->TextureID == 7)
+				{
+					tile->CollisionID = 1;
+				}
+				else if (tile->TextureID == 8)
+				{
+					tile->CollisionID = 2;
+				}
+				else
+				{
+					tile->CollisionID = 0;
+				}
+			}
+			else
+			{
+				tile->TextureID = -1;
+				tile->CollisionID = -1;
+			}
+		}
+	}
+
 	return true;
 }
 
-bool Map::Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, float pDistance, HGF::Vector2& pOutHit)
+bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std::vector<int>& pTargets, HGF::Vector2& pOutHit, float& pOutDistance)
 {
 	int x = (int)std::roundf(pPosition.X);
 	int y = (int)std::roundf(pPosition.Y);
@@ -158,73 +209,76 @@ bool Map::Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection,
 
 	pOutHit = HGF::Vector2::Zero;
 
-	if (pDirection == HGF::Vector2::Up)
+	switch (pDirection)
 	{
-		for (int ty = tileY; ty >= 0; --ty)
-		{
-			if (!IsTileEmpty(tileX, ty))
+		case Direction::UP:
+			for (int ty = tileY; ty >= 0; --ty)
 			{
-				for (int py = Tileset.Size - 1; py >= 0; --py)
+				if (!IsTileEmpty(tileX, ty))
 				{
-					if (!IsTraversable(tileX, ty, pixelX, py))
+					for (int py = Tileset.Size - 1; py >= 0; --py)
 					{
-						pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
-						return true;
+						if (!IsTraversable(tileX, ty, pixelX, py) && VECTORHELPER_Contains(pTargets, Data[tileX][ty].CollisionID))
+						{
+							pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
+							pOutDistance = pPosition.Y - pOutHit.Y;
+							return true;
+						}
 					}
 				}
 			}
-		}
-	}
-	else if(pDirection == HGF::Vector2::Down)
-	{
-		for (int ty = tileY; ty < Height; ++ty)
-		{
-			if (!IsTileEmpty(tileX, ty))
+			break;
+		case Direction::DOWN:
+			for (int ty = tileY; ty < Height; ++ty)
 			{
-				for (int py = 0; py < Tileset.Size; ++py)
+				if (!IsTileEmpty(tileX, ty))
 				{
-					if (!IsTraversable(tileX, ty, pixelX, py))
+					for (int py = 0; py < Tileset.Size; ++py)
 					{
-						pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
-						return true;
+						if (!IsTraversable(tileX, ty, pixelX, py) && VECTORHELPER_Contains(pTargets, Data[tileX][ty].CollisionID))
+						{
+							pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
+							pOutDistance = pOutHit.Y - pPosition.Y;
+							return true;
+						}
 					}
 				}
 			}
-		}
-	}
-	else if(pDirection == HGF::Vector2::Left)
-	{
-		for (int tx = tileX; tx >= 0; --tx)
-		{
-			if (!IsTileEmpty(tx, tileY))
+			break;
+		case Direction::LEFT:
+			for (int tx = tileX; tx >= 0; --tx)
 			{
-				for (int px = Tileset.Size - 1; px >= 0; --px)
+				if (!IsTileEmpty(tx, tileY))
 				{
-					if (!IsTraversable(tx, tileY, px, pixelY))
+					for (int px = Tileset.Size - 1; px >= 0; --px)
 					{
-						pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
-						return true;
+						if (!IsTraversable(tx, tileY, px, pixelY) && VECTORHELPER_Contains(pTargets, Data[tx][tileY].CollisionID))
+						{
+							pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
+							pOutDistance = pPosition.X - pOutHit.X;
+							return true;
+						}
 					}
 				}
 			}
-		}
-	}
-	else if(pDirection == HGF::Vector2::Right)
-	{
-		for (int tx = tileX; tx < Width; ++tx)
-		{
-			if (!IsTileEmpty(tx, tileY))
+			break;
+		case Direction::RIGHT:
+			for (int tx = tileX; tx < Width; ++tx)
 			{
-				for (int px = 0; px < Tileset.Size; ++px)
+				if (!IsTileEmpty(tx, tileY))
 				{
-					if (!IsTraversable(tx, tileY, px, pixelY))
+					for (int px = 0; px < Tileset.Size; ++px)
 					{
-						pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
-						return true;
+						if (!IsTraversable(tx, tileY, px, pixelY) && VECTORHELPER_Contains(pTargets, Data[tx][tileY].CollisionID))
+						{
+							pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
+							pOutDistance = pOutHit.X - pPosition.X;
+							return true;
+						}
 					}
 				}
 			}
-		}
+			break;
 	}
 
 	return false;
@@ -266,7 +320,7 @@ bool Map::Render(const Renderer& pRenderer)
 				HGF::Vector2 min((value % Tileset.Y) / (float)Tileset.X, (value / Tileset.Y) / (float)Tileset.Y);
 				HGF::Vector2 max(((value % Tileset.Y) + 1) / (float)Tileset.X, ((value / Tileset.Y) + 1) / (float)Tileset.Y);
 
-				if (pRenderer.RenderTexture(Tileset.Texture.GetID(), position, dimensions, min, max) < 0)
+				if (pRenderer.RenderTexture(Tileset.Texture.GetID(), position, dimensions, HGF::Vector2::Zero, min, max) < 0)
 					return false;
 			}
 		}

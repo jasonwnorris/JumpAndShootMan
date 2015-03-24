@@ -1,10 +1,12 @@
 #ifndef __MAP_HPP__
 #define __MAP_HPP__
 
+#include "Direction.hpp"
 #include "Texture.hpp"
 #include "Vector2.hpp"
 
 #include <string>
+#include <vector>
 
 struct Tileset
 {
@@ -28,7 +30,8 @@ class Map
 		~Map();
 
 		bool Load(const std::string& pFilename);
-		bool Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, float pDistance, HGF::Vector2& pOutHit);
+		bool Randomize();
+		bool Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std::vector<int>& pTargets, HGF::Vector2& pOutHit, float& pOutDistance);
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
 		bool Render(const Renderer& pRenderer);
@@ -39,6 +42,9 @@ class Map
 		Tile** Data;
 		int BitMaskCount;
 		bool*** BitMasks;
+
+	private:
+		bool mIsLoaded;
 };
 
 #endif

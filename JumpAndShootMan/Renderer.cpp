@@ -40,13 +40,13 @@ int Renderer::RenderLine(HGF::Vector2 pStart, HGF::Vector2 pEnd, float pSize, fl
 	return 0;
 }
 
-int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, float pRed, float pGreen, float pBlue, float pAlpha) const
+int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pOrigin, float pRed, float pGreen, float pBlue, float pAlpha) const
 {
 	HGF::Vector2 points[4] = {
-		HGF::Vector2(pPosition.X,				  pPosition.Y),
-		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y),
-		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y + pDimensions.Y),
-		HGF::Vector2(pPosition.X,				  pPosition.Y + pDimensions.Y)
+		HGF::Vector2(pPosition.X - pOrigin.X,				  pPosition.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X - pOrigin.X, pPosition.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X - pOrigin.X, pPosition.Y + pDimensions.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X - pOrigin.X,				  pPosition.Y + pDimensions.Y - pOrigin.Y)
 	};
 
 	glLineWidth(1.0f);
@@ -59,13 +59,13 @@ int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, 
 	return 0;
 }
 
-int Renderer::RenderTexture(unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip) const
+int Renderer::RenderTexture(unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pOrigin, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip) const
 {
 	HGF::Vector2 xys[4] = {
-		HGF::Vector2(pPosition.X,				  pPosition.Y),
-		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y),
-		HGF::Vector2(pPosition.X,				  pPosition.Y + pDimensions.Y),
-		HGF::Vector2(pPosition.X + pDimensions.X, pPosition.Y + pDimensions.Y)
+		HGF::Vector2(pPosition.X - pOrigin.X,				  pPosition.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X - pOrigin.X, pPosition.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X - pOrigin.X,				  pPosition.Y + pDimensions.Y - pOrigin.Y),
+		HGF::Vector2(pPosition.X + pDimensions.X - pOrigin.X, pPosition.Y + pDimensions.Y - pOrigin.Y)
 	};
 
 	HGF::Vector2 uvs[4];

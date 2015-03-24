@@ -1,14 +1,18 @@
 #ifndef __PLAYER_HPP__
 #define __PLAYER_HPP__
 
+#include "Direction.hpp"
 #include "Texture.hpp"
 #include "Vector2.hpp"
+
+#include <vector>
 
 struct RayInfo
 {
 	HGF::Vector2 Position;
-	HGF::Vector2 Direction;
-	float Distance;
+	Direction Direction;
+	float MaxDistance;
+	std::vector<int> Targets;
 	HGF::Vector2 OutHit;
 };
 

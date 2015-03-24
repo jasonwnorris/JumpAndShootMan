@@ -96,6 +96,7 @@
   <ItemGroup>
     <ClInclude Include="BitArray.hpp" />
     <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="Direction.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MathHelper.hpp" />

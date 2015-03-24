@@ -122,7 +122,7 @@ int Game::HandleInput()
 	// debug
 	if (mKeys[SDLK_RETURN])
 	{
-		//GenerateMap(map);
+		mMap.Randomize();
 	}
 	if (mKeys[SDLK_BACKSPACE])
 	{
@@ -200,7 +200,27 @@ int Game::Update(float pDeltaTime)
 
 	for (int i = 0; i < Player::MaxRayCount; ++i)
 	{
-		mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i].Position, mPlayer.CollisionRays[i].Direction, mPlayer.CollisionRays[i].Distance, mPlayer.CollisionRays[i].OutHit);
+		float outDistance;
+		mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i].Position, mPlayer.CollisionRays[i].Direction, mPlayer.CollisionRays[i].Targets, mPlayer.CollisionRays[i].OutHit, outDistance);
+
+		if (outDistance < mPlayer.CollisionRays[i].MaxDistance)
+		{
+			switch (mPlayer.CollisionRays[i].Direction)
+			{
+				case Direction::UP:
+					mPlayer.Position.Y += (mPlayer.CollisionRays[i].MaxDistance - outDistance);
+					break;
+				case Direction::DOWN:
+					mPlayer.Position.Y -= (mPlayer.CollisionRays[i].MaxDistance - outDistance);
+					break;
+				case Direction::LEFT:
+					mPlayer.Position.X += (mPlayer.CollisionRays[i].MaxDistance - outDistance);
+					break;
+				case Direction::RIGHT:
+					mPlayer.Position.X -= (mPlayer.CollisionRays[i].MaxDistance - outDistance);
+					break;
+			}
+		}
 	}
 
 	return 0;
