@@ -8,6 +8,13 @@
 #include <string>
 #include <vector>
 
+enum EdgeType
+{
+	Empty = 0,
+	Solid = 1,
+	Interesting = 2
+};
+
 struct Tileset
 {
 	HGF::Texture Texture;
@@ -20,6 +27,7 @@ struct Tile
 {
 	int TextureID;
 	int CollisionID;
+	EdgeType Edges[4];
 };
 
 class Renderer;

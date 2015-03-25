@@ -9,12 +9,10 @@
 
 Renderer::Renderer()
 {
-
 }
 
 Renderer::~Renderer()
 {
-
 }
 
 int Renderer::RenderPoint(HGF::Vector2 pPosition, float pSize, float pRed, float pGreen, float pBlue, float pAlpha) const
@@ -59,7 +57,7 @@ int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, 
 	return 0;
 }
 
-int Renderer::RenderTexture(unsigned int pTextureID, HGF::Vector2 pPosition, HGF::Vector2 pDimensions, HGF::Vector2 pOrigin, HGF::Vector2 pClipMin, HGF::Vector2 pClipMax, bool pFlip) const
+int Renderer::RenderTexture(const HGF::Texture& pTexture, const HGF::Vector2& pPosition, const HGF::Vector2& pDimensions, const HGF::Vector2& pOrigin, const HGF::Vector2& pClipMin, const HGF::Vector2& pClipMax, bool pFlip) const
 {
 	HGF::Vector2 xys[4] = {
 		HGF::Vector2(pPosition.X - pOrigin.X,				  pPosition.Y - pOrigin.Y),
@@ -68,24 +66,15 @@ int Renderer::RenderTexture(unsigned int pTextureID, HGF::Vector2 pPosition, HGF
 		HGF::Vector2(pPosition.X + pDimensions.X - pOrigin.X, pPosition.Y + pDimensions.Y - pOrigin.Y)
 	};
 
-	HGF::Vector2 uvs[4];
-	if (pFlip)
-	{
-		uvs[0] = HGF::Vector2(pClipMax.X, pClipMin.Y);
-		uvs[1] = HGF::Vector2(pClipMin.X, pClipMin.Y);
-		uvs[2] = HGF::Vector2(pClipMax.X, pClipMax.Y);
-		uvs[3] = HGF::Vector2(pClipMin.X, pClipMax.Y);
-	}
-	else
-	{
-		uvs[0] = HGF::Vector2(pClipMin.X, pClipMin.Y);
-		uvs[1] = HGF::Vector2(pClipMax.X, pClipMin.Y);
-		uvs[2] = HGF::Vector2(pClipMin.X, pClipMax.Y);
-		uvs[3] = HGF::Vector2(pClipMax.X, pClipMax.Y);
-	}
+	HGF::Vector2 uvs[4] = {
+		HGF::Vector2((pFlip ? pClipMax.X : pClipMin.X) / (float)pTexture.GetWidth(), pClipMin.Y / (float)pTexture.GetHeight()),
+		HGF::Vector2((pFlip ? pClipMin.X : pClipMax.X) / (float)pTexture.GetWidth(), pClipMin.Y / (float)pTexture.GetHeight()),
+		HGF::Vector2((pFlip ? pClipMax.X : pClipMin.X) / (float)pTexture.GetWidth(), pClipMax.Y / (float)pTexture.GetHeight()),
+		HGF::Vector2((pFlip ? pClipMin.X : pClipMax.X) / (float)pTexture.GetWidth(), pClipMax.Y / (float)pTexture.GetHeight())
+	};
 
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, pTextureID);
+	glBindTexture(GL_TEXTURE_2D, pTexture.GetID());
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glBegin(GL_TRIANGLE_STRIP);
 	for (int i = 0; i < 4; ++i)

@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include "Globals.hpp"
 
 #include <SDL2\SDL_opengl.h>
 
@@ -6,6 +7,8 @@
 
 Game::Game()
 {
+	Globals::IsDebugDrawOn = false;
+
 	mIsRunning = true;
 	
 	mWindowWidth = 1024;
@@ -128,6 +131,10 @@ int Game::HandleInput()
 	{
 		mPlayer.Position = HGF::Vector2(100.0f, 100.0f);
 	}
+	if (mKeys[SDLK_p])
+	{
+		Globals::IsDebugDrawOn = !Globals::IsDebugDrawOn;
+	}
 
 	// exit
 	if (mKeys[SDLK_ESCAPE])
@@ -207,16 +214,16 @@ int Game::Update(float pDeltaTime)
 		{
 			switch (mPlayer.CollisionRays[i].Direction)
 			{
-				case Direction::UP:
+				case Direction::Up:
 					mPlayer.Position.Y += (mPlayer.CollisionRays[i].MaxDistance - outDistance);
 					break;
-				case Direction::DOWN:
+				case Direction::Down:
 					mPlayer.Position.Y -= (mPlayer.CollisionRays[i].MaxDistance - outDistance);
 					break;
-				case Direction::LEFT:
+				case Direction::Left:
 					mPlayer.Position.X += (mPlayer.CollisionRays[i].MaxDistance - outDistance);
 					break;
-				case Direction::RIGHT:
+				case Direction::Right:
 					mPlayer.Position.X -= (mPlayer.CollisionRays[i].MaxDistance - outDistance);
 					break;
 			}
@@ -229,7 +236,7 @@ int Game::Update(float pDeltaTime)
 int Game::Render()
 {
 	// clear
-	glClearColor(150.0f / 255.0f, 175.0f / 255.0f, 225.0f / 255.0f, 1.0f);
+	glClearColor(125.0f / 255.0f, 125.0f / 255.0f, 125.0f / 255.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	// focus camera

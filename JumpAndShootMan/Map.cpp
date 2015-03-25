@@ -1,3 +1,4 @@
+#include "Globals.hpp"
 #include "Map.hpp"
 #include "Renderer.hpp"
 
@@ -59,18 +60,18 @@ bool Map::Load(const std::string& pFilename)
 		return false;
 
 	// Temp default values.
-	if (!Tileset.Texture.Load("data/img/tileset2.png"))
+	if (!Tileset.Texture.Load("data/img/tiles.png"))
 		return false;
 
-	Tileset.X = 3;
-	Tileset.Y = 3;
+	Tileset.X = 2;
+	Tileset.Y = 2;
 	Tileset.Size = 16;
 	Width = 16;
 	Height = 12;
 
 	// Load bitmask tiles.
 	HGF::Texture bitmaskTexture;
-	if (!bitmaskTexture.Load("data/img/bitfield.png"))
+	if (!bitmaskTexture.Load("data/img/bitmasks.png"))
 		return false;
 
 	// Establish bitmask count.
@@ -114,47 +115,16 @@ bool Map::Load(const std::string& pFilename)
 		std::cout << std::endl;
 	}
 
+	// Allocate tile memory.
 	Data = new Tile*[Width];
-
 	for (int x = 0; x < Width; ++x)
 	{
 		Data[x] = new Tile[Height];
-
-		for (int y = 0; y < Height; ++y)
-		{
-			Tile* tile = &Data[x][y];
-
-			if (x == 0 || x == Width - 1 || y == 0 || y == Height - 1)
-			{
-				tile->TextureID = 0;
-				tile->CollisionID = 0;
-			}
-			else if (rand() % 12 == 0)
-			{
-				tile->TextureID = rand() % (Tileset.X * Tileset.Y - 1) + 1;
-
-				if (tile->TextureID == 7)
-				{
-					tile->CollisionID = 1;
-				}
-				else if (tile->TextureID == 8)
-				{
-					tile->CollisionID = 2;
-				}
-				else
-				{
-					tile->CollisionID = 0;
-				}
-			}
-			else
-			{
-				tile->TextureID = -1;
-				tile->CollisionID = -1;
-			}
-		}
 	}
 
 	mIsLoaded = true;
+
+	Randomize();
 
 	return mIsLoaded;
 }
@@ -164,27 +134,44 @@ bool Map::Randomize()
 	if (!mIsLoaded)
 		return false;
 
-	for (int x = 1; x < Width - 1; ++x)
+	for (int x = 0; x < Width; ++x)
 	{
-		for (int y = 1; y < Height - 1; ++y)
+		for (int y = 0; y < Height; ++y)
 		{
 			Tile* tile = &Data[x][y];
 
-			if (rand() % 12 == 0)
+			if (x == 0 || x == Width - 1 || y == 0 || y == Height - 1)
+			{
+				tile->TextureID = 0;
+				tile->CollisionID = 0;
+				for (int i = 0; i < 4; ++i)
+					tile->Edges[i] = EdgeType::Solid;
+			}
+			else if (rand() % 12 == 0)
 			{
 				tile->TextureID = rand() % (Tileset.X * Tileset.Y - 1) + 1;
 
-				if (tile->TextureID == 7)
+				if (tile->TextureID == 2)
 				{
 					tile->CollisionID = 1;
+					tile->Edges[Direction::Up] = EdgeType::Interesting;
+					tile->Edges[Direction::Down] = EdgeType::Solid;
+					tile->Edges[Direction::Left] = EdgeType::Interesting;
+					tile->Edges[Direction::Right] = EdgeType::Solid;
 				}
-				else if (tile->TextureID == 8)
+				else if (tile->TextureID == 3)
 				{
 					tile->CollisionID = 2;
+					tile->Edges[Direction::Up] = EdgeType::Interesting;
+					tile->Edges[Direction::Down] = EdgeType::Solid;
+					tile->Edges[Direction::Left] = EdgeType::Solid;
+					tile->Edges[Direction::Right] = EdgeType::Interesting;
 				}
 				else
 				{
 					tile->CollisionID = 0;
+					for (int i = 0; i < 4; ++i)
+						tile->Edges[i] = EdgeType::Solid;
 				}
 			}
 			else
@@ -211,7 +198,7 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 
 	switch (pDirection)
 	{
-		case Direction::UP:
+		case Direction::Up:
 			for (int ty = tileY; ty >= 0; --ty)
 			{
 				if (!IsTileEmpty(tileX, ty))
@@ -228,7 +215,7 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 				}
 			}
 			break;
-		case Direction::DOWN:
+		case Direction::Down:
 			for (int ty = tileY; ty < Height; ++ty)
 			{
 				if (!IsTileEmpty(tileX, ty))
@@ -245,7 +232,7 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 				}
 			}
 			break;
-		case Direction::LEFT:
+		case Direction::Left:
 			for (int tx = tileX; tx >= 0; --tx)
 			{
 				if (!IsTileEmpty(tx, tileY))
@@ -262,7 +249,7 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 				}
 			}
 			break;
-		case Direction::RIGHT:
+		case Direction::Right:
 			for (int tx = tileX; tx < Width; ++tx)
 			{
 				if (!IsTileEmpty(tx, tileY))
@@ -317,11 +304,44 @@ bool Map::Render(const Renderer& pRenderer)
 			{
 				HGF::Vector2 position(x * Tileset.Size, y * Tileset.Size);
 				HGF::Vector2 dimensions(Tileset.Size, Tileset.Size);
-				HGF::Vector2 min((value % Tileset.Y) / (float)Tileset.X, (value / Tileset.Y) / (float)Tileset.Y);
-				HGF::Vector2 max(((value % Tileset.Y) + 1) / (float)Tileset.X, ((value / Tileset.Y) + 1) / (float)Tileset.Y);
+				HGF::Vector2 min((value % Tileset.Y) * Tileset.Size, (value / Tileset.Y)  * Tileset.Size);
+				HGF::Vector2 max(((value % Tileset.Y) + 1)  * Tileset.Size, ((value / Tileset.Y) + 1)  * Tileset.Size);
 
-				if (pRenderer.RenderTexture(Tileset.Texture.GetID(), position, dimensions, HGF::Vector2::Zero, min, max) < 0)
+				if (pRenderer.RenderTexture(Tileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max) < 0)
 					return false;
+
+				if (Globals::IsDebugDrawOn)
+				{
+					for (int i = 0; i < 4; ++i)
+					{
+						if (Data[x][y].Edges[i] == EdgeType::Solid || Data[x][y].Edges[i] == EdgeType::Interesting)
+						{
+							float r = Data[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
+							float g = 0.0f;
+							float b = Data[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
+
+							switch (i)
+							{
+							case Direction::Up:
+								if (pRenderer.RenderLine(HGF::Vector2(x * Tileset.Size, y * Tileset.Size), HGF::Vector2((x + 1) * Tileset.Size, y * Tileset.Size), 2.0f, r, g, b, 1.0f))
+									return false;
+								break;
+							case Direction::Down:
+								if (pRenderer.RenderLine(HGF::Vector2(x * Tileset.Size, (y + 1) * Tileset.Size), HGF::Vector2((x + 1) * Tileset.Size, (y + 1) * Tileset.Size), 2.0f, r, g, b, 1.0f))
+									return false;
+								break;
+							case Direction::Left:
+								if (pRenderer.RenderLine(HGF::Vector2(x * Tileset.Size, y * Tileset.Size), HGF::Vector2(x * Tileset.Size, (y + 1) * Tileset.Size), 2.0f, r, g, b, 1.0f))
+									return false;
+								break;
+							case Direction::Right:
+								if (pRenderer.RenderLine(HGF::Vector2((x + 1) * Tileset.Size, y * Tileset.Size), HGF::Vector2((x + 1) * Tileset.Size, (y + 1) * Tileset.Size), 2.0f, r, g, b, 1.0f))
+									return false;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}

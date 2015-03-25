@@ -83,6 +83,7 @@
     <ClCompile Include="BitArray.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Globals.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MathHelper.cpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Direction.hpp" />
     <ClInclude Include="Game.hpp" />
+    <ClInclude Include="Globals.hpp" />
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MathHelper.hpp" />
     <ClInclude Include="Player.hpp" />
