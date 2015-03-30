@@ -103,6 +103,7 @@
     <ClInclude Include="Map.hpp" />
     <ClInclude Include="MathHelper.hpp" />
     <ClInclude Include="Player.hpp" />
+    <ClInclude Include="Raycast.hpp" />
     <ClInclude Include="Renderer.hpp" />
     <ClInclude Include="Texture.hpp" />
     <ClInclude Include="Timer.hpp" />

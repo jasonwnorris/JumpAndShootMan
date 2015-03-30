@@ -6,14 +6,16 @@ const int Player::MaxRayCount = 12;
 
 Player::Player()
 {
+	float scale = 2.0f;
+
 	Position = HGF::Vector2(100.0f, 100.0f);
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
 	IsFacingLeft = false;
-	MovementSpeed = 0.185f + 1.5f;
+	MovementSpeed = 0.185f;
 	JumpingSpeed = 1.15f;
 	Gravity = 0.035f;
-	Dimensions = HGF::Vector2(107.0f / 5.0f, 147.0f / 5.0f);
+	Dimensions = HGF::Vector2(107.0f / scale, 147.0f / scale);
 	IsGrounded = false;
 	IsJumping = false;
 }
@@ -21,70 +23,74 @@ Player::Player()
 Player::~Player()
 {
 	delete [] CollisionRays;
+	delete [] RaycastHits;
 }
 
 bool Player::Load(const std::string& pFilename)
 {
-	if (!Texture.Load("data/img/player.png"))
+	if (!Texture.Load(pFilename))
 		return false;
+
+	float updowndistance = 70.0f / 2.0f;
+	float leftrightdistance = 46.0f / 2.0f;
 
 	CollisionRays = new RayInfo[MaxRayCount];
 	// Down
 	CollisionRays[MRK_FOOT_LEFT].Position = HGF::Vector2(Dimensions.X * -3.0f / 8.0f, 0.0f);
 	CollisionRays[MRK_FOOT_LEFT].Direction = Direction::Down;
-	CollisionRays[MRK_FOOT_LEFT].MaxDistance = 14.75f;
-	CollisionRays[MRK_FOOT_LEFT].Targets.push_back(0);
+	CollisionRays[MRK_FOOT_LEFT].Distance = updowndistance;
+	CollisionRays[MRK_FOOT_LEFT].HasInterest = false;
 	CollisionRays[MRK_HOTSPOT].Position = HGF::Vector2(0.0f, 0.0f);
 	CollisionRays[MRK_HOTSPOT].Direction = Direction::Down;
-	CollisionRays[MRK_HOTSPOT].MaxDistance = 14.75f;
-	CollisionRays[MRK_HOTSPOT].Targets.push_back(0);
-	CollisionRays[MRK_HOTSPOT].Targets.push_back(1);
-	CollisionRays[MRK_HOTSPOT].Targets.push_back(2);
+	CollisionRays[MRK_HOTSPOT].Distance = updowndistance;
+	CollisionRays[MRK_HOTSPOT].HasInterest = true;
 	CollisionRays[MRK_FOOT_RIGHT].Position = HGF::Vector2(Dimensions.X * 3.0f / 8.0f, 0.0f);
 	CollisionRays[MRK_FOOT_RIGHT].Direction = Direction::Down;
-	CollisionRays[MRK_FOOT_RIGHT].MaxDistance = 14.75f;
-	CollisionRays[MRK_FOOT_RIGHT].Targets.push_back(0);
+	CollisionRays[MRK_FOOT_RIGHT].Distance = updowndistance;
+	CollisionRays[MRK_FOOT_RIGHT].HasInterest = false;
 	// Left
 	CollisionRays[MRK_LEFT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
 	CollisionRays[MRK_LEFT_TOP].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_TOP].MaxDistance = 11.0f;
-	CollisionRays[MRK_LEFT_TOP].Targets.push_back(0);
+	CollisionRays[MRK_LEFT_TOP].Distance = leftrightdistance;
+	CollisionRays[MRK_LEFT_TOP].HasInterest = false;
 	CollisionRays[MRK_LEFT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
 	CollisionRays[MRK_LEFT_CENTER].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_CENTER].MaxDistance = 11.0f;
-	CollisionRays[MRK_LEFT_CENTER].Targets.push_back(0);
+	CollisionRays[MRK_LEFT_CENTER].Distance = leftrightdistance;
+	CollisionRays[MRK_LEFT_CENTER].HasInterest = false;
 	CollisionRays[MRK_LEFT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
 	CollisionRays[MRK_LEFT_BOTTOM].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_BOTTOM].MaxDistance = 11.0f;
-	CollisionRays[MRK_LEFT_BOTTOM].Targets.push_back(0);
+	CollisionRays[MRK_LEFT_BOTTOM].Distance = leftrightdistance;
+	CollisionRays[MRK_LEFT_BOTTOM].HasInterest = false;
 	// Right
 	CollisionRays[MRK_RIGHT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
 	CollisionRays[MRK_RIGHT_TOP].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_TOP].MaxDistance = 11.0f;
-	CollisionRays[MRK_RIGHT_TOP].Targets.push_back(0);
+	CollisionRays[MRK_RIGHT_TOP].Distance = leftrightdistance;
+	CollisionRays[MRK_RIGHT_TOP].HasInterest = false;
 	CollisionRays[MRK_RIGHT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
 	CollisionRays[MRK_RIGHT_CENTER].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_CENTER].MaxDistance = 11.0f;
-	CollisionRays[MRK_RIGHT_CENTER].Targets.push_back(0);
+	CollisionRays[MRK_RIGHT_CENTER].Distance = leftrightdistance;
+	CollisionRays[MRK_RIGHT_CENTER].HasInterest = false;
 	CollisionRays[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
 	CollisionRays[MRK_RIGHT_BOTTOM].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_BOTTOM].MaxDistance = 11.0f;
-	CollisionRays[MRK_RIGHT_BOTTOM].Targets.push_back(0);
+	CollisionRays[MRK_RIGHT_BOTTOM].Distance = leftrightdistance;
+	CollisionRays[MRK_RIGHT_BOTTOM].HasInterest = false;
 	// Up
 	CollisionRays[MRK_HEAD_LEFT].Position = HGF::Vector2(Dimensions.X * -1.0f / 4.0f, 0.0f);
 	CollisionRays[MRK_HEAD_LEFT].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_LEFT].MaxDistance = 14.75f;
-	CollisionRays[MRK_HEAD_LEFT].Targets.push_back(0);
+	CollisionRays[MRK_HEAD_LEFT].Distance = updowndistance;
+	CollisionRays[MRK_HEAD_LEFT].HasInterest = false;
 	CollisionRays[MRK_HEAD_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
 	CollisionRays[MRK_HEAD_CENTER].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_CENTER].MaxDistance = 14.75f;
-	CollisionRays[MRK_HEAD_CENTER].Targets.push_back(0);
+	CollisionRays[MRK_HEAD_CENTER].Distance = updowndistance;
+	CollisionRays[MRK_HEAD_CENTER].HasInterest = true;
 	CollisionRays[MRK_HEAD_RIGHT].Position = HGF::Vector2(Dimensions.X * 1.0f / 4.0f, 0.0f);
 	CollisionRays[MRK_HEAD_RIGHT].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_RIGHT].MaxDistance = 14.75f;
-	CollisionRays[MRK_HEAD_RIGHT].Targets.push_back(0);
+	CollisionRays[MRK_HEAD_RIGHT].Distance = updowndistance;
+	CollisionRays[MRK_HEAD_RIGHT].HasInterest = false;
 
-	return false;
+	RaycastHits = new RaycastHit[MaxRayCount];
+
+	return true;
 }
 
 bool Player::Render(const Renderer& pRenderer)
@@ -103,11 +109,12 @@ bool Player::Render(const Renderer& pRenderer)
 		for (int i = 0; i < Player::MaxRayCount; ++i)
 		{
 			RayInfo& col = CollisionRays[i];
+			RaycastHit& hit = RaycastHits[i];
 
-			if (pRenderer.RenderLine(Position + col.Position, col.OutHit, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f) < 0)
+			if (pRenderer.RenderLine(Position + col.Position, hit.Position, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f) < 0)
 				return false;
 
-			if (pRenderer.RenderPoint(col.OutHit, 4.0f, 1.0f, 1.0f, 0.0f) < 0)
+			if (pRenderer.RenderPoint(hit.Position, 4.0f, 1.0f, 1.0f, 0.0f) < 0)
 				return false;
 		}
 	}

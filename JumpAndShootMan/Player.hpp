@@ -2,19 +2,11 @@
 #define __PLAYER_HPP__
 
 #include "Direction.hpp"
+#include "Raycast.hpp"
 #include "Texture.hpp"
 #include "Vector2.hpp"
 
 #include <vector>
-
-struct RayInfo
-{
-	HGF::Vector2 Position;
-	Direction Direction;
-	float MaxDistance;
-	std::vector<int> Targets;
-	HGF::Vector2 OutHit;
-};
 
 class Renderer;
 class Player
@@ -55,6 +47,7 @@ class Player
 		bool IsGrounded;
 		bool IsJumping;
 		RayInfo* CollisionRays;
+		RaycastHit* RaycastHits;
 };
 
 #endif

@@ -6,12 +6,8 @@
 #include <SDL2\SDL_image.h>
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
-
-template<typename T> bool VECTORHELPER_Contains(const std::vector<T>& pVector, T pItem)
-{
-	return std::find(pVector.begin(), pVector.end(), pItem) != pVector.end();
-}
 
 Map::Map()
 {
@@ -59,23 +55,31 @@ bool Map::Load(const std::string& pFilename)
 	if (mIsLoaded)
 		return false;
 
-	// Temp default values.
-	if (!Tileset.Texture.Load("data/img/tiles.png"))
+	std::ifstream file;
+	file.open(pFilename);
+	if (!file.is_open())
 		return false;
 
-	Tileset.X = 2;
-	Tileset.Y = 2;
-	Tileset.Size = 16;
-	Width = 16;
-	Height = 12;
+	std::string tilesetFilename, bitmaskFilename;
+	int bitWidth, bitHeight, bitSize;
 
-	// Load bitmask tiles.
+	file >> Width >> Height;
+	file >> tilesetFilename;
+	file >> Tileset.X >> Tileset.Y >> Tileset.Size;
+	file >> bitmaskFilename;
+	file >> bitWidth >> bitHeight >> bitSize;
+
+	// Load tileset texture;
+	if (!Tileset.Texture.Load(tilesetFilename))
+		return false;
+
+	// Load bitmask texture.
 	HGF::Texture bitmaskTexture;
-	if (!bitmaskTexture.Load("data/img/bitmasks.png"))
+	if (!bitmaskTexture.Load(bitmaskFilename))
 		return false;
 
 	// Establish bitmask count.
-	BitMaskCount = bitmaskTexture.GetWidth() / Tileset.Size;
+	BitMaskCount = bitWidth * bitHeight;
 	BitMasks = new bool**[BitMaskCount];
 
 	// Read the bitmask pixels.
@@ -97,24 +101,6 @@ bool Map::Load(const std::string& pFilename)
 		}
 	}
 
-	// Debug: Print the bitmasks.
-	for (int i = 0; i < BitMaskCount; ++i)
-	{
-		std::cout << "Bitmask #" << i << ":" << std::endl;
-
-		for (int px = 0; px < Tileset.Size; ++px)
-		{
-			for (int py = 0; py < Tileset.Size; ++py)
-			{
-				std::cout << (BitMasks[i][px][py] ? "1" : "0");
-			}
-
-			std::cout << std::endl;
-		}
-
-		std::cout << std::endl;
-	}
-
 	// Allocate tile memory.
 	Data = new Tile*[Width];
 	for (int x = 0; x < Width; ++x)
@@ -122,9 +108,68 @@ bool Map::Load(const std::string& pFilename)
 		Data[x] = new Tile[Height];
 	}
 
-	mIsLoaded = true;
+	// Load tile values.
+	for (int y = 0; y < Height; ++y)
+	{
+		for (int x = 0; x < Width; ++x)
+		{
+			Tile& tile = Data[x][y];
 
-	Randomize();
+			file >> tile.TextureID >> tile.CollisionID;
+			
+			switch (tile.CollisionID)
+			{
+				case 0:
+					for (int i = 0; i < 4; ++i)
+						tile.Edges[i] = EdgeType::Solid;
+					break;
+				case 1:
+					tile.Edges[Direction::Up] = EdgeType::Interesting;
+					tile.Edges[Direction::Down] = EdgeType::Solid;
+					tile.Edges[Direction::Left] = EdgeType::Interesting;
+					tile.Edges[Direction::Right] = EdgeType::Solid;
+					break;
+				case 2:
+					tile.Edges[Direction::Up] = EdgeType::Interesting;
+					tile.Edges[Direction::Down] = EdgeType::Solid;
+					tile.Edges[Direction::Left] = EdgeType::Solid;
+					tile.Edges[Direction::Right] = EdgeType::Interesting;
+					break;
+				default:
+					for (int i = 0; i < 4; ++i)
+						tile.Edges[i] = EdgeType::Empty;
+					break;
+			}
+		}
+	}
+
+	// Resolve collision edges.
+	for (int y = 0; y < Height; ++y)
+	{
+		for (int x = 0; x < Width; ++x)
+		{
+			if (x + 1 != Width)
+			{
+				if (Data[x][y].Edges[Direction::Right] == EdgeType::Solid && Data[x + 1][y].Edges[Direction::Left] == EdgeType::Solid)
+				{
+					Data[x][y].Edges[Direction::Right] = EdgeType::Empty;
+					Data[x + 1][y].Edges[Direction::Left] = EdgeType::Empty;
+				}
+			}
+			if (y + 1 != Height)
+			{
+				if (Data[x][y].Edges[Direction::Down] == EdgeType::Solid && Data[x][y + 1].Edges[Direction::Up] == EdgeType::Solid)
+				{
+					Data[x][y].Edges[Direction::Down] = EdgeType::Empty;
+					Data[x][y + 1].Edges[Direction::Up] = EdgeType::Empty;
+				}
+			}
+		}
+	}
+
+	file.close();
+
+	mIsLoaded = true;
 
 	return mIsLoaded;
 }
@@ -134,50 +179,77 @@ bool Map::Randomize()
 	if (!mIsLoaded)
 		return false;
 
+	// Generate tiles.
 	for (int x = 0; x < Width; ++x)
 	{
 		for (int y = 0; y < Height; ++y)
 		{
-			Tile* tile = &Data[x][y];
+			Tile& tile = Data[x][y];
 
 			if (x == 0 || x == Width - 1 || y == 0 || y == Height - 1)
 			{
-				tile->TextureID = 0;
-				tile->CollisionID = 0;
+				tile.TextureID = 0;
+				tile.CollisionID = 0;
 				for (int i = 0; i < 4; ++i)
-					tile->Edges[i] = EdgeType::Solid;
+					tile.Edges[i] = EdgeType::Solid;
 			}
-			else if (rand() % 12 == 0)
+			else if (rand() % 15 == 0)
 			{
-				tile->TextureID = rand() % (Tileset.X * Tileset.Y - 1) + 1;
+				tile.TextureID = rand() % (Tileset.X * Tileset.Y);
 
-				if (tile->TextureID == 2)
+				if (tile.TextureID == 2)
 				{
-					tile->CollisionID = 1;
-					tile->Edges[Direction::Up] = EdgeType::Interesting;
-					tile->Edges[Direction::Down] = EdgeType::Solid;
-					tile->Edges[Direction::Left] = EdgeType::Interesting;
-					tile->Edges[Direction::Right] = EdgeType::Solid;
+					tile.CollisionID = 1;
+					tile.Edges[Direction::Up] = EdgeType::Interesting;
+					tile.Edges[Direction::Down] = EdgeType::Solid;
+					tile.Edges[Direction::Left] = EdgeType::Interesting;
+					tile.Edges[Direction::Right] = EdgeType::Solid;
 				}
-				else if (tile->TextureID == 3)
+				else if (tile.TextureID == 3)
 				{
-					tile->CollisionID = 2;
-					tile->Edges[Direction::Up] = EdgeType::Interesting;
-					tile->Edges[Direction::Down] = EdgeType::Solid;
-					tile->Edges[Direction::Left] = EdgeType::Solid;
-					tile->Edges[Direction::Right] = EdgeType::Interesting;
+					tile.CollisionID = 2;
+					tile.Edges[Direction::Up] = EdgeType::Interesting;
+					tile.Edges[Direction::Down] = EdgeType::Solid;
+					tile.Edges[Direction::Left] = EdgeType::Solid;
+					tile.Edges[Direction::Right] = EdgeType::Interesting;
 				}
 				else
 				{
-					tile->CollisionID = 0;
+					tile.CollisionID = 0;
 					for (int i = 0; i < 4; ++i)
-						tile->Edges[i] = EdgeType::Solid;
+						tile.Edges[i] = EdgeType::Solid;
 				}
 			}
 			else
 			{
-				tile->TextureID = -1;
-				tile->CollisionID = -1;
+				tile.TextureID = -1;
+				tile.CollisionID = -1;
+				for (int i = 0; i < 4; ++i)
+					tile.Edges[i] = EdgeType::Empty;
+			}
+		}
+	}
+
+	// Resolve collision edges.
+	for (int x = 0; x < Width; ++x)
+	{
+		for (int y = 0; y < Height; ++y)
+		{
+			if (x + 1 != Width)
+			{
+				if (Data[x][y].Edges[Direction::Right] == EdgeType::Solid && Data[x + 1][y].Edges[Direction::Left] == EdgeType::Solid)
+				{
+					Data[x][y].Edges[Direction::Right] = EdgeType::Empty;
+					Data[x + 1][y].Edges[Direction::Left] = EdgeType::Empty;
+				}
+			}
+			if (y + 1 != Height)
+			{
+				if (Data[x][y].Edges[Direction::Down] == EdgeType::Solid && Data[x][y + 1].Edges[Direction::Up] == EdgeType::Solid)
+				{
+					Data[x][y].Edges[Direction::Down] = EdgeType::Empty;
+					Data[x][y + 1].Edges[Direction::Up] = EdgeType::Empty;
+				}
 			}
 		}
 	}
@@ -185,7 +257,7 @@ bool Map::Randomize()
 	return true;
 }
 
-bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std::vector<int>& pTargets, HGF::Vector2& pOutHit, float& pOutDistance)
+bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit)
 {
 	int x = (int)std::roundf(pPosition.X);
 	int y = (int)std::roundf(pPosition.Y);
@@ -194,21 +266,27 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 	int pixelX = x % Tileset.Size;
 	int pixelY = y % Tileset.Size;
 
-	pOutHit = HGF::Vector2::Zero;
+	pRaycastHit.Position = HGF::Vector2::Zero;
+	pRaycastHit.Distance = 1000.0f;
+
+	if (tileX < 0 || tileX >= Width || tileY < 0 || tileY >= Height)
+		return false;
 
 	switch (pDirection)
 	{
 		case Direction::Up:
-			for (int ty = tileY; ty >= 0; --ty)
+			for (int ty = tileY - 1; ty >= 0; --ty)
 			{
-				if (!IsTileEmpty(tileX, ty))
+				if (Data[tileX][ty].Edges[Direction::Down] == EdgeType::Solid || (pHasInterest && Data[tileX][ty].Edges[Direction::Down] == EdgeType::Interesting))
 				{
 					for (int py = Tileset.Size - 1; py >= 0; --py)
 					{
-						if (!IsTraversable(tileX, ty, pixelX, py) && VECTORHELPER_Contains(pTargets, Data[tileX][ty].CollisionID))
+						if (!IsTraversable(tileX, ty, pixelX, py))
 						{
-							pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
-							pOutDistance = pPosition.Y - pOutHit.Y;
+							pRaycastHit.Position = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
+							pRaycastHit.Distance = pPosition.Y - pRaycastHit.Position.Y;
+							pRaycastHit.TileX = tileX;
+							pRaycastHit.TileY = ty;
 							return true;
 						}
 					}
@@ -216,16 +294,18 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 			}
 			break;
 		case Direction::Down:
-			for (int ty = tileY; ty < Height; ++ty)
+			for (int ty = tileY + 1; ty < Height; ++ty)
 			{
-				if (!IsTileEmpty(tileX, ty))
+				if (Data[tileX][ty].Edges[Direction::Up] == EdgeType::Solid || (pHasInterest && Data[tileX][ty].Edges[Direction::Up] == EdgeType::Interesting))
 				{
 					for (int py = 0; py < Tileset.Size; ++py)
 					{
-						if (!IsTraversable(tileX, ty, pixelX, py) && VECTORHELPER_Contains(pTargets, Data[tileX][ty].CollisionID))
+						if (!IsTraversable(tileX, ty, pixelX, py))
 						{
-							pOutHit = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
-							pOutDistance = pOutHit.Y - pPosition.Y;
+							pRaycastHit.Position = HGF::Vector2(pPosition.X, (float)(ty * Tileset.Size + py));
+							pRaycastHit.Distance = pRaycastHit.Position.Y - pPosition.Y;
+							pRaycastHit.TileX = tileX;
+							pRaycastHit.TileY = ty;
 							return true;
 						}
 					}
@@ -233,16 +313,18 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 			}
 			break;
 		case Direction::Left:
-			for (int tx = tileX; tx >= 0; --tx)
+			for (int tx = tileX - 1; tx >= 0; --tx)
 			{
-				if (!IsTileEmpty(tx, tileY))
+				if (Data[tx][tileY].Edges[Direction::Right] == EdgeType::Solid || (pHasInterest && Data[tx][tileY].Edges[Direction::Right] == EdgeType::Interesting))
 				{
 					for (int px = Tileset.Size - 1; px >= 0; --px)
 					{
-						if (!IsTraversable(tx, tileY, px, pixelY) && VECTORHELPER_Contains(pTargets, Data[tx][tileY].CollisionID))
+						if (!IsTraversable(tx, tileY, px, pixelY))
 						{
-							pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
-							pOutDistance = pPosition.X - pOutHit.X;
+							pRaycastHit.Position = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
+							pRaycastHit.Distance = pPosition.X - pRaycastHit.Position.X;
+							pRaycastHit.TileX = tileY;
+							pRaycastHit.TileY = tx;
 							return true;
 						}
 					}
@@ -250,16 +332,18 @@ bool Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std
 			}
 			break;
 		case Direction::Right:
-			for (int tx = tileX; tx < Width; ++tx)
+			for (int tx = tileX + 1; tx < Width; ++tx)
 			{
-				if (!IsTileEmpty(tx, tileY))
+				if (Data[tx][tileY].Edges[Direction::Left] == EdgeType::Solid || (pHasInterest && Data[tx][tileY].Edges[Direction::Left] == EdgeType::Interesting))
 				{
 					for (int px = 0; px < Tileset.Size; ++px)
 					{
-						if (!IsTraversable(tx, tileY, px, pixelY) && VECTORHELPER_Contains(pTargets, Data[tx][tileY].CollisionID))
+						if (!IsTraversable(tx, tileY, px, pixelY))
 						{
-							pOutHit = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
-							pOutDistance = pOutHit.X - pPosition.X;
+							pRaycastHit.Position = HGF::Vector2((float)(tx * Tileset.Size + px), pPosition.Y);
+							pRaycastHit.Distance = pRaycastHit.Position.X - pPosition.X;
+							pRaycastHit.TileX = tileY;
+							pRaycastHit.TileY = tx;
 							return true;
 						}
 					}
@@ -304,8 +388,8 @@ bool Map::Render(const Renderer& pRenderer)
 			{
 				HGF::Vector2 position(x * Tileset.Size, y * Tileset.Size);
 				HGF::Vector2 dimensions(Tileset.Size, Tileset.Size);
-				HGF::Vector2 min((value % Tileset.Y) * Tileset.Size, (value / Tileset.Y)  * Tileset.Size);
-				HGF::Vector2 max(((value % Tileset.Y) + 1)  * Tileset.Size, ((value / Tileset.Y) + 1)  * Tileset.Size);
+				HGF::Vector2 min((value % Tileset.X) * Tileset.Size, (value / Tileset.X)  * Tileset.Size);
+				HGF::Vector2 max(((value % Tileset.X) + 1)  * Tileset.Size, ((value / Tileset.X) + 1)  * Tileset.Size);
 
 				if (pRenderer.RenderTexture(Tileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max) < 0)
 					return false;

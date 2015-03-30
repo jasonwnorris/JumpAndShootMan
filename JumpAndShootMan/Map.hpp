@@ -1,9 +1,8 @@
 #ifndef __MAP_HPP__
 #define __MAP_HPP__
 
-#include "Direction.hpp"
+#include "Raycast.hpp"
 #include "Texture.hpp"
-#include "Vector2.hpp"
 
 #include <string>
 #include <vector>
@@ -39,7 +38,7 @@ class Map
 
 		bool Load(const std::string& pFilename);
 		bool Randomize();
-		bool Raycast(const HGF::Vector2& pPosition, Direction pDirection, const std::vector<int>& pTargets, HGF::Vector2& pOutHit, float& pOutDistance);
+		bool Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
 		bool Render(const Renderer& pRenderer);
