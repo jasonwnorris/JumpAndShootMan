@@ -1,7 +1,8 @@
 // BitArray.cpp
 
+// Project Includes
 #include "BitArray.hpp"
-
+// STL Includes
 #include <assert.h>
 
 BitArray::BitArray(int pLength)

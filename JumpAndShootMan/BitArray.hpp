@@ -1,3 +1,5 @@
+// BitArray.hpp
+
 #ifndef __BITARRAY_HPP__
 #define __BITARRAY_HPP__
 

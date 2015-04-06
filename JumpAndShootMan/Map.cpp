@@ -1,10 +1,13 @@
+// Map.cpp
+
+// SDL Includes
+#include <SDL2\SDL.h>
+#include <SDL2\SDL_image.h>
+// Project Includes
 #include "Globals.hpp"
 #include "Map.hpp"
 #include "Renderer.hpp"
-
-#include <SDL2\SDL.h>
-#include <SDL2\SDL_image.h>
-
+// STL Includes
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -70,12 +73,12 @@ bool Map::Load(const std::string& pFilename)
 	file >> bitWidth >> bitHeight >> bitSize;
 
 	// Load tileset texture;
-	if (!mTileset.Texture.Load(tilesetFilename))
+	if (!mTileset.Texture.Load(tilesetFilename.c_str(), HGF::Interpolation::Nearest))
 		return false;
 
 	// Load bitmask texture.
 	HGF::Texture bitmaskTexture;
-	if (!bitmaskTexture.Load(bitmaskFilename))
+	if (!bitmaskTexture.Load(bitmaskFilename.c_str()))
 		return false;
 
 	// Establish bitmask count.

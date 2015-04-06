@@ -1,3 +1,6 @@
+// Player.cpp
+
+// Project Includes
 #include "Globals.hpp"
 #include "Player.hpp"
 #include "Renderer.hpp"
@@ -28,7 +31,7 @@ Player::~Player()
 
 bool Player::Load(const std::string& pFilename)
 {
-	if (!mTexture.Load(pFilename))
+	if (!mTexture.Load(pFilename.c_str()))
 		return false;
 
 	float updowndistance = 70.0f / 2.0f;

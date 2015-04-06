@@ -1,8 +1,11 @@
+// Renderer.hpp
+
 #ifndef __RENDERER_HPP__
 #define __RENDERER_HPP__
 
-#include "Texture.hpp"
-#include "Vector2.hpp"
+// HGF Includes
+#include <HGF\Texture.hpp>
+#include <HGF\Vector2.hpp>
 
 class Map;
 class Player;

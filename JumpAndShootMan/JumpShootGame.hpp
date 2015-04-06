@@ -1,29 +1,31 @@
+// JumpShootGame.hpp
+
 #ifndef __GAME_HPP__
 #define __GAME_HPP__
 
-#include "Timer.hpp"
+// SAGE Includes
+#include <SAGE\Game.hpp>
+// Project Includes
 #include "Camera.hpp"
 #include "Renderer.hpp"
 #include "Map.hpp"
 #include "Player.hpp"
-
+// STL Includes
 #include <map>
 
-class Game
+class JumpShootGame : public SAGE::Game
 {
 	public:
-		Game();
-		~Game();
+		JumpShootGame();
+		~JumpShootGame();
 
-		int Run();
+	protected:
+		int Initialize() override;
+		int Finalize() override;
+		int Update(float pDeltaTime) override;
+		int Render() override;
 
 	private:
-		int Initialize();
-		int Finalize();
-		int HandleInput();
-		int Update(float pDeltaTime);
-		int Render();
-
 		void UpdateRaycast();
 		void UpdateAdjustment(Direction pDirection, float pDistance);
 
@@ -34,12 +36,8 @@ class Game
 		int mWindowWidth;
 		int mWindowHeight;
 
-		SDL_Event mEvent;
-		std::map<SDL_Keycode, bool> mKeys;
 		SDL_Window* mWindow;
 		SDL_GLContext mContext;
-		bool mIsRunning;
-		Timer mTimer;
 		Camera mCamera;
 		Renderer mRenderer;
 		Map mMap;

@@ -1,11 +1,13 @@
-#include "Renderer.hpp"
+// Renderer.hpp
 
-#include "Map.hpp"
-#include "Player.hpp"
-
+// SDL Includes
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
 #include <SDL2\SDL_opengl.h>
+// Project Includes
+#include "Map.hpp"
+#include "Player.hpp"
+#include "Renderer.hpp"
 
 Renderer::Renderer()
 {

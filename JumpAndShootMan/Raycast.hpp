@@ -1,8 +1,12 @@
+// Raycast.hpp
+
 #ifndef __RAYCAST_HPP__
 #define __RAYCAST_HPP__
 
+// HGF Includes
+#include <HGF\Vector2.hpp>
+// Project Includes
 #include "Direction.hpp"
-#include "Vector2.hpp"
 
 struct RaycastInfo
 {

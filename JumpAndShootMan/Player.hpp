@@ -1,11 +1,15 @@
+// Player.hpp
+
 #ifndef __PLAYER_HPP__
 #define __PLAYER_HPP__
 
+// HGF Includes
+#include <HGF\Texture.hpp>
+#include <HGF\Vector2.hpp>
+// Project Includes
 #include "Direction.hpp"
 #include "Raycast.hpp"
-#include "Texture.hpp"
-#include "Vector2.hpp"
-
+// STL Includes
 #include <vector>
 
 class Renderer;

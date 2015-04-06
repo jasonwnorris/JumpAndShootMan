@@ -1,7 +1,10 @@
+// Camera.hpp
+
 #ifndef __CAMERA_HPP__
 #define __CAMERA_HPP__
 
-#include "Vector2.hpp"
+// HGF Includes
+#include <HGF\Vector2.hpp>
 
 struct Camera
 {

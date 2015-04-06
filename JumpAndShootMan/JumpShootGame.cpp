@@ -1,15 +1,19 @@
-#include "Game.hpp"
-#include "Globals.hpp"
+// JumpShootGame.cpp
 
+// HGF Includes
+#include <HGF\Events.hpp>
+#include <HGF\Keyboard.hpp>
+// SDL Includes
 #include <SDL2\SDL_opengl.h>
-
+// Project Includes
+#include "JumpShootGame.hpp"
+#include "Globals.hpp"
+// STL Includes
 #include <iostream>
 
-Game::Game()
+JumpShootGame::JumpShootGame()
 {
 	Globals::IsDebugDrawOn = false;
-
-	mIsRunning = true;
 	
 	mWindowWidth = 1024;
 	mWindowHeight = 768;
@@ -19,38 +23,11 @@ Game::Game()
 	mCamera.Zoom = 1.0f;
 }
 
-Game::~Game()
+JumpShootGame::~JumpShootGame()
 {
 }
 
-int Game::Run()
-{
-	if (Initialize() < 0)
-		return -1;
-
-	while (mIsRunning)
-	{
-		mTimer.Update();
-
-		if (HandleInput() < 0)
-			return -1;
-
-		if (Update(mTimer.GetDeltaTime()) < 0)
-			return -1;
-
-		if (Render() < 0)
-			return -1;
-
-		SDL_Delay(10);
-	}
-
-	if (Finalize() < 0)
-		return -1;
-
-	return 0;
-}
-
-int Game::Initialize()
+int JumpShootGame::Initialize()
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 		return -1;
@@ -93,7 +70,7 @@ int Game::Initialize()
 	return 0;
 }
 
-int Game::Finalize()
+int JumpShootGame::Finalize()
 {
 	// clean up
 	SDL_GL_DeleteContext(mContext);
@@ -103,78 +80,70 @@ int Game::Finalize()
 	return 0;
 }
 
-int Game::HandleInput()
+int JumpShootGame::Update(float pDeltaTime)
 {
-	// event handling
-	while (SDL_PollEvent(&mEvent))
+	mFrameCount++;
+	mCurrentTicks = SDL_GetTicks();
+	if (mCurrentTicks > mPreviousTicks + 1000)
 	{
-		switch (mEvent.type)
-		{
-			case SDL_QUIT:
-				mIsRunning = false;
-				break;
-			case SDL_KEYDOWN:
-				mKeys[mEvent.key.keysym.sym] = true;
-				break;
-			case SDL_KEYUP:
-				mKeys[mEvent.key.keysym.sym] = false;
-				break;
-			default:
-				break;
-		}
+		std::cout << "FPS: " << mFrameCount << " | Delta: "  << pDeltaTime << std::endl;
+		mPreviousTicks = mCurrentTicks;
+		mFrameCount = 0;
 	}
 
 	// debug
-	if (mKeys[SDLK_BACKSPACE])
+	if (HGF::Keyboard::IsKeyPressed(SDLK_BACKSPACE))
 	{
 		mPlayer.Position = HGF::Vector2(100.0f, 100.0f);
+		mPlayer.IsGrounded = false;
 	}
-	if (mKeys[SDLK_p])
+	if (HGF::Keyboard::IsKeyPressed(SDLK_p))
 	{
 		Globals::IsDebugDrawOn = !Globals::IsDebugDrawOn;
 	}
 
 	// exit
-	if (mKeys[SDLK_ESCAPE])
+	if (HGF::Keyboard::IsKeyPressed(SDLK_ESCAPE))
 	{
-		mIsRunning = false;
+		mRunning = false;
 	}
 
 	/*
 	// movement
-	if (mKeys[SDLK_UP])
+	if (HGF::Keyboard::IsKeyDown(SDLK_UP))
 	{
-		mPlayer.Position.Y -= mPlayer.MovementSpeed;
+	mPlayer.Position.Y -= mPlayer.MovementSpeed;
 	}
-	if (mKeys[SDLK_DOWN])
+	if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
 	{
-		mPlayer.Position.Y += mPlayer.MovementSpeed;
+	mPlayer.Position.Y += mPlayer.MovementSpeed;
 	}
+	if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 	if (mKeys[SDLK_LEFT])
 	{
-		mPlayer.Position.X -= mPlayer.MovementSpeed;
-		mPlayer.IsFacingLeft = true;
+	mPlayer.Position.X -= mPlayer.MovementSpeed;
+	mPlayer.IsFacingLeft = true;
 	}
-	if (mKeys[SDLK_RIGHT])
+	if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 	{
-		mPlayer.Position.X += mPlayer.MovementSpeed;
-		mPlayer.IsFacingLeft = false;
+	mPlayer.Position.X += mPlayer.MovementSpeed;
+	mPlayer.IsFacingLeft = false;
 	}
 	*/
 
 	// handle input
-	if (mKeys[SDLK_SPACE] && mPlayer.IsGrounded)
+	if (HGF::Keyboard::IsKeyPressed(SDLK_SPACE) && mPlayer.IsGrounded)
 	{
 		mPlayer.Velocity.Y = 0.0f;
 		mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
 		mPlayer.IsGrounded = false;
 	}
-	if (mKeys[SDLK_LEFT])
+	if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 	{
 		mPlayer.Acceleration.X -= mPlayer.MovementSpeed;
 		mPlayer.IsFacingLeft = true;
 	}
-	if (mKeys[SDLK_RIGHT])
+	if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 	{
 		mPlayer.Acceleration.X += mPlayer.MovementSpeed;
 		mPlayer.IsFacingLeft = false;
@@ -190,26 +159,12 @@ int Game::HandleInput()
 	mPlayer.Velocity.X *= 0.75f;
 	mPlayer.Acceleration *= 0.75f;
 
-	return 0;
-}
-
-int Game::Update(float pDeltaTime)
-{
-	mFrameCount++;
-	mCurrentTicks = SDL_GetTicks();
-	if (mCurrentTicks > mPreviousTicks + 1000)
-	{
-		std::cout << "FPS: " << mFrameCount << std::endl;
-		mPreviousTicks = mCurrentTicks;
-		mFrameCount = 0;
-	}
-
 	UpdateRaycast();
 
 	return 0;
 }
 
-int Game::Render()
+int JumpShootGame::Render()
 {
 	// clear
 	glClearColor(125.0f / 255.0f, 125.0f / 255.0f, 125.0f / 255.0f, 1.0f);
@@ -236,7 +191,7 @@ int Game::Render()
 	return 0;
 }
 
-void Game::UpdateRaycast()
+void JumpShootGame::UpdateRaycast()
 {
 	for (int i = 0; i < Player::MaxRayCount; i += 3)
 	{
@@ -280,7 +235,7 @@ void Game::UpdateRaycast()
 	}
 }
 
-void Game::UpdateAdjustment(Direction pDirection, float pDistance)
+void JumpShootGame::UpdateAdjustment(Direction pDirection, float pDistance)
 {
 	switch (pDirection)
 	{

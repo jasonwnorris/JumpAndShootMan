@@ -1,9 +1,13 @@
+// Map.hpp
+
 #ifndef __MAP_HPP__
 #define __MAP_HPP__
 
+// HGF Includes
+#include <HGF\Texture.hpp>
+// Project Includes
 #include "Raycast.hpp"
-#include "Texture.hpp"
-
+// STL Includes
 #include <string>
 #include <vector>
 

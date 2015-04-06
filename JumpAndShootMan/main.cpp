@@ -1,18 +1,15 @@
-#include <SDL2\SDL.h>
-#include <SDL2\SDL_image.h>
+// main.cpp
 
-#include "MathHelper.hpp"
-#include "Game.hpp"
-#include "Vector2.hpp"
-
-#include <cstdlib>
+// Project Includes
+#include "JumpShootGame.hpp"
+// STL Includes
 #include <time.h>
 
 int main(int argc, char** argv)
 {
 	srand((unsigned int)time(NULL));
 
-	Game game;
+	JumpShootGame game;
 	game.Run();
 
 	return 0;
