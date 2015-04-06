@@ -35,7 +35,6 @@ class Player
 			MRK_RIGHT_BOTTOM,
 		};
 
-		HGF::Texture Texture;
 		HGF::Vector2 Position;
 		HGF::Vector2 Velocity;
 		HGF::Vector2 Acceleration;
@@ -46,8 +45,11 @@ class Player
 		HGF::Vector2 Dimensions;
 		bool IsGrounded;
 		bool IsJumping;
-		RayInfo* CollisionRays;
+		RaycastInfo* RaycastInfos;
 		RaycastHit* RaycastHits;
+
+	private:
+		HGF::Texture mTexture;
 };
 
 #endif

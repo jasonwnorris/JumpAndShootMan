@@ -37,20 +37,18 @@ class Map
 		~Map();
 
 		bool Load(const std::string& pFilename);
-		bool Randomize();
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
 		bool Render(const Renderer& pRenderer);
-
-		Tileset Tileset;
-		Tile** Data;
-		int BitMaskCount;
-		bool*** BitMasks;
-
+		
 	private:
+		Tileset mTileset;
 		int mWidth;
 		int mHeight;
+		Tile** mData;
+		int mBitMaskCount;
+		bool*** mBitMasks;
 		bool mIsLoaded;
 };
 

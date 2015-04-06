@@ -12,7 +12,7 @@ Player::Player()
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
 	IsFacingLeft = false;
-	MovementSpeed = 0.185f + 2.5f;
+	MovementSpeed = 0.185f;// +2.5f;
 	JumpingSpeed = 1.15f;
 	Gravity = 0.035f;
 	Dimensions = HGF::Vector2(107.0f / scale, 147.0f / scale);
@@ -22,71 +22,84 @@ Player::Player()
 
 Player::~Player()
 {
-	delete [] CollisionRays;
+	delete [] RaycastInfos;
 	delete [] RaycastHits;
 }
 
 bool Player::Load(const std::string& pFilename)
 {
-	if (!Texture.Load(pFilename))
+	if (!mTexture.Load(pFilename))
 		return false;
 
 	float updowndistance = 70.0f / 2.0f;
 	float leftrightdistance = 46.0f / 2.0f;
+	float thresholdAddition = 15.0f;
 
-	CollisionRays = new RayInfo[MaxRayCount];
+	RaycastInfos = new RaycastInfo[MaxRayCount];
 	// Up
-	CollisionRays[MRK_HEAD_LEFT].Position = HGF::Vector2(Dimensions.X * -1.0f / 4.0f, 0.0f);
-	CollisionRays[MRK_HEAD_LEFT].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_LEFT].Distance = updowndistance;
-	CollisionRays[MRK_HEAD_LEFT].HasInterest = false;
-	CollisionRays[MRK_HEAD_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	CollisionRays[MRK_HEAD_CENTER].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_CENTER].Distance = updowndistance;
-	CollisionRays[MRK_HEAD_CENTER].HasInterest = true;
-	CollisionRays[MRK_HEAD_RIGHT].Position = HGF::Vector2(Dimensions.X * 1.0f / 4.0f, 0.0f);
-	CollisionRays[MRK_HEAD_RIGHT].Direction = Direction::Up;
-	CollisionRays[MRK_HEAD_RIGHT].Distance = updowndistance;
-	CollisionRays[MRK_HEAD_RIGHT].HasInterest = false;
+	RaycastInfos[MRK_HEAD_LEFT].Position = HGF::Vector2(Dimensions.X * -1.0f / 4.0f, 0.0f);
+	RaycastInfos[MRK_HEAD_LEFT].Direction = Direction::Up;
+	RaycastInfos[MRK_HEAD_LEFT].Distance = updowndistance;
+	RaycastInfos[MRK_HEAD_LEFT].Threshold = updowndistance;
+	RaycastInfos[MRK_HEAD_LEFT].HasInterest = false;
+	RaycastInfos[MRK_HEAD_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[MRK_HEAD_CENTER].Direction = Direction::Up;
+	RaycastInfos[MRK_HEAD_CENTER].Distance = updowndistance;
+	RaycastInfos[MRK_HEAD_CENTER].Threshold = updowndistance + thresholdAddition;
+	RaycastInfos[MRK_HEAD_CENTER].HasInterest = true;
+	RaycastInfos[MRK_HEAD_RIGHT].Position = HGF::Vector2(Dimensions.X * 1.0f / 4.0f, 0.0f);
+	RaycastInfos[MRK_HEAD_RIGHT].Direction = Direction::Up;
+	RaycastInfos[MRK_HEAD_RIGHT].Distance = updowndistance;
+	RaycastInfos[MRK_HEAD_RIGHT].Threshold = updowndistance;
+	RaycastInfos[MRK_HEAD_RIGHT].HasInterest = false;
 	// Down
-	CollisionRays[MRK_FOOT_LEFT].Position = HGF::Vector2(Dimensions.X * -3.0f / 8.0f, 0.0f);
-	CollisionRays[MRK_FOOT_LEFT].Direction = Direction::Down;
-	CollisionRays[MRK_FOOT_LEFT].Distance = updowndistance;
-	CollisionRays[MRK_FOOT_LEFT].HasInterest = false;
-	CollisionRays[MRK_HOTSPOT].Position = HGF::Vector2(0.0f, 0.0f);
-	CollisionRays[MRK_HOTSPOT].Direction = Direction::Down;
-	CollisionRays[MRK_HOTSPOT].Distance = updowndistance;
-	CollisionRays[MRK_HOTSPOT].HasInterest = true;
-	CollisionRays[MRK_FOOT_RIGHT].Position = HGF::Vector2(Dimensions.X * 3.0f / 8.0f, 0.0f);
-	CollisionRays[MRK_FOOT_RIGHT].Direction = Direction::Down;
-	CollisionRays[MRK_FOOT_RIGHT].Distance = updowndistance;
-	CollisionRays[MRK_FOOT_RIGHT].HasInterest = false;
+	RaycastInfos[MRK_FOOT_LEFT].Position = HGF::Vector2(Dimensions.X * -3.0f / 10.0f, 0.0f);
+	RaycastInfos[MRK_FOOT_LEFT].Direction = Direction::Down;
+	RaycastInfos[MRK_FOOT_LEFT].Distance = updowndistance;
+	RaycastInfos[MRK_FOOT_LEFT].Threshold = updowndistance;
+	RaycastInfos[MRK_FOOT_LEFT].HasInterest = false;
+	RaycastInfos[MRK_HOTSPOT].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[MRK_HOTSPOT].Direction = Direction::Down;
+	RaycastInfos[MRK_HOTSPOT].Distance = updowndistance;
+	RaycastInfos[MRK_HOTSPOT].Threshold = updowndistance + thresholdAddition;
+	RaycastInfos[MRK_HOTSPOT].HasInterest = true;
+	RaycastInfos[MRK_FOOT_RIGHT].Position = HGF::Vector2(Dimensions.X * 3.0f / 10.0f, 0.0f);
+	RaycastInfos[MRK_FOOT_RIGHT].Direction = Direction::Down;
+	RaycastInfos[MRK_FOOT_RIGHT].Distance = updowndistance;
+	RaycastInfos[MRK_FOOT_RIGHT].Threshold = updowndistance;
+	RaycastInfos[MRK_FOOT_RIGHT].HasInterest = false;
 	// Left
-	CollisionRays[MRK_LEFT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
-	CollisionRays[MRK_LEFT_TOP].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_TOP].Distance = leftrightdistance;
-	CollisionRays[MRK_LEFT_TOP].HasInterest = false;
-	CollisionRays[MRK_LEFT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	CollisionRays[MRK_LEFT_CENTER].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_CENTER].Distance = leftrightdistance;
-	CollisionRays[MRK_LEFT_CENTER].HasInterest = false;
-	CollisionRays[MRK_LEFT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
-	CollisionRays[MRK_LEFT_BOTTOM].Direction = Direction::Left;
-	CollisionRays[MRK_LEFT_BOTTOM].Distance = leftrightdistance;
-	CollisionRays[MRK_LEFT_BOTTOM].HasInterest = false;
+	RaycastInfos[MRK_LEFT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
+	RaycastInfos[MRK_LEFT_TOP].Direction = Direction::Left;
+	RaycastInfos[MRK_LEFT_TOP].Distance = leftrightdistance;
+	RaycastInfos[MRK_LEFT_TOP].Threshold = leftrightdistance;
+	RaycastInfos[MRK_LEFT_TOP].HasInterest = false;
+	RaycastInfos[MRK_LEFT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[MRK_LEFT_CENTER].Direction = Direction::Left;
+	RaycastInfos[MRK_LEFT_CENTER].Distance = leftrightdistance;
+	RaycastInfos[MRK_LEFT_CENTER].Threshold = leftrightdistance + thresholdAddition;
+	RaycastInfos[MRK_LEFT_CENTER].HasInterest = false;
+	RaycastInfos[MRK_LEFT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
+	RaycastInfos[MRK_LEFT_BOTTOM].Direction = Direction::Left;
+	RaycastInfos[MRK_LEFT_BOTTOM].Distance = leftrightdistance;
+	RaycastInfos[MRK_LEFT_BOTTOM].Threshold = leftrightdistance;
+	RaycastInfos[MRK_LEFT_BOTTOM].HasInterest = false;
 	// Right
-	CollisionRays[MRK_RIGHT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
-	CollisionRays[MRK_RIGHT_TOP].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_TOP].Distance = leftrightdistance;
-	CollisionRays[MRK_RIGHT_TOP].HasInterest = false;
-	CollisionRays[MRK_RIGHT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	CollisionRays[MRK_RIGHT_CENTER].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_CENTER].Distance = leftrightdistance;
-	CollisionRays[MRK_RIGHT_CENTER].HasInterest = false;
-	CollisionRays[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
-	CollisionRays[MRK_RIGHT_BOTTOM].Direction = Direction::Right;
-	CollisionRays[MRK_RIGHT_BOTTOM].Distance = leftrightdistance;
-	CollisionRays[MRK_RIGHT_BOTTOM].HasInterest = false;
+	RaycastInfos[MRK_RIGHT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
+	RaycastInfos[MRK_RIGHT_TOP].Direction = Direction::Right;
+	RaycastInfos[MRK_RIGHT_TOP].Distance = leftrightdistance;
+	RaycastInfos[MRK_RIGHT_TOP].Threshold = leftrightdistance;
+	RaycastInfos[MRK_RIGHT_TOP].HasInterest = false;
+	RaycastInfos[MRK_RIGHT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[MRK_RIGHT_CENTER].Direction = Direction::Right;
+	RaycastInfos[MRK_RIGHT_CENTER].Distance = leftrightdistance;
+	RaycastInfos[MRK_RIGHT_CENTER].Threshold = leftrightdistance + thresholdAddition;
+	RaycastInfos[MRK_RIGHT_CENTER].HasInterest = false;
+	RaycastInfos[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
+	RaycastInfos[MRK_RIGHT_BOTTOM].Direction = Direction::Right;
+	RaycastInfos[MRK_RIGHT_BOTTOM].Distance = leftrightdistance;
+	RaycastInfos[MRK_RIGHT_BOTTOM].Threshold = leftrightdistance;
+	RaycastInfos[MRK_RIGHT_BOTTOM].HasInterest = false;
 
 	RaycastHits = new RaycastHit[MaxRayCount];
 
@@ -96,7 +109,7 @@ bool Player::Load(const std::string& pFilename)
 bool Player::Render(const Renderer& pRenderer)
 {
 	// texture
-	if (pRenderer.RenderTexture(Texture, Position, Dimensions, Dimensions / 2.0f, HGF::Vector2(12, 110), HGF::Vector2(118, 256), IsFacingLeft) < 0)
+	if (pRenderer.RenderTexture(mTexture, Position, Dimensions, Dimensions / 2.0f, HGF::Vector2(12, 110), HGF::Vector2(118, 256), IsFacingLeft) < 0)
 		return false;
 	
 	if (Globals::IsDebugDrawOn)
@@ -108,7 +121,7 @@ bool Player::Render(const Renderer& pRenderer)
 		// collision points
 		for (int i = 0; i < Player::MaxRayCount; ++i)
 		{
-			RayInfo& col = CollisionRays[i];
+			RaycastInfo& col = RaycastInfos[i];
 			RaycastHit& hit = RaycastHits[i];
 
 			if (pRenderer.RenderLine(Position + col.Position, hit.Position, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f) < 0)

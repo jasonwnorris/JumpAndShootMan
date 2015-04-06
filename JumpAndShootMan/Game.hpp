@@ -24,6 +24,9 @@ class Game
 		int Update(float pDeltaTime);
 		int Render();
 
+		void UpdateRaycast();
+		void UpdateAdjustment(Direction pDirection, float pDistance);
+
 		int mFrameCount;
 		Uint32 mPreviousTicks;
 		Uint32 mCurrentTicks;

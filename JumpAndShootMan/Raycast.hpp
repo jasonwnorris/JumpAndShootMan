@@ -4,11 +4,12 @@
 #include "Direction.hpp"
 #include "Vector2.hpp"
 
-struct RayInfo
+struct RaycastInfo
 {
 	HGF::Vector2 Position;
 	Direction Direction;
 	float Distance;
+	float Threshold;
 	bool HasInterest;
 };
 

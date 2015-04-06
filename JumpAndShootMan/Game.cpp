@@ -7,7 +7,7 @@
 
 Game::Game()
 {
-	Globals::IsDebugDrawOn = true;
+	Globals::IsDebugDrawOn = false;
 
 	mIsRunning = true;
 	
@@ -125,10 +125,6 @@ int Game::HandleInput()
 	}
 
 	// debug
-	if (mKeys[SDLK_RETURN])
-	{
-		mMap.Randomize();
-	}
 	if (mKeys[SDLK_BACKSPACE])
 	{
 		mPlayer.Position = HGF::Vector2(100.0f, 100.0f);
@@ -144,6 +140,7 @@ int Game::HandleInput()
 		mIsRunning = false;
 	}
 
+	/*
 	// movement
 	if (mKeys[SDLK_UP])
 	{
@@ -163,8 +160,8 @@ int Game::HandleInput()
 		mPlayer.Position.X += mPlayer.MovementSpeed;
 		mPlayer.IsFacingLeft = false;
 	}
+	*/
 
-	/*
 	// handle input
 	if (mKeys[SDLK_SPACE] && mPlayer.IsGrounded)
 	{
@@ -192,7 +189,6 @@ int Game::HandleInput()
 	mPlayer.Position += mPlayer.Velocity;
 	mPlayer.Velocity.X *= 0.75f;
 	mPlayer.Acceleration *= 0.75f;
-	*/
 
 	return 0;
 }
@@ -208,120 +204,7 @@ int Game::Update(float pDeltaTime)
 		mFrameCount = 0;
 	}
 
-	bool hitGround = false;
-	int c = 3;
-	for (int i = 0; i < 4; ++i)
-	{
-		mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i * c].Position, mPlayer.CollisionRays[i * c].Direction, mPlayer.CollisionRays[i * c].HasInterest, mPlayer.RaycastHits[i * c]);
-		if (mPlayer.RaycastHits[i * c].Distance < mPlayer.CollisionRays[i * c].Distance)
-		{
-			float diff = mPlayer.CollisionRays[i * c].Distance - mPlayer.RaycastHits[i * c].Distance;
-			switch (mPlayer.CollisionRays[i * c].Direction)
-			{
-				case Direction::Up:
-					mPlayer.Position.Y += diff;
-					mPlayer.Velocity.Y = 0.0f;
-					mPlayer.Acceleration.Y = 0.0f;
-					break;
-				case Direction::Down:
-					mPlayer.Position.Y -= diff;
-					mPlayer.Velocity.Y = 0.0f;
-					mPlayer.Acceleration.Y = 0.0f;
-					hitGround = true;
-					break;
-				case Direction::Left:
-					mPlayer.Position.X += diff;
-					mPlayer.Velocity.X = 0.0f;
-					mPlayer.Acceleration.X = 0.0f;
-					break;
-				case Direction::Right:
-					mPlayer.Position.X -= diff;
-					mPlayer.Velocity.X = 0.0f;
-					mPlayer.Acceleration.X = 0.0f;
-					break;
-			}
-		}
-		else
-		{
-			for (int j = 1; j <= 2; ++j)
-			{
-				mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i * c + j].Position, mPlayer.CollisionRays[i * c + j].Direction, mPlayer.CollisionRays[i * c + j].HasInterest, mPlayer.RaycastHits[i * c + j]);
-			
-				if (mPlayer.RaycastHits[i * c + j].Distance < mPlayer.CollisionRays[i * c + j].Distance)
-				{
-					float diff = mPlayer.CollisionRays[i * c + j].Distance - mPlayer.RaycastHits[i * c + j].Distance;
-					switch (mPlayer.CollisionRays[i * c + j].Direction)
-					{
-						case Direction::Up:
-							mPlayer.Position.Y += diff;
-							mPlayer.Velocity.Y = 0.0f;
-							mPlayer.Acceleration.Y = 0.0f;
-							break;
-						case Direction::Down:
-							if ((j == 1 && !(mPlayer.RaycastHits[i * c].TileX - 1 == mPlayer.RaycastHits[i * c + 1].TileX && mPlayer.RaycastHits[i * c].TileY == mPlayer.RaycastHits[i * c + 1].TileY)) ||
-								(j == 2 && !(mPlayer.RaycastHits[i * c].TileX + 1 == mPlayer.RaycastHits[i * c + 2].TileX && mPlayer.RaycastHits[i * c].TileY == mPlayer.RaycastHits[i * c + 2].TileY)))
-							{
-								mPlayer.Position.Y -= diff;
-								mPlayer.Velocity.Y = 0.0f;
-								mPlayer.Acceleration.Y = 0.0f;
-								hitGround = true;
-							}
-							break;
-						case Direction::Left:
-							mPlayer.Position.X += diff;
-							mPlayer.Velocity.X = 0.0f;
-							mPlayer.Acceleration.X = 0.0f;
-							break;
-						case Direction::Right:
-							mPlayer.Position.X -= diff;
-							mPlayer.Velocity.X = 0.0f;
-							mPlayer.Acceleration.X = 0.0f;
-							break;
-					}
-				}
-			}
-		}
-	}
-	mPlayer.IsGrounded = hitGround;
-
-	/*
-	// Cast rays.
-	bool hitGround = false;
-	for (int i = 0; i < Player::MaxRayCount; ++i)
-	{
-		mMap.Raycast(mPlayer.Position + mPlayer.CollisionRays[i].Position, mPlayer.CollisionRays[i].Direction, mPlayer.CollisionRays[i].HasInterest, mPlayer.RaycastHits[i]);
-
-		if (mPlayer.RaycastHits[i].Distance < mPlayer.CollisionRays[i].Distance)
-		{
-			float diff = mPlayer.CollisionRays[i].Distance - mPlayer.RaycastHits[i].Distance;
-			switch (mPlayer.CollisionRays[i].Direction)
-			{
-				case Direction::Up:
-					mPlayer.Position.Y += diff;
-					mPlayer.Velocity.Y = 0.0f;
-					mPlayer.Acceleration.Y = 0.0f;
-					break;
-				case Direction::Down:
-					mPlayer.Position.Y -= diff;
-					mPlayer.Velocity.Y = 0.0f;
-					mPlayer.Acceleration.Y = 0.0f;
-					hitGround = true;
-					break;
-				case Direction::Left:
-					mPlayer.Position.X += diff;
-					mPlayer.Velocity.X = 0.0f;
-					mPlayer.Acceleration.X = 0.0f;
-					break;
-				case Direction::Right:
-					mPlayer.Position.X -= diff;
-					mPlayer.Velocity.X = 0.0f;
-					mPlayer.Acceleration.X = 0.0f;
-					break;
-			}
-		}
-	}
-	mPlayer.IsGrounded = hitGround;
-	*/
+	UpdateRaycast();
 
 	return 0;
 }
@@ -351,4 +234,76 @@ int Game::Render()
 	SDL_GL_SwapWindow(mWindow);
 
 	return 0;
+}
+
+void Game::UpdateRaycast()
+{
+	for (int i = 0; i < Player::MaxRayCount; i += 3)
+	{
+		mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i].HasInterest, mPlayer.RaycastHits[i]);
+
+		if (mPlayer.RaycastHits[i].Distance < mPlayer.RaycastInfos[i].Threshold)
+		{
+			if (mPlayer.RaycastHits[i].Distance < mPlayer.RaycastInfos[i].Distance || (mPlayer.RaycastInfos[i].Direction == Direction::Down && mPlayer.IsGrounded))
+			{
+				UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i].Distance - mPlayer.RaycastHits[i].Distance);
+			}
+		}
+		else
+		{
+			mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i + 1].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].HasInterest, mPlayer.RaycastHits[i + 1]);
+			mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i + 2].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].HasInterest, mPlayer.RaycastHits[i + 2]);
+		
+			if (mPlayer.RaycastHits[i + 1].Distance < mPlayer.RaycastInfos[i + 1].Distance && mPlayer.RaycastHits[i + 2].Distance < mPlayer.RaycastInfos[i + 2].Distance)
+			{
+				if (mPlayer.RaycastHits[i + 1].Distance > mPlayer.RaycastHits[i + 2].Distance)
+				{
+					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].Distance - mPlayer.RaycastHits[i + 1].Distance);
+				}
+				else
+				{
+					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].Distance - mPlayer.RaycastHits[i + 2].Distance);
+				}
+			}
+			else
+			{
+				if (mPlayer.RaycastHits[i + 1].Distance < mPlayer.RaycastInfos[i + 1].Distance)
+				{
+					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].Distance - mPlayer.RaycastHits[i + 1].Distance);
+				}
+				if (mPlayer.RaycastHits[i + 2].Distance < mPlayer.RaycastInfos[i + 2].Distance)
+				{
+					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].Distance - mPlayer.RaycastHits[i + 2].Distance);
+				}
+			}
+		}
+	}
+}
+
+void Game::UpdateAdjustment(Direction pDirection, float pDistance)
+{
+	switch (pDirection)
+	{
+		case Direction::Up:
+			mPlayer.Position.Y += pDistance;
+			mPlayer.Velocity.Y = 0.0f;
+			mPlayer.Acceleration.Y = 0.0f;
+			break;
+		case Direction::Down:
+			mPlayer.Position.Y -= pDistance;
+			mPlayer.Velocity.Y = 0.0f;
+			mPlayer.Acceleration.Y = 0.0f;
+			mPlayer.IsGrounded = true;
+			break;
+		case Direction::Left:
+			mPlayer.Position.X += pDistance;
+			mPlayer.Velocity.X = 0.0f;
+			mPlayer.Acceleration.X = 0.0f;
+			break;
+		case Direction::Right:
+			mPlayer.Position.X -= pDistance;
+			mPlayer.Velocity.X = 0.0f;
+			mPlayer.Acceleration.X = 0.0f;
+			break;
+	}
 }
