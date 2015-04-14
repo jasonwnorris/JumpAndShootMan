@@ -15,12 +15,13 @@ Player::Player()
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
 	IsFacingLeft = false;
-	MovementSpeed = 0.185f;// +2.5f;
-	JumpingSpeed = 1.15f;
+	MovementSpeed = 0.185f;
+	JumpingSpeed = 1.35f;
 	Gravity = 0.035f;
 	Dimensions = HGF::Vector2(107.0f / scale, 147.0f / scale);
 	IsGrounded = false;
 	IsJumping = false;
+	IsDebugFly = false;
 }
 
 Player::~Player()

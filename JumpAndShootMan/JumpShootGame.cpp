@@ -3,6 +3,8 @@
 // HGF Includes
 #include <HGF\Events.hpp>
 #include <HGF\Keyboard.hpp>
+// GL Includes
+#include <GL\glew.h>
 // SDL Includes
 #include <SDL2\SDL_opengl.h>
 // Project Includes
@@ -46,6 +48,9 @@ int JumpShootGame::Initialize()
 	if (SDL_GL_SetSwapInterval(1) < 0)
 		return -1;
 
+	if (!mSpriteBatch.Initialize())
+		return -1;
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -72,6 +77,9 @@ int JumpShootGame::Initialize()
 
 int JumpShootGame::Finalize()
 {
+	if (!mSpriteBatch.Finalize())
+		return -1;
+
 	// clean up
 	SDL_GL_DeleteContext(mContext);
 	SDL_DestroyWindow(mWindow);
@@ -101,6 +109,14 @@ int JumpShootGame::Update(float pDeltaTime)
 	{
 		Globals::IsDebugDrawOn = !Globals::IsDebugDrawOn;
 	}
+	if (HGF::Keyboard::IsKeyPressed(SDLK_l))
+	{
+		mPlayer.IsDebugFly = !mPlayer.IsDebugFly;
+		if (mPlayer.IsDebugFly)
+			mPlayer.MovementSpeed = 2.685f;
+		else
+			mPlayer.MovementSpeed = 0.185f;
+	}
 
 	// exit
 	if (HGF::Keyboard::IsKeyPressed(SDLK_ESCAPE))
@@ -108,56 +124,57 @@ int JumpShootGame::Update(float pDeltaTime)
 		mRunning = false;
 	}
 
-	/*
-	// movement
-	if (HGF::Keyboard::IsKeyDown(SDLK_UP))
-	{
-	mPlayer.Position.Y -= mPlayer.MovementSpeed;
-	}
-	if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
-	{
-	mPlayer.Position.Y += mPlayer.MovementSpeed;
-	}
-	if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
-	if (mKeys[SDLK_LEFT])
-	{
-	mPlayer.Position.X -= mPlayer.MovementSpeed;
-	mPlayer.IsFacingLeft = true;
-	}
-	if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
-	{
-	mPlayer.Position.X += mPlayer.MovementSpeed;
-	mPlayer.IsFacingLeft = false;
-	}
-	*/
-
 	// handle input
-	if (HGF::Keyboard::IsKeyPressed(SDLK_SPACE) && mPlayer.IsGrounded)
+	if (mPlayer.IsDebugFly)
 	{
-		mPlayer.Velocity.Y = 0.0f;
-		mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
-		mPlayer.IsGrounded = false;
+		if (HGF::Keyboard::IsKeyDown(SDLK_UP))
+		{
+			mPlayer.Position.Y -= mPlayer.MovementSpeed;
+		}
+		if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
+		{
+			mPlayer.Position.Y += mPlayer.MovementSpeed;
+		}
+		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
+		{
+			mPlayer.Position.X -= mPlayer.MovementSpeed;
+			mPlayer.IsFacingLeft = true;
+		}
+		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
+		{
+			mPlayer.Position.X += mPlayer.MovementSpeed;
+			mPlayer.IsFacingLeft = false;
+		}
 	}
-	if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
+	else
 	{
-		mPlayer.Acceleration.X -= mPlayer.MovementSpeed;
-		mPlayer.IsFacingLeft = true;
-	}
-	if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
-	{
-		mPlayer.Acceleration.X += mPlayer.MovementSpeed;
-		mPlayer.IsFacingLeft = false;
-	}
+		if (HGF::Keyboard::IsKeyPressed(SDLK_SPACE) && mPlayer.IsGrounded)
+		{
+			mPlayer.Velocity.Y = 0.0f;
+			mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
+			mPlayer.IsGrounded = false;
+		}
+		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
+		{
+			mPlayer.Acceleration.X -= mPlayer.MovementSpeed;
+			mPlayer.IsFacingLeft = true;
+		}
+		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
+		{
+			mPlayer.Acceleration.X += mPlayer.MovementSpeed;
+			mPlayer.IsFacingLeft = false;
+		}
 
-	// update movement
-	if (!mPlayer.IsGrounded)
-	{
-		mPlayer.Acceleration.Y += mPlayer.Gravity;
+		// update movement
+		if (!mPlayer.IsGrounded)
+		{
+			mPlayer.Acceleration.Y += mPlayer.Gravity;
+		}
+		mPlayer.Velocity += mPlayer.Acceleration;
+		mPlayer.Position += mPlayer.Velocity;
+		mPlayer.Velocity.X *= 0.75f;
+		mPlayer.Acceleration *= 0.75f;
 	}
-	mPlayer.Velocity += mPlayer.Acceleration;
-	mPlayer.Position += mPlayer.Velocity;
-	mPlayer.Velocity.X *= 0.75f;
-	mPlayer.Acceleration *= 0.75f;
 
 	UpdateRaycast();
 
@@ -199,17 +216,21 @@ void JumpShootGame::UpdateRaycast()
 
 		if (mPlayer.RaycastHits[i].Distance < mPlayer.RaycastInfos[i].Threshold)
 		{
-			if (mPlayer.RaycastHits[i].Distance < mPlayer.RaycastInfos[i].Distance || (mPlayer.RaycastInfos[i].Direction == Direction::Down && mPlayer.IsGrounded))
+			if (mPlayer.RaycastHits[i].Distance < mPlayer.RaycastInfos[i].Distance || (mPlayer.RaycastInfos[i].Direction == Direction::Down && (mPlayer.IsGrounded && !mPlayer.IsDebugFly)))
 			{
 				UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i].Distance - mPlayer.RaycastHits[i].Distance);
 			}
 		}
 		else
 		{
-			mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i + 1].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].HasInterest, mPlayer.RaycastHits[i + 1]);
-			mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i + 2].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].HasInterest, mPlayer.RaycastHits[i + 2]);
-		
-			if (mPlayer.RaycastHits[i + 1].Distance < mPlayer.RaycastInfos[i + 1].Distance && mPlayer.RaycastHits[i + 2].Distance < mPlayer.RaycastInfos[i + 2].Distance)
+			bool hit[2];
+			for (int j = 0; j < 2; ++j)
+			{
+				mMap.Raycast(mPlayer.Position + mPlayer.RaycastInfos[i + j + 1].Position, mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + j + 1].HasInterest, mPlayer.RaycastHits[i + j + 1]);
+				hit[j] = mPlayer.RaycastHits[i + j + 1].Distance < mPlayer.RaycastInfos[i + j + 1].Distance;
+			}
+
+			if (hit[0] && hit[1])
 			{
 				if (mPlayer.RaycastHits[i + 1].Distance > mPlayer.RaycastHits[i + 2].Distance)
 				{
@@ -220,16 +241,17 @@ void JumpShootGame::UpdateRaycast()
 					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].Distance - mPlayer.RaycastHits[i + 2].Distance);
 				}
 			}
-			else
+			else if (hit[0])
 			{
-				if (mPlayer.RaycastHits[i + 1].Distance < mPlayer.RaycastInfos[i + 1].Distance)
-				{
-					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].Distance - mPlayer.RaycastHits[i + 1].Distance);
-				}
-				if (mPlayer.RaycastHits[i + 2].Distance < mPlayer.RaycastInfos[i + 2].Distance)
-				{
-					UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].Distance - mPlayer.RaycastHits[i + 2].Distance);
-				}
+				UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 1].Distance - mPlayer.RaycastHits[i + 1].Distance);
+			}
+			else if (hit[1])
+			{
+				UpdateAdjustment(mPlayer.RaycastInfos[i].Direction, mPlayer.RaycastInfos[i + 2].Distance - mPlayer.RaycastHits[i + 2].Distance);
+			} 
+			else if (mPlayer.RaycastInfos[i].Direction == Direction::Down)
+			{
+				mPlayer.IsGrounded = false;
 			}
 		}
 	}

@@ -49,6 +49,7 @@ class Player
 		HGF::Vector2 Dimensions;
 		bool IsGrounded;
 		bool IsJumping;
+		bool IsDebugFly;
 		RaycastInfo* RaycastInfos;
 		RaycastHit* RaycastHits;
 

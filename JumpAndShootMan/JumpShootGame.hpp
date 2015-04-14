@@ -5,6 +5,7 @@
 
 // SAGE Includes
 #include <SAGE\Game.hpp>
+#include <SAGE\SpriteBatch.hpp>
 // Project Includes
 #include "Camera.hpp"
 #include "Renderer.hpp"
@@ -42,6 +43,7 @@ class JumpShootGame : public SAGE::Game
 		Renderer mRenderer;
 		Map mMap;
 		Player mPlayer;
+		SAGE::SpriteBatch mSpriteBatch;
 };
 
 #endif
