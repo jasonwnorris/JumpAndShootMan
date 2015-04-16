@@ -1,15 +1,13 @@
 // JumpShootGame.cpp
 
+#include "Globals.hpp"
 // HGF Includes
 #include <HGF\Events.hpp>
 #include <HGF\Keyboard.hpp>
-// GL Includes
-#include <GL\glew.h>
 // SDL Includes
 #include <SDL2\SDL_opengl.h>
 // Project Includes
 #include "JumpShootGame.hpp"
-#include "Globals.hpp"
 // STL Includes
 #include <iostream>
 
@@ -19,10 +17,6 @@ JumpShootGame::JumpShootGame()
 	
 	mWindowWidth = 1024;
 	mWindowHeight = 768;
-
-	mCamera.Position = HGF::Vector2(0.0f, 0.0f);
-	mCamera.Rotation = 0.0f;
-	mCamera.Zoom = 1.0f;
 }
 
 JumpShootGame::~JumpShootGame()
@@ -31,42 +25,33 @@ JumpShootGame::~JumpShootGame()
 
 int JumpShootGame::Initialize()
 {
-	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
-		return -1;
+	HGF::Events::OnQuit.Add([&]{ mRunning = false; });
 
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-
-	mWindow = SDL_CreateWindow("JUMP AND SHOOT MAN", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, mWindowWidth, mWindowHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-	if (mWindow == NULL)
+	if (!mWindow.Initialize("JUMP AND SHOOT MAN", mWindowWidth, mWindowHeight))
 		return -1;
-
-	mContext = SDL_GL_CreateContext(mWindow);
-	if (mContext == NULL)
-		return -1;
-
-	if (SDL_GL_SetSwapInterval(1) < 0)
-		return -1;
+	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
+	mWindow.SetVerticalSync(false);
+	mWindow.PrintInfo();
 
 	if (!mSpriteBatch.Initialize())
 		return -1;
 
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, mWindowWidth, mWindowHeight, 0, -1, 1);
-
-	glViewport(0, 0, mWindowWidth, mWindowHeight);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	if (!mEffect.Initialize())
+		return -1;
+	if (!mEffect.Attach("data/shaders/positioncolornormaltexture.vs.glsl", HGF::Effect::ShaderType::Vertex))
+		return -1;
+	if (!mEffect.Attach("data/shaders/positioncolornormaltexture.fs.glsl", HGF::Effect::ShaderType::Fragment))
+		return -1;
+	if (!mEffect.Link())
+		return -1;
+	mEffect.Use();
+	mEffect.SetUniform("uTextureSampler", 0);
 
 	mFrameCount = 0;
 	mPreviousTicks = 0;
 	mCurrentTicks = SDL_GetTicks();
 
-	if (!mMap.Load("data/maps/first_redux.txt"))
+	if (!mMap.Load("data/maps/first.txt"))
 		return -1;
 
 	if (!mPlayer.Load("data/img/player.png"))
@@ -77,13 +62,14 @@ int JumpShootGame::Initialize()
 
 int JumpShootGame::Finalize()
 {
+	if (!mEffect.Finalize())
+		return -1;
+
 	if (!mSpriteBatch.Finalize())
 		return -1;
 
-	// clean up
-	SDL_GL_DeleteContext(mContext);
-	SDL_DestroyWindow(mWindow);
-	SDL_Quit();
+	if (!mWindow.Finalize())
+		return -1;
 
 	return 0;
 }
@@ -99,6 +85,12 @@ int JumpShootGame::Update(float pDeltaTime)
 		mFrameCount = 0;
 	}
 
+	// exit
+	if (HGF::Keyboard::IsKeyPressed(SDLK_ESCAPE))
+	{
+		mRunning = false;
+	}
+
 	// debug
 	if (HGF::Keyboard::IsKeyPressed(SDLK_BACKSPACE))
 	{
@@ -112,37 +104,30 @@ int JumpShootGame::Update(float pDeltaTime)
 	if (HGF::Keyboard::IsKeyPressed(SDLK_l))
 	{
 		mPlayer.IsDebugFly = !mPlayer.IsDebugFly;
-		if (mPlayer.IsDebugFly)
-			mPlayer.MovementSpeed = 2.685f;
-		else
-			mPlayer.MovementSpeed = 0.185f;
 	}
 
-	// exit
-	if (HGF::Keyboard::IsKeyPressed(SDLK_ESCAPE))
-	{
-		mRunning = false;
-	}
+	float dt = pDeltaTime * 25.0f;
 
 	// handle input
 	if (mPlayer.IsDebugFly)
 	{
+		float speed = 10.0f;
 		if (HGF::Keyboard::IsKeyDown(SDLK_UP))
 		{
-			mPlayer.Position.Y -= mPlayer.MovementSpeed;
+			mPlayer.Position.Y -= mPlayer.MovementSpeed * dt * speed;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
 		{
-			mPlayer.Position.Y += mPlayer.MovementSpeed;
+			mPlayer.Position.Y += mPlayer.MovementSpeed * dt * speed;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 		{
-			mPlayer.Position.X -= mPlayer.MovementSpeed;
+			mPlayer.Position.X -= mPlayer.MovementSpeed * dt * speed;
 			mPlayer.IsFacingLeft = true;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 		{
-			mPlayer.Position.X += mPlayer.MovementSpeed;
+			mPlayer.Position.X += mPlayer.MovementSpeed * dt * speed;
 			mPlayer.IsFacingLeft = false;
 		}
 	}
@@ -151,24 +136,24 @@ int JumpShootGame::Update(float pDeltaTime)
 		if (HGF::Keyboard::IsKeyPressed(SDLK_SPACE) && mPlayer.IsGrounded)
 		{
 			mPlayer.Velocity.Y = 0.0f;
-			mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
+			mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed * dt;
 			mPlayer.IsGrounded = false;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 		{
-			mPlayer.Acceleration.X -= mPlayer.MovementSpeed;
+			mPlayer.Acceleration.X -= mPlayer.MovementSpeed * dt;
 			mPlayer.IsFacingLeft = true;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 		{
-			mPlayer.Acceleration.X += mPlayer.MovementSpeed;
+			mPlayer.Acceleration.X += mPlayer.MovementSpeed * dt;
 			mPlayer.IsFacingLeft = false;
 		}
 
 		// update movement
 		if (!mPlayer.IsGrounded)
 		{
-			mPlayer.Acceleration.Y += mPlayer.Gravity;
+			mPlayer.Acceleration.Y += mPlayer.Gravity * dt;
 		}
 		mPlayer.Velocity += mPlayer.Acceleration;
 		mPlayer.Position += mPlayer.Velocity;
@@ -178,32 +163,28 @@ int JumpShootGame::Update(float pDeltaTime)
 
 	UpdateRaycast();
 
+
 	return 0;
 }
 
 int JumpShootGame::Render()
 {
-	// clear
-	glClearColor(125.0f / 255.0f, 125.0f / 255.0f, 125.0f / 255.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glm::mat4 projectionMatrix(glm::ortho(0.0f, (float)mWindowWidth, (float)mWindowHeight, 0.0f, 1.0f, -1.0f));
+	mEffect.SetProjection(projectionMatrix);
 
-	// focus camera
-	mCamera.Position.X = mWindowWidth / 2.0f - (mPlayer.Position.X + mPlayer.Dimensions.X / 2.0f) * mCamera.Zoom;
-	mCamera.Position.Y = mWindowHeight / 2.0f - (mPlayer.Position.Y + mPlayer.Dimensions.Y / 2.0f) * mCamera.Zoom;
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef(mCamera.Position.X, mCamera.Position.Y, 0.0f);
-	glRotatef(mCamera.Rotation, 0.0f, 0.0f, 1.0f);
-	glScalef(mCamera.Zoom, mCamera.Zoom, 0.0f);
-	
-	// render loop
-	if (!mMap.Render(mRenderer))
-		return -1;
-	if (!mPlayer.Render(mRenderer))
-		return -1;
+	glm::mat4 modelViewMatrix;
+	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f));
+	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3(-mPlayer.Position.X, -mPlayer.Position.Y, 0.0f));
+	mEffect.SetModelView(modelViewMatrix);
 
-	// flip
-	SDL_GL_SwapWindow(mWindow);
+	mWindow.Clear();
+
+	mSpriteBatch.Begin(SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
+	mMap.Render(mSpriteBatch);
+	mPlayer.Render(mSpriteBatch);
+	mSpriteBatch.End();
+
+	mWindow.Flip();
 
 	return 0;
 }

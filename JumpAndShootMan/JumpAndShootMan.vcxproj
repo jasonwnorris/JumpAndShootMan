@@ -41,7 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;C:\Libraries\GLM_0_9_5_4\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Libraries\SDL2_2_0_3\lib\x86;C:\Libraries\GLEW_1_11_0\lib\Release\Win32;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\Debug;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -53,12 +53,12 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;GLEW_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenGL32.lib;glu32.lib;glew32s.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenGL32.lib;glu32.lib;glew32.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -91,7 +91,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitArray.hpp" />
-    <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Direction.hpp" />
     <ClInclude Include="JumpShootGame.hpp" />
     <ClInclude Include="Globals.hpp" />

@@ -3,6 +3,8 @@
 #ifndef __MAP_HPP__
 #define __MAP_HPP__
 
+// SAGE Includes
+#include <SAGE\SpriteBatch.hpp>
 // HGF Includes
 #include <HGF\Texture.hpp>
 // Project Includes
@@ -44,7 +46,7 @@ class Map
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
-		bool Render(const Renderer& pRenderer);
+		void Render(SAGE::SpriteBatch& pSpriteBatch);
 		
 	private:
 		Tileset mTileset;

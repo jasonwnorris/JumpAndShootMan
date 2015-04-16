@@ -15,10 +15,13 @@ Player::Player()
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
 	IsFacingLeft = false;
-	MovementSpeed = 0.185f;
-	JumpingSpeed = 1.35f;
-	Gravity = 0.035f;
+	MovementSpeed = 0.475f;
+	JumpingSpeed = 5.65f;
+	Gravity = 0.045f;
 	Dimensions = HGF::Vector2(107.0f / scale, 147.0f / scale);
+	Source = HGF::Rectangle(12, 107, 106, 149);
+	Scale = HGF::Vector2(0.5f, 0.5f);
+	Origin = HGF::Vector2(Source.Width / 2.0f, Source.Height / 2.0f);
 	IsGrounded = false;
 	IsJumping = false;
 	IsDebugFly = false;
@@ -110,12 +113,18 @@ bool Player::Load(const std::string& pFilename)
 	return true;
 }
 
-bool Player::Render(const Renderer& pRenderer)
-{
-	// texture
-	if (pRenderer.RenderTexture(mTexture, Position, Dimensions, Dimensions / 2.0f, HGF::Vector2(12, 110), HGF::Vector2(118, 256), IsFacingLeft) < 0)
-		return false;
-	
+void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
+{	
+	pSpriteBatch.Draw(mTexture,
+					  Position,
+					  Source,
+					  HGF::Color::White,
+					  Origin,
+					  0.0f,
+					  Scale,
+					  IsFacingLeft ? SAGE::OrientationEffect::FlipHorizontal : SAGE::OrientationEffect::None);
+
+	/*
 	if (Globals::IsDebugDrawOn)
 	{
 		// AABB
@@ -135,6 +144,5 @@ bool Player::Render(const Renderer& pRenderer)
 				return false;
 		}
 	}
-	
-	return true;
+	*/
 }

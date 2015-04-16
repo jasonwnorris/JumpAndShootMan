@@ -73,7 +73,7 @@ bool Map::Load(const std::string& pFilename)
 	file >> bitWidth >> bitHeight >> bitSize;
 
 	// Load tileset texture;
-	if (!mTileset.Texture.Load(tilesetFilename.c_str(), HGF::Interpolation::Nearest))
+	if (!mTileset.Texture.Load(tilesetFilename.c_str()))
 		return false;
 
 	// Load bitmask texture.
@@ -337,7 +337,7 @@ bool Map::IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY)
 	return !mBitMasks[mData[pTileX][pTileY].CollisionID][pPixelX][pPixelY];
 }
 
-bool Map::Render(const Renderer& pRenderer)
+void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	for (int y = 0; y < mHeight; ++y)
 	{
@@ -347,13 +347,16 @@ bool Map::Render(const Renderer& pRenderer)
 			if (value >= 0)
 			{
 				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
-				HGF::Vector2 dimensions(mTileset.Size, mTileset.Size);
-				HGF::Vector2 min((value % mTileset.X) * mTileset.Size, (value / mTileset.X)  * mTileset.Size);
-				HGF::Vector2 max(((value % mTileset.X) + 1)  * mTileset.Size, ((value / mTileset.X) + 1)  * mTileset.Size);
 
-				if (pRenderer.RenderTexture(mTileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max) < 0)
-					return false;
+				HGF::Rectangle source;
+				source.X = (value % mTileset.X) * mTileset.Size;
+				source.Y = (value / mTileset.X)  * mTileset.Size;
+				source.Width = mTileset.Size;
+				source.Height = mTileset.Size;
 
+				pSpriteBatch.Draw(mTileset.Texture, position, source, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::OrientationEffect::None);
+
+				/*
 				if (Globals::IsDebugDrawOn)
 				{
 					for (int i = 0; i < 4; ++i)
@@ -386,9 +389,8 @@ bool Map::Render(const Renderer& pRenderer)
 						}
 					}
 				}
+				*/
 			}
 		}
 	}
-
-	return true;
 }

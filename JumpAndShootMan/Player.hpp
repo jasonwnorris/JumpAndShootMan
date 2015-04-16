@@ -3,6 +3,8 @@
 #ifndef __PLAYER_HPP__
 #define __PLAYER_HPP__
 
+// SAGE Includes
+#include <SAGE\SpriteBatch.hpp>
 // HGF Includes
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
@@ -20,7 +22,7 @@ class Player
 		~Player();
 
 		bool Load(const std::string& pFilename);
-		bool Render(const Renderer& pRenderer);
+		void Render(SAGE::SpriteBatch& pSpriteBatch);
 
 		static const int MaxRayCount;
 		enum RayIndex
@@ -47,6 +49,9 @@ class Player
 		float JumpingSpeed;
 		float Gravity;
 		HGF::Vector2 Dimensions;
+		HGF::Rectangle Source;
+		HGF::Vector2 Scale;
+		HGF::Vector2 Origin;
 		bool IsGrounded;
 		bool IsJumping;
 		bool IsDebugFly;

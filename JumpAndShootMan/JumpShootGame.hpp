@@ -3,11 +3,14 @@
 #ifndef __GAME_HPP__
 #define __GAME_HPP__
 
+#include "Globals.hpp"
 // SAGE Includes
 #include <SAGE\Game.hpp>
 #include <SAGE\SpriteBatch.hpp>
+// HGF Includes
+#include <HGF\Effect.hpp>
+#include <HGF\Window.hpp>
 // Project Includes
-#include "Camera.hpp"
 #include "Renderer.hpp"
 #include "Map.hpp"
 #include "Player.hpp"
@@ -37,9 +40,8 @@ class JumpShootGame : public SAGE::Game
 		int mWindowWidth;
 		int mWindowHeight;
 
-		SDL_Window* mWindow;
-		SDL_GLContext mContext;
-		Camera mCamera;
+		HGF::Window mWindow;
+		HGF::Effect mEffect;
 		Renderer mRenderer;
 		Map mMap;
 		Player mPlayer;
