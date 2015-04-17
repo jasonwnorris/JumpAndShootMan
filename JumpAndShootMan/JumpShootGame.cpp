@@ -33,19 +33,32 @@ int JumpShootGame::Initialize()
 	mWindow.SetVerticalSync(false);
 	mWindow.PrintInfo();
 
+	if (!mGeometryBatch.Initialize())
+		return -1;
+
+	if (!mGeometryEffect.Initialize())
+		return -1;
+	if (!mGeometryEffect.Attach("data/shaders/positioncolor.vs.glsl", HGF::Effect::ShaderType::Vertex))
+		return -1;
+	if (!mGeometryEffect.Attach("data/shaders/positioncolor.fs.glsl", HGF::Effect::ShaderType::Fragment))
+		return -1;
+	if (!mGeometryEffect.Link())
+		return -1;
+	mGeometryEffect.Use();
+
 	if (!mSpriteBatch.Initialize())
 		return -1;
 
-	if (!mEffect.Initialize())
+	if (!mSpriteEffect.Initialize())
 		return -1;
-	if (!mEffect.Attach("data/shaders/positioncolornormaltexture.vs.glsl", HGF::Effect::ShaderType::Vertex))
+	if (!mSpriteEffect.Attach("data/shaders/positioncolortexture.vs.glsl", HGF::Effect::ShaderType::Vertex))
 		return -1;
-	if (!mEffect.Attach("data/shaders/positioncolornormaltexture.fs.glsl", HGF::Effect::ShaderType::Fragment))
+	if (!mSpriteEffect.Attach("data/shaders/positioncolortexture.fs.glsl", HGF::Effect::ShaderType::Fragment))
 		return -1;
-	if (!mEffect.Link())
+	if (!mSpriteEffect.Link())
 		return -1;
-	mEffect.Use();
-	mEffect.SetUniform("uTextureSampler", 0);
+	mSpriteEffect.Use();
+	mSpriteEffect.SetUniform("uTextureSampler", 0);
 
 	mFrameCount = 0;
 	mPreviousTicks = 0;
@@ -62,7 +75,13 @@ int JumpShootGame::Initialize()
 
 int JumpShootGame::Finalize()
 {
-	if (!mEffect.Finalize())
+	if (!mGeometryEffect.Finalize())
+		return -1;
+
+	if (!mGeometryBatch.Finalize())
+		return -1;
+
+	if (!mSpriteEffect.Finalize())
 		return -1;
 
 	if (!mSpriteBatch.Finalize())
@@ -104,6 +123,8 @@ int JumpShootGame::Update(float pDeltaTime)
 	if (HGF::Keyboard::IsKeyPressed(SDLK_l))
 	{
 		mPlayer.IsDebugFly = !mPlayer.IsDebugFly;
+		mPlayer.Velocity = HGF::Vector2::Zero;
+		mPlayer.Acceleration = HGF::Vector2::Zero;
 	}
 
 	float dt = pDeltaTime * 25.0f;
@@ -111,7 +132,7 @@ int JumpShootGame::Update(float pDeltaTime)
 	// handle input
 	if (mPlayer.IsDebugFly)
 	{
-		float speed = 10.0f;
+		float speed = 50.0f;
 		if (HGF::Keyboard::IsKeyDown(SDLK_UP))
 		{
 			mPlayer.Position.Y -= mPlayer.MovementSpeed * dt * speed;
@@ -170,19 +191,33 @@ int JumpShootGame::Update(float pDeltaTime)
 int JumpShootGame::Render()
 {
 	glm::mat4 projectionMatrix(glm::ortho(0.0f, (float)mWindowWidth, (float)mWindowHeight, 0.0f, 1.0f, -1.0f));
-	mEffect.SetProjection(projectionMatrix);
 
 	glm::mat4 modelViewMatrix;
 	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f));
 	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3(-mPlayer.Position.X, -mPlayer.Position.Y, 0.0f));
-	mEffect.SetModelView(modelViewMatrix);
 
 	mWindow.Clear();
+
+	mSpriteEffect.SetProjection(projectionMatrix);
+	mSpriteEffect.SetModelView(modelViewMatrix);
+	mSpriteEffect.Use();
 
 	mSpriteBatch.Begin(SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
 	mMap.Render(mSpriteBatch);
 	mPlayer.Render(mSpriteBatch);
 	mSpriteBatch.End();
+
+	if (Globals::IsDebugDrawOn)
+	{
+		mGeometryEffect.SetProjection(projectionMatrix);
+		mGeometryEffect.SetModelView(modelViewMatrix);
+		mGeometryEffect.Use();
+
+		mGeometryBatch.Begin();
+		mMap.RenderDebug(mGeometryBatch);
+		mPlayer.RenderDebug(mGeometryBatch);
+		mGeometryBatch.End();
+	}
 
 	mWindow.Flip();
 

@@ -6,6 +6,7 @@
 #include "Globals.hpp"
 // SAGE Includes
 #include <SAGE\Game.hpp>
+#include <SAGE\GeometryBatch.hpp>
 #include <SAGE\SpriteBatch.hpp>
 // HGF Includes
 #include <HGF\Effect.hpp>
@@ -41,11 +42,13 @@ class JumpShootGame : public SAGE::Game
 		int mWindowHeight;
 
 		HGF::Window mWindow;
-		HGF::Effect mEffect;
+		SAGE::GeometryBatch mGeometryBatch;
+		HGF::Effect mGeometryEffect;
+		SAGE::SpriteBatch mSpriteBatch;
+		HGF::Effect mSpriteEffect;
 		Renderer mRenderer;
 		Map mMap;
 		Player mPlayer;
-		SAGE::SpriteBatch mSpriteBatch;
 };
 
 #endif

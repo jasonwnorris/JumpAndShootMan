@@ -3,7 +3,6 @@
 uniform sampler2D uTextureSampler;
 
 in vec4 vs_fs_color;
-in vec3 vs_fs_normal;
 in vec2 vs_fs_texcoord;
 
 void main()

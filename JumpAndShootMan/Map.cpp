@@ -394,3 +394,52 @@ void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 		}
 	}
 }
+
+void Map::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
+{
+	for (int y = 0; y < mHeight; ++y)
+	{
+		for (int x = 0; x < mWidth; ++x)
+		{
+			int value = mData[x][y].TextureID;
+			if (value >= 0)
+			{
+				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
+
+				HGF::Rectangle source;
+				source.X = (value % mTileset.X) * mTileset.Size;
+				source.Y = (value / mTileset.X)  * mTileset.Size;
+				source.Width = mTileset.Size;
+				source.Height = mTileset.Size;
+
+				for (int i = 0; i < 4; ++i)
+				{
+					if (mData[x][y].Edges[i] == EdgeType::Solid || mData[x][y].Edges[i] == EdgeType::Interesting)
+					{
+						float r = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
+						float g = 0.0f;
+						float b = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
+
+						HGF::Color color(r, g, b);
+
+						switch (i)
+						{
+						case Direction::Up:
+							pGeometryBatch.Draw(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), color);
+							break;
+						case Direction::Down:
+							pGeometryBatch.Draw(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
+							break;
+						case Direction::Left:
+							pGeometryBatch.Draw(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), color);
+							break;
+						case Direction::Right:
+							pGeometryBatch.Draw(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -9,8 +9,6 @@ const int Player::MaxRayCount = 12;
 
 Player::Player()
 {
-	float scale = 2.0f;
-
 	Position = HGF::Vector2(100.0f, 100.0f);
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
@@ -18,10 +16,10 @@ Player::Player()
 	MovementSpeed = 0.475f;
 	JumpingSpeed = 5.65f;
 	Gravity = 0.045f;
-	Dimensions = HGF::Vector2(107.0f / scale, 147.0f / scale);
 	Source = HGF::Rectangle(12, 107, 106, 149);
 	Scale = HGF::Vector2(0.5f, 0.5f);
 	Origin = HGF::Vector2(Source.Width / 2.0f, Source.Height / 2.0f);
+	Dimensions = HGF::Vector2(Source.Width * Scale.X, Source.Height * Scale.Y);
 	IsGrounded = false;
 	IsJumping = false;
 	IsDebugFly = false;
@@ -145,4 +143,24 @@ void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
 		}
 	}
 	*/
+}
+
+void Player::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
+{
+	// AABB
+	HGF::Vector2 TL(Position.X - Dimensions.X / 2.0f, Position.Y - Dimensions.Y / 2.0f);
+	HGF::Vector2 BR(Position.X + Dimensions.X / 2.0f, Position.Y + Dimensions.Y / 2.0f);
+	pGeometryBatch.Draw(HGF::Vector2(TL.X, TL.Y), HGF::Vector2(BR.X, TL.Y), HGF::Color::Green);
+	pGeometryBatch.Draw(HGF::Vector2(BR.X, TL.Y), HGF::Vector2(BR.X, BR.Y), HGF::Color::Green);
+	pGeometryBatch.Draw(HGF::Vector2(BR.X, BR.Y), HGF::Vector2(TL.X, BR.Y), HGF::Color::Green);
+	pGeometryBatch.Draw(HGF::Vector2(TL.X, BR.Y), HGF::Vector2(TL.X, TL.Y), HGF::Color::Green);
+
+	// collision points
+	for (int i = 0; i < Player::MaxRayCount; ++i)
+	{
+		RaycastInfo& col = RaycastInfos[i];
+		RaycastHit& hit = RaycastHits[i];
+
+		pGeometryBatch.Draw(Position + col.Position, hit.Position, HGF::Color(0.9f, 0.1f, 0.8f));
+	}
 }

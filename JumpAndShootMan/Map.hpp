@@ -4,6 +4,7 @@
 #define __MAP_HPP__
 
 // SAGE Includes
+#include <SAGE\GeometryBatch.hpp>
 #include <SAGE\SpriteBatch.hpp>
 // HGF Includes
 #include <HGF\Texture.hpp>
@@ -47,6 +48,7 @@ class Map
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
+		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 		
 	private:
 		Tileset mTileset;
