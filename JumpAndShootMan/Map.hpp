@@ -9,6 +9,7 @@
 // HGF Includes
 #include <HGF\Texture.hpp>
 // Project Includes
+#include "Renderer.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <string>
@@ -47,6 +48,8 @@ class Map
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 		bool IsTileEmpty(int pTileX, int pTileY);
 		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
+		void Render(const Renderer& pRenderer);
+		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 		

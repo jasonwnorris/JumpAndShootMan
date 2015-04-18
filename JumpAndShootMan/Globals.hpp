@@ -17,6 +17,7 @@ class Globals
 {
 	public:
 		static bool IsDebugDrawOn;
+		static int DrawCount;
 };
 
 #endif

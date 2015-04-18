@@ -27,10 +27,16 @@ int JumpShootGame::Initialize()
 {
 	HGF::Events::OnQuit.Add([&]{ mRunning = false; });
 
-	if (!mWindow.Initialize("JUMP AND SHOOT MAN", mWindowWidth, mWindowHeight))
+	HGF::WindowOptions options;
+	options.Title = "Jump 'n' Shoot Man";
+	options.Width = mWindowWidth;
+	options.Height = mWindowHeight;
+	options.Mode = HGF::WindowMode::Windowed;
+	options.VerticalSync = false;
+
+	if (!mWindow.Initialize(options))
 		return -1;
 	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
-	mWindow.SetVerticalSync(false);
 	mWindow.PrintInfo();
 
 	if (!mGeometryBatch.Initialize())
@@ -44,7 +50,6 @@ int JumpShootGame::Initialize()
 		return -1;
 	if (!mGeometryEffect.Link())
 		return -1;
-	mGeometryEffect.Use();
 
 	if (!mSpriteBatch.Initialize())
 		return -1;
@@ -57,7 +62,6 @@ int JumpShootGame::Initialize()
 		return -1;
 	if (!mSpriteEffect.Link())
 		return -1;
-	mSpriteEffect.Use();
 	mSpriteEffect.SetUniform("uTextureSampler", 0);
 
 	mFrameCount = 0;
@@ -99,7 +103,12 @@ int JumpShootGame::Update(float pDeltaTime)
 	mCurrentTicks = SDL_GetTicks();
 	if (mCurrentTicks > mPreviousTicks + 1000)
 	{
-		std::cout << "FPS: " << mFrameCount << " | Delta: "  << pDeltaTime << std::endl;
+#if BATCH_RENDERING
+		std::cout << "FPS: " << mFrameCount << " | Delta: "  << pDeltaTime << " | SB Calls: " << mSpriteBatch.GetDrawCallCount() << " | GB Calls: " << mGeometryBatch.GetDrawCallCount() << std::endl;
+#else
+		std::cout << "FPS: " << mFrameCount << " | Delta: " << pDeltaTime << " | Draw Calls: " << Globals::DrawCount / mFrameCount << std::endl;
+		Globals::DrawCount = 0;
+#endif
 		mPreviousTicks = mCurrentTicks;
 		mFrameCount = 0;
 	}
@@ -184,19 +193,19 @@ int JumpShootGame::Update(float pDeltaTime)
 
 	UpdateRaycast();
 
-
 	return 0;
 }
 
 int JumpShootGame::Render()
 {
+	mWindow.Clear();
+
+#if BATCH_RENDERING
 	glm::mat4 projectionMatrix(glm::ortho(0.0f, (float)mWindowWidth, (float)mWindowHeight, 0.0f, 1.0f, -1.0f));
 
 	glm::mat4 modelViewMatrix;
 	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f));
 	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3(-mPlayer.Position.X, -mPlayer.Position.Y, 0.0f));
-
-	mWindow.Clear();
 
 	mSpriteEffect.SetProjection(projectionMatrix);
 	mSpriteEffect.SetModelView(modelViewMatrix);
@@ -206,9 +215,24 @@ int JumpShootGame::Render()
 	mMap.Render(mSpriteBatch);
 	mPlayer.Render(mSpriteBatch);
 	mSpriteBatch.End();
+#else
+	float rot = 0.0f;
+	float zoom = 1.0f;
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f);
+	glTranslatef(-mPlayer.Position.X, -mPlayer.Position.Y, 0.0f);
+	glRotatef(rot, 0.0f, 0.0f, 1.0f);
+	glScalef(zoom, zoom, 0.0f);
+
+	mMap.Render(mRenderer);
+	mPlayer.Render(mRenderer);
+#endif
 
 	if (Globals::IsDebugDrawOn)
 	{
+#if BATCH_RENDERING
 		mGeometryEffect.SetProjection(projectionMatrix);
 		mGeometryEffect.SetModelView(modelViewMatrix);
 		mGeometryEffect.Use();
@@ -217,6 +241,10 @@ int JumpShootGame::Render()
 		mMap.RenderDebug(mGeometryBatch);
 		mPlayer.RenderDebug(mGeometryBatch);
 		mGeometryBatch.End();
+#else
+		mMap.RenderDebug(mRenderer);
+		mPlayer.RenderDebug(mRenderer);
+#endif
 	}
 
 	mWindow.Flip();

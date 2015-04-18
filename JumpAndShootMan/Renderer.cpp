@@ -1,5 +1,6 @@
 // Renderer.hpp
 
+#include "Globals.hpp"
 // SDL Includes
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
@@ -25,6 +26,8 @@ int Renderer::RenderPoint(HGF::Vector2 pPosition, float pSize, float pRed, float
 		glVertex2f(pPosition.X, pPosition.Y);
 	glEnd();
 
+	Globals::DrawCount++;
+
 	return 0;
 }
 
@@ -36,6 +39,8 @@ int Renderer::RenderLine(HGF::Vector2 pStart, HGF::Vector2 pEnd, float pSize, fl
 		glVertex2f(pStart.X, pStart.Y);
 		glVertex2f(pEnd.X, pEnd.Y);
 	glEnd();
+
+	Globals::DrawCount++;
 
 	return 0;
 }
@@ -55,6 +60,8 @@ int Renderer::RenderRectangle(HGF::Vector2 pPosition, HGF::Vector2 pDimensions, 
 	for (int i = 0; i < 4; ++i)
 		glVertex2f(points[i].X, points[i].Y);
 	glEnd();
+
+	Globals::DrawCount++;
 
 	return 0;
 }
@@ -86,6 +93,8 @@ int Renderer::RenderTexture(const HGF::Texture& pTexture, const HGF::Vector2& pP
 	}
 	glEnd();
 	glDisable(GL_TEXTURE_2D);
+
+	Globals::DrawCount++;
 
 	return 0;
 }

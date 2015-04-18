@@ -10,7 +10,6 @@
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 // Project Includes
-#include "Direction.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <vector>
@@ -23,6 +22,8 @@ class Player
 		~Player();
 
 		bool Load(const std::string& pFilename);
+		void Render(const Renderer& pRenderer);
+		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 

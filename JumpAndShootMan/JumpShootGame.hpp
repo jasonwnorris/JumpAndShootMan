@@ -3,6 +3,8 @@
 #ifndef __GAME_HPP__
 #define __GAME_HPP__
 
+#define BATCH_RENDERING 1
+
 #include "Globals.hpp"
 // SAGE Includes
 #include <SAGE\Game.hpp>

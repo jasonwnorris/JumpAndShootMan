@@ -16,7 +16,7 @@ Player::Player()
 	MovementSpeed = 0.475f;
 	JumpingSpeed = 5.65f;
 	Gravity = 0.045f;
-	Source = HGF::Rectangle(12, 107, 106, 149);
+	Source = HGF::Rectangle(11, 107, 108, 149);
 	Scale = HGF::Vector2(0.5f, 0.5f);
 	Origin = HGF::Vector2(Source.Width / 2.0f, Source.Height / 2.0f);
 	Dimensions = HGF::Vector2(Source.Width * Scale.X, Source.Height * Scale.Y);
@@ -111,6 +111,27 @@ bool Player::Load(const std::string& pFilename)
 	return true;
 }
 
+void Player::Render(const Renderer& pRenderer)
+{
+	pRenderer.RenderTexture(mTexture, Position, Dimensions, Dimensions / 2.0f, HGF::Vector2(12, 110), HGF::Vector2(118, 256), IsFacingLeft);
+}
+
+void Player::RenderDebug(const Renderer& pRenderer)
+{
+	// AABB
+	pRenderer.RenderRectangle(Position, Dimensions, Dimensions / 2.0f, 0.0f, 1.0f, 0.0f);
+
+	// collision points
+	for (int i = 0; i < Player::MaxRayCount; ++i)
+	{
+		RaycastInfo& col = RaycastInfos[i];
+		RaycastHit& hit = RaycastHits[i];
+
+		pRenderer.RenderLine(Position + col.Position, hit.Position, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f);
+		pRenderer.RenderPoint(hit.Position, 4.0f, 1.0f, 1.0f, 0.0f);
+	}
+}
+
 void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
 {	
 	pSpriteBatch.Draw(mTexture,
@@ -120,29 +141,7 @@ void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
 					  Origin,
 					  0.0f,
 					  Scale,
-					  IsFacingLeft ? SAGE::OrientationEffect::FlipHorizontal : SAGE::OrientationEffect::None);
-
-	/*
-	if (Globals::IsDebugDrawOn)
-	{
-		// AABB
-		if (pRenderer.RenderRectangle(Position, Dimensions, Dimensions / 2.0f, 0.0f, 1.0f, 0.0f) < 0)
-			return false;
-
-		// collision points
-		for (int i = 0; i < Player::MaxRayCount; ++i)
-		{
-			RaycastInfo& col = RaycastInfos[i];
-			RaycastHit& hit = RaycastHits[i];
-
-			if (pRenderer.RenderLine(Position + col.Position, hit.Position, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f) < 0)
-				return false;
-
-			if (pRenderer.RenderPoint(hit.Position, 4.0f, 1.0f, 1.0f, 0.0f) < 0)
-				return false;
-		}
-	}
-	*/
+					  IsFacingLeft ? SAGE::Orientation::FlipHorizontal : SAGE::Orientation::None);
 }
 
 void Player::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)

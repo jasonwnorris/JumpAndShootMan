@@ -337,6 +337,65 @@ bool Map::IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY)
 	return !mBitMasks[mData[pTileX][pTileY].CollisionID][pPixelX][pPixelY];
 }
 
+void Map::Render(const Renderer& pRenderer)
+{
+	for (int y = 0; y < mHeight; ++y)
+	{
+		for (int x = 0; x < mWidth; ++x)
+		{
+			int value = mData[x][y].TextureID;
+			if (value >= 0)
+			{
+				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
+				HGF::Vector2 dimensions(mTileset.Size, mTileset.Size);
+				HGF::Vector2 min((value % mTileset.X) * mTileset.Size, (value / mTileset.X)  * mTileset.Size);
+				HGF::Vector2 max(((value % mTileset.X) + 1)  * mTileset.Size, ((value / mTileset.X) + 1)  * mTileset.Size);
+
+				pRenderer.RenderTexture(mTileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max);
+			}
+		}
+	}
+}
+
+void Map::RenderDebug(const Renderer& pRenderer)
+{
+	for (int y = 0; y < mHeight; ++y)
+	{
+		for (int x = 0; x < mWidth; ++x)
+		{
+			int value = mData[x][y].TextureID;
+			if (value >= 0)
+			{
+				for (int i = 0; i < 4; ++i)
+				{
+					if (mData[x][y].Edges[i] == EdgeType::Solid || mData[x][y].Edges[i] == EdgeType::Interesting)
+					{
+						float r = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
+						float g = 0.0f;
+						float b = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
+
+						switch (i)
+						{
+						case Direction::Up:
+							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), 2.0f, r, g, b, 1.0f);
+							break;
+						case Direction::Down:
+							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
+							break;
+						case Direction::Left:
+							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
+							break;
+						case Direction::Right:
+							pRenderer.RenderLine(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	for (int y = 0; y < mHeight; ++y)
@@ -354,42 +413,7 @@ void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 				source.Width = mTileset.Size;
 				source.Height = mTileset.Size;
 
-				pSpriteBatch.Draw(mTileset.Texture, position, source, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::OrientationEffect::None);
-
-				/*
-				if (Globals::IsDebugDrawOn)
-				{
-					for (int i = 0; i < 4; ++i)
-					{
-						if (mData[x][y].Edges[i] == EdgeType::Solid || mData[x][y].Edges[i] == EdgeType::Interesting)
-						{
-							float r = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
-							float g = 0.0f;
-							float b = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
-
-							switch (i)
-							{
-							case Direction::Up:
-								if (pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), 2.0f, r, g, b, 1.0f))
-									return false;
-								break;
-							case Direction::Down:
-								if (pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f))
-									return false;
-								break;
-							case Direction::Left:
-								if (pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f))
-									return false;
-								break;
-							case Direction::Right:
-								if (pRenderer.RenderLine(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f))
-									return false;
-								break;
-							}
-						}
-					}
-				}
-				*/
+				pSpriteBatch.Draw(mTileset.Texture, position, source, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
 			}
 		}
 	}
