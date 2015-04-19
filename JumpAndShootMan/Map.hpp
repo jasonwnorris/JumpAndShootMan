@@ -6,9 +6,11 @@
 // SAGE Includes
 #include <SAGE\GeometryBatch.hpp>
 #include <SAGE\SpriteBatch.hpp>
+#include <SAGE\Orientation.hpp>
 // HGF Includes
 #include <HGF\Texture.hpp>
 // Project Includes
+#include "BitField.hpp"
 #include "Renderer.hpp"
 #include "Raycast.hpp"
 // STL Includes
@@ -35,6 +37,7 @@ struct Tile
 	int TextureID;
 	int CollisionID;
 	EdgeType Edges[4];
+	SAGE::Orientation Orientation;
 };
 
 class Renderer;
@@ -59,7 +62,7 @@ class Map
 		int mHeight;
 		Tile** mData;
 		int mBitMaskCount;
-		bool*** mBitMasks;
+		BitField* mBitMasks;
 		bool mIsLoaded;
 };
 

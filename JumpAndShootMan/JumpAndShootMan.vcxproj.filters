@@ -16,9 +16,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="BitArray.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Map.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -37,11 +34,11 @@
     <ClCompile Include="Direction.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="BitField.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BitArray.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Map.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -61,6 +58,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="JumpShootGame.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BitField.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

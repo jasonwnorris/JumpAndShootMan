@@ -80,7 +80,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BitArray.cpp" />
+    <ClCompile Include="BitField.cpp" />
     <ClCompile Include="Direction.cpp" />
     <ClCompile Include="JumpShootGame.cpp" />
     <ClCompile Include="Globals.cpp" />
@@ -90,7 +90,7 @@
     <ClCompile Include="Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BitArray.hpp" />
+    <ClInclude Include="BitField.hpp" />
     <ClInclude Include="Direction.hpp" />
     <ClInclude Include="JumpShootGame.hpp" />
     <ClInclude Include="Globals.hpp" />

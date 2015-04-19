@@ -33,20 +33,6 @@ Map::~Map()
 	}
 
 	// Free map bitmasks.
-	for (int i = 0; i < mBitMaskCount; ++i)
-	{
-		for (int x = 0; x < mTileset.Size; ++x)
-		{
-			if (mBitMasks[i][x])
-			{
-				delete [] mBitMasks[i][x];
-			}
-		}
-		if (mBitMasks[i])
-		{
-			delete [] mBitMasks[i];
-		}
-	}
 	if (mBitMasks)
 	{
 		delete [] mBitMasks;
@@ -83,23 +69,21 @@ bool Map::Load(const std::string& pFilename)
 
 	// Establish bitmask count.
 	mBitMaskCount = bitWidth * bitHeight;
-	mBitMasks = new bool**[mBitMaskCount];
+	mBitMasks = new BitField[mBitMaskCount];
 
 	// Read the bitmask pixels.
 	for (int i = 0; i < mBitMaskCount; ++i)
 	{
-		mBitMasks[i] = new bool*[mTileset.Size];
+		mBitMasks[i].Resize(mTileset.Size, mTileset.Size);
 
 		for (int px = 0; px < mTileset.Size; ++px)
 		{
-			mBitMasks[i][px] = new bool[mTileset.Size];
-
 			for (int py = 0; py < mTileset.Size; ++py)
 			{
 				Uint8 r, g, b, a;
 				bitmaskTexture.GetColor(i * mTileset.Size + px, py, r, g, b, a);
 
-				mBitMasks[i][px][py] = (r == 0 && g == 0 && b == 0);
+				mBitMasks[i].SetBit(px, py, (r == 0 && g == 0 && b == 0));
 			}
 		}
 	}
@@ -143,6 +127,8 @@ bool Map::Load(const std::string& pFilename)
 						tile.Edges[i] = EdgeType::Empty;
 					break;
 			}
+
+			tile.Orientation = SAGE::Orientation::None;
 		}
 	}
 
@@ -151,20 +137,24 @@ bool Map::Load(const std::string& pFilename)
 	{
 		for (int x = 0; x < mWidth; ++x)
 		{
+			Tile& tile = mData[x][y];
+			Tile& tileHorz = mData[x + 1][y];
+			Tile& tileVert = mData[x][y + 1];
+
 			if (x + 1 != mWidth)
 			{
-				if (mData[x][y].Edges[Direction::Right] == EdgeType::Solid && mData[x + 1][y].Edges[Direction::Left] == EdgeType::Solid)
+				if (tile.Edges[Direction::Right] == EdgeType::Solid && tileHorz.Edges[Direction::Left] == EdgeType::Solid)
 				{
-					mData[x][y].Edges[Direction::Right] = EdgeType::Empty;
-					mData[x + 1][y].Edges[Direction::Left] = EdgeType::Empty;
+					tile.Edges[Direction::Right] = EdgeType::Empty;
+					tileHorz.Edges[Direction::Left] = EdgeType::Empty;
 				}
 			}
 			if (y + 1 != mHeight)
 			{
-				if (mData[x][y].Edges[Direction::Down] == EdgeType::Solid && mData[x][y + 1].Edges[Direction::Up] == EdgeType::Solid)
+				if (tile.Edges[Direction::Down] == EdgeType::Solid && tileVert.Edges[Direction::Up] == EdgeType::Solid)
 				{
-					mData[x][y].Edges[Direction::Down] = EdgeType::Empty;
-					mData[x][y + 1].Edges[Direction::Up] = EdgeType::Empty;
+					tile.Edges[Direction::Down] = EdgeType::Empty;
+					tileVert.Edges[Direction::Up] = EdgeType::Empty;
 				}
 			}
 		}
@@ -220,6 +210,8 @@ void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHas
 		case Direction::Up:
 			for (int ty = tileY; ty >= 0; --ty)
 			{
+				Tile& tile = mData[tileX][ty];
+
 				if (mData[tileX][ty].Edges[Direction::Down] == EdgeType::Solid || (pHasInterest && mData[tileX][ty].Edges[Direction::Down] == EdgeType::Interesting))
 				{
 					for (int py = mTileset.Size - 1; py >= 0; --py)
@@ -243,7 +235,9 @@ void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHas
 		case Direction::Down:
 			for (int ty = tileY; ty < mHeight; ++ty)
 			{
-				if (mData[tileX][ty].Edges[Direction::Up] == EdgeType::Solid || (pHasInterest && mData[tileX][ty].Edges[Direction::Up] == EdgeType::Interesting))
+				Tile& tile = mData[tileX][ty];
+
+				if (tile.Edges[Direction::Up] == EdgeType::Solid || (pHasInterest && tile.Edges[Direction::Up] == EdgeType::Interesting))
 				{
 					for (int py = 0; py < mTileset.Size; ++py)
 					{
@@ -266,7 +260,9 @@ void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHas
 		case Direction::Left:
 			for (int tx = tileX; tx >= 0; --tx)
 			{
-				if (mData[tx][tileY].Edges[Direction::Right] == EdgeType::Solid || (pHasInterest && mData[tx][tileY].Edges[Direction::Right] == EdgeType::Interesting))
+				Tile& tile = mData[tx][tileY];
+
+				if (tile.Edges[Direction::Right] == EdgeType::Solid || (pHasInterest && tile.Edges[Direction::Right] == EdgeType::Interesting))
 				{
 					for (int px = mTileset.Size - 1; px >= 0; --px)
 					{
@@ -289,7 +285,9 @@ void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHas
 		case Direction::Right:
 			for (int tx = tileX; tx < mWidth; ++tx)
 			{
-				if (mData[tx][tileY].Edges[Direction::Left] == EdgeType::Solid || (pHasInterest && mData[tx][tileY].Edges[Direction::Left] == EdgeType::Interesting))
+				Tile& tile = mData[tx][tileY];
+
+				if (tile.Edges[Direction::Left] == EdgeType::Solid || (pHasInterest && tile.Edges[Direction::Left] == EdgeType::Interesting))
 				{
 					for (int px = 0; px < mTileset.Size; ++px)
 					{
@@ -320,7 +318,9 @@ bool Map::IsTileEmpty(int pTileX, int pTileY)
 	if (pTileX < 0 || pTileY < 0 || pTileX >= mWidth || pTileY >= mHeight)
 		return true;
 
-	return mData[pTileX][pTileY].CollisionID < 0;
+	Tile& tile = mData[pTileX][pTileY];
+
+	return tile.CollisionID < 0;
 }
 
 bool Map::IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY)
@@ -331,10 +331,12 @@ bool Map::IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY)
 	if (pPixelX < 0 || pPixelY < 0 || pPixelX >= mTileset.Size || pPixelY >= mTileset.Size)
 		return true;
 
-	if (mData[pTileX][pTileY].CollisionID < 0)
+	Tile& tile = mData[pTileX][pTileY];
+
+	if (tile.CollisionID < 0)
 		return true;
 
-	return !mBitMasks[mData[pTileX][pTileY].CollisionID][pPixelX][pPixelY];
+	return !mBitMasks[tile.CollisionID].GetBit(pPixelX, pPixelY);
 }
 
 void Map::Render(const Renderer& pRenderer)
@@ -343,13 +345,14 @@ void Map::Render(const Renderer& pRenderer)
 	{
 		for (int x = 0; x < mWidth; ++x)
 		{
-			int value = mData[x][y].TextureID;
-			if (value >= 0)
+			if (!IsTileEmpty(x, y))
 			{
+				Tile& tile = mData[x][y];
+
 				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
 				HGF::Vector2 dimensions(mTileset.Size, mTileset.Size);
-				HGF::Vector2 min((value % mTileset.X) * mTileset.Size, (value / mTileset.X)  * mTileset.Size);
-				HGF::Vector2 max(((value % mTileset.X) + 1)  * mTileset.Size, ((value / mTileset.X) + 1)  * mTileset.Size);
+				HGF::Vector2 min((tile.TextureID % mTileset.X) * mTileset.Size, (tile.TextureID / mTileset.X)  * mTileset.Size);
+				HGF::Vector2 max(((tile.TextureID % mTileset.X) + 1)  * mTileset.Size, ((tile.TextureID / mTileset.X) + 1)  * mTileset.Size);
 
 				pRenderer.RenderTexture(mTileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max);
 			}
@@ -363,16 +366,17 @@ void Map::RenderDebug(const Renderer& pRenderer)
 	{
 		for (int x = 0; x < mWidth; ++x)
 		{
-			int value = mData[x][y].TextureID;
-			if (value >= 0)
+			if (!IsTileEmpty(x, y))
 			{
+				Tile& tile = mData[x][y];
+
 				for (int i = 0; i < 4; ++i)
 				{
-					if (mData[x][y].Edges[i] == EdgeType::Solid || mData[x][y].Edges[i] == EdgeType::Interesting)
+					if (tile.Edges[i] == EdgeType::Solid || tile.Edges[i] == EdgeType::Interesting)
 					{
-						float r = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
+						float r = tile.Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
 						float g = 0.0f;
-						float b = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
+						float b = tile.Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
 
 						switch (i)
 						{
@@ -402,18 +406,19 @@ void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 	{
 		for (int x = 0; x < mWidth; ++x)
 		{
-			int value = mData[x][y].TextureID;
-			if (value >= 0)
+			if (!IsTileEmpty(x, y))
 			{
+				Tile& tile = mData[x][y];
+
 				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
 
 				HGF::Rectangle source;
-				source.X = (value % mTileset.X) * mTileset.Size;
-				source.Y = (value / mTileset.X)  * mTileset.Size;
+				source.X = (tile.TextureID % mTileset.X) * mTileset.Size;
+				source.Y = (tile.TextureID / mTileset.X)  * mTileset.Size;
 				source.Width = mTileset.Size;
 				source.Height = mTileset.Size;
 
-				pSpriteBatch.Draw(mTileset.Texture, position, source, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
+				pSpriteBatch.Draw(mTileset.Texture, position, source, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, tile.Orientation);
 			}
 		}
 	}
@@ -425,24 +430,17 @@ void Map::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
 	{
 		for (int x = 0; x < mWidth; ++x)
 		{
-			int value = mData[x][y].TextureID;
-			if (value >= 0)
+			if (!IsTileEmpty(x, y))
 			{
-				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
-
-				HGF::Rectangle source;
-				source.X = (value % mTileset.X) * mTileset.Size;
-				source.Y = (value / mTileset.X)  * mTileset.Size;
-				source.Width = mTileset.Size;
-				source.Height = mTileset.Size;
+				Tile& tile = mData[x][y];
 
 				for (int i = 0; i < 4; ++i)
 				{
-					if (mData[x][y].Edges[i] == EdgeType::Solid || mData[x][y].Edges[i] == EdgeType::Interesting)
+					if (tile.Edges[i] == EdgeType::Solid || tile.Edges[i] == EdgeType::Interesting)
 					{
-						float r = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
+						float r = tile.Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
 						float g = 0.0f;
-						float b = mData[x][y].Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
+						float b = tile.Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
 
 						HGF::Color color(r, g, b);
 
