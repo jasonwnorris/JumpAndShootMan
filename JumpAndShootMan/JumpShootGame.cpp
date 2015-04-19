@@ -32,7 +32,6 @@ int JumpShootGame::Initialize()
 	options.Width = mWindowWidth;
 	options.Height = mWindowHeight;
 	options.Mode = HGF::WindowMode::Windowed;
-	options.VerticalSync = false;
 
 	if (!mWindow.Initialize(options))
 		return -1;
@@ -136,28 +135,26 @@ int JumpShootGame::Update(float pDeltaTime)
 		mPlayer.Acceleration = HGF::Vector2::Zero;
 	}
 
-	float dt = pDeltaTime * 25.0f;
-
 	// handle input
 	if (mPlayer.IsDebugFly)
 	{
-		float speed = 50.0f;
+		float mult = 50.0f;
 		if (HGF::Keyboard::IsKeyDown(SDLK_UP))
 		{
-			mPlayer.Position.Y -= mPlayer.MovementSpeed * dt * speed;
+			mPlayer.Position.Y -= mPlayer.MovementSpeed * mult;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
 		{
-			mPlayer.Position.Y += mPlayer.MovementSpeed * dt * speed;
+			mPlayer.Position.Y += mPlayer.MovementSpeed * mult;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 		{
-			mPlayer.Position.X -= mPlayer.MovementSpeed * dt * speed;
+			mPlayer.Position.X -= mPlayer.MovementSpeed * mult;
 			mPlayer.IsFacingLeft = true;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 		{
-			mPlayer.Position.X += mPlayer.MovementSpeed * dt * speed;
+			mPlayer.Position.X += mPlayer.MovementSpeed * mult;
 			mPlayer.IsFacingLeft = false;
 		}
 	}
@@ -166,24 +163,24 @@ int JumpShootGame::Update(float pDeltaTime)
 		if (HGF::Keyboard::IsKeyPressed(SDLK_SPACE) && mPlayer.IsGrounded)
 		{
 			mPlayer.Velocity.Y = 0.0f;
-			mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed * dt;
+			mPlayer.Acceleration.Y -= mPlayer.JumpingSpeed;
 			mPlayer.IsGrounded = false;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
 		{
-			mPlayer.Acceleration.X -= mPlayer.MovementSpeed * dt;
+			mPlayer.Acceleration.X -= mPlayer.MovementSpeed;
 			mPlayer.IsFacingLeft = true;
 		}
 		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
 		{
-			mPlayer.Acceleration.X += mPlayer.MovementSpeed * dt;
+			mPlayer.Acceleration.X += mPlayer.MovementSpeed;
 			mPlayer.IsFacingLeft = false;
 		}
 
 		// update movement
 		if (!mPlayer.IsGrounded)
 		{
-			mPlayer.Acceleration.Y += mPlayer.Gravity * dt;
+			mPlayer.Acceleration.Y += mPlayer.Gravity;
 		}
 		mPlayer.Velocity += mPlayer.Acceleration;
 		mPlayer.Position += mPlayer.Velocity;

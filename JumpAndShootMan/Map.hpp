@@ -48,9 +48,12 @@ class Map
 		~Map();
 
 		bool Load(const std::string& pFilename);
+
+		bool TryGetTile(int pX, int pY, Tile& pTile);
+		bool IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest);
+		bool IsTraversable(const Tile& pTile, int pPixelX, int pPixelY);
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
-		bool IsTileEmpty(int pTileX, int pTileY);
-		bool IsTraversable(int pTileX, int pTileY, int pPixelX, int pPixelY);
+
 		void Render(const Renderer& pRenderer);
 		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);

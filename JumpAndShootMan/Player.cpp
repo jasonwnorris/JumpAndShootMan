@@ -13,9 +13,9 @@ Player::Player()
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
 	IsFacingLeft = false;
-	MovementSpeed = 0.475f;
-	JumpingSpeed = 5.65f;
-	Gravity = 0.045f;
+	MovementSpeed = 0.195f;
+	JumpingSpeed = 1.75f;
+	Gravity = 0.055f;
 	Source = HGF::Rectangle(11, 107, 108, 149);
 	Scale = HGF::Vector2(0.5f, 0.5f);
 	Origin = HGF::Vector2(Source.Width / 2.0f, Source.Height / 2.0f);
