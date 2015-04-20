@@ -41,8 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;C:\Libraries\GLM_0_9_5_4\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Libraries\SDL2_2_0_3\lib\x86;C:\Libraries\GLEW_1_11_0\lib\Release\Win32;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\Debug;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;C:\Libraries\GLM_0_9_5_4\include;C:\Libraries\jsoncpp_0_5_0\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\SDL2_2_0_3\lib\x86;C:\Libraries\GLEW_1_11_0\lib\Release\Win32;C:\Libraries\jsoncpp_0_5_0\lib\Debug;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\Debug;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -58,7 +58,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenGL32.lib;glu32.lib;glew32.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenGL32.lib;glu32.lib;glew32.lib;jsoncpp.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

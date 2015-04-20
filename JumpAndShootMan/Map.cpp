@@ -7,6 +7,8 @@
 #include "Globals.hpp"
 #include "Map.hpp"
 #include "Renderer.hpp"
+// JSON
+#include <json\json.h>
 // STL Includes
 #include <cstdlib>
 #include <fstream>
@@ -52,11 +54,64 @@ bool Map::Load(const std::string& pFilename)
 	std::string tilesetFilename, bitmaskFilename;
 	int bitWidth, bitHeight, bitSize;
 
-	file >> mWidth >> mHeight;
-	file >> tilesetFilename;
-	file >> mTileset.X >> mTileset.Y >> mTileset.Size;
-	file >> bitmaskFilename;
-	file >> bitWidth >> bitHeight >> bitSize;
+	std::string ext = pFilename.substr(pFilename.find_last_of('.') + 1);
+	if (ext == "txt")
+	{
+		file >> mWidth >> mHeight;
+		file >> tilesetFilename;
+		file >> mTileset.X >> mTileset.Y >> mTileset.Size;
+		file >> bitmaskFilename;
+		file >> bitWidth >> bitHeight >> bitSize;
+
+		mIsLoaded = true;
+	}
+	else if (ext == "json")
+	{
+		Json::Value root;
+		Json::Reader reader;
+
+		// "Tiled" editor output
+		if (reader.parse(file, root, false))
+		{
+			mWidth = root["width"].asInt();
+			mHeight = root["height"].asInt();
+
+			const Json::Value tilesets = root["tilesets"];
+			for (Json::Value::UInt i = 0; i < tilesets.size(); ++i)
+			{
+				std::string name = tilesets[i]["name"].asString();
+				std::string path = tilesets[i]["image"].asString();
+				int imageWidth = tilesets[i]["imagewidth"].asInt();
+				int imageHeight = tilesets[i]["imageheight"].asInt();
+				int tileSize = tilesets[i]["tilewidth"].asInt();
+
+				if (name == "Texture")
+				{
+					tilesetFilename = path;
+					mTileset.X = imageWidth / tileSize;
+					mTileset.Y = imageHeight / tileSize;
+					mTileset.Size = tileSize;
+				}
+				else if (name == "Bitmask")
+				{
+					bitmaskFilename = path;
+					bitWidth = imageWidth / tileSize;
+					bitHeight = imageHeight / tileSize;
+					bitSize = tileSize;
+				}
+			}
+
+			mIsLoaded = true;
+		}
+		else
+		{
+			SDL_Log("[Map::Load] Failed to parse JSON file.");
+		}
+	}
+	else
+	{
+		SDL_Log("[Map::Load] Unsupported map file format: %s", ext);
+	}
 
 	// Load tileset texture;
 	if (!mTileset.Texture.Load(tilesetFilename.c_str()))
@@ -108,46 +163,46 @@ bool Map::Load(const std::string& pFilename)
 			// Assign orientation. (This could be cleaner.)
 			switch (orientation)
 			{
-				default:
-				case 1:
-					tile.Orientation = SAGE::Orientation::None;
-					break;
-				case 2:
-					tile.Orientation = SAGE::Orientation::FlipHorizontal;
-					break;
-				case 4:
-					tile.Orientation = SAGE::Orientation::FlipVertical;
-					break;
-				case 6:
-					tile.Orientation = SAGE::Orientation::FlipBoth;
-					break;
+			default:
+			case 1:
+				tile.Orientation = SAGE::Orientation::None;
+				break;
+			case 2:
+				tile.Orientation = SAGE::Orientation::FlipHorizontal;
+				break;
+			case 4:
+				tile.Orientation = SAGE::Orientation::FlipVertical;
+				break;
+			case 6:
+				tile.Orientation = SAGE::Orientation::FlipBoth;
+				break;
 			}
 
 			// Assign edge type depending on collision. (Temporary)
 			switch (tile.CollisionID)
 			{
-				case 0:
-					for (int i = 0; i < 4; ++i)
-						tile.Edges[i] = EdgeType::Solid;
-					break;
-				case 1:
-				case 3:
-					tile.Edges[Direction::Up] = EdgeType::Interesting;
-					tile.Edges[Direction::Down] = EdgeType::Solid;
-					tile.Edges[Direction::Left] = EdgeType::Interesting;
-					tile.Edges[Direction::Right] = EdgeType::Solid;
-					break;
-				case 2:
-				case 4:
-					tile.Edges[Direction::Up] = EdgeType::Interesting;
-					tile.Edges[Direction::Down] = EdgeType::Solid;
-					tile.Edges[Direction::Left] = EdgeType::Interesting;
-					tile.Edges[Direction::Right] = EdgeType::Interesting;
-					break;
-				default:
-					for (int i = 0; i < 4; ++i)
-						tile.Edges[i] = EdgeType::Empty;
-					break;
+			case 0:
+				for (int i = 0; i < 4; ++i)
+					tile.Edges[i] = EdgeType::Solid;
+				break;
+			case 1:
+			case 3:
+				tile.Edges[Direction::Up] = EdgeType::Interesting;
+				tile.Edges[Direction::Down] = EdgeType::Solid;
+				tile.Edges[Direction::Left] = EdgeType::Interesting;
+				tile.Edges[Direction::Right] = EdgeType::Solid;
+				break;
+			case 2:
+			case 4:
+				tile.Edges[Direction::Up] = EdgeType::Interesting;
+				tile.Edges[Direction::Down] = EdgeType::Solid;
+				tile.Edges[Direction::Left] = EdgeType::Interesting;
+				tile.Edges[Direction::Right] = EdgeType::Interesting;
+				break;
+			default:
+				for (int i = 0; i < 4; ++i)
+					tile.Edges[i] = EdgeType::Empty;
+				break;
 			}
 
 			// Flip edges for orientation.
@@ -189,8 +244,6 @@ bool Map::Load(const std::string& pFilename)
 	}
 
 	file.close();
-
-	mIsLoaded = true;
 
 	return mIsLoaded;
 }
