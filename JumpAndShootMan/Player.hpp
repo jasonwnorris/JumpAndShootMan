@@ -10,21 +10,25 @@
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 // Project Includes
+#include "EntityManager.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <vector>
 
 class Renderer;
-class Player
+class Player : public Entity
 {
 	public:
-		Player();
+		Player(EntityManager* pManager);
 		~Player();
 
 		bool Load(const std::string& pFilename);
-		void Render(const Renderer& pRenderer);
+		void Fire();
+
+		void Update(float pDeltaTime) override;
+		void Render(const Renderer& pRenderer) override;
 		void RenderDebug(const Renderer& pRenderer);
-		void Render(SAGE::SpriteBatch& pSpriteBatch);
+		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 
 		static const int MaxRayCount;

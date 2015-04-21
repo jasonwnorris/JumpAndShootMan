@@ -50,7 +50,8 @@ class JumpShootGame : public SAGE::Game
 		HGF::Effect mSpriteEffect;
 		Renderer mRenderer;
 		Map mMap;
-		Player mPlayer;
+		EntityManager mEntityManager;
+		Player* mPlayer;
 };
 
 #endif

@@ -37,6 +37,18 @@
     <ClCompile Include="BitField.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DirectionalProjectile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Map.hpp">
@@ -61,6 +73,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="BitField.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityManager.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalProjectile.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

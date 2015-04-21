@@ -4,10 +4,11 @@
 #include "Globals.hpp"
 #include "Player.hpp"
 #include "Renderer.hpp"
+#include "DirectionalProjectile.hpp"
 
 const int Player::MaxRayCount = 12;
 
-Player::Player()
+Player::Player(EntityManager* pManager) : Entity(pManager)
 {
 	Position = HGF::Vector2(100.0f, 100.0f);
 	Velocity = HGF::Vector2::Zero;
@@ -36,9 +37,12 @@ bool Player::Load(const std::string& pFilename)
 	if (!mTexture.Load(pFilename.c_str()))
 		return false;
 
+	if (!DirectionalProjectile::DirProjTexture.Load("data/img/projectile.png"))
+		return false;
+
 	float updowndistance = 70.0f / 2.0f;
 	float leftrightdistance = 46.0f / 2.0f;
-	float thresholdAddition = 15.0f;
+	float thresholdAddition = 25.0f;
 
 	RaycastInfos = new RaycastInfo[MaxRayCount];
 	// Up
@@ -109,6 +113,20 @@ bool Player::Load(const std::string& pFilename)
 	RaycastHits = new RaycastHit[MaxRayCount];
 
 	return true;
+}
+
+void Player::Fire()
+{
+	DirectionalProjectile* proj = mManager->Create<DirectionalProjectile>();
+	proj->Position = Position;
+	proj->Speed = 250.0f;
+	proj->LifeTime = 2.5f;
+	proj->Direction = IsFacingLeft ? Direction::Left : Direction::Right;
+}
+
+void Player::Update(float pDeltaTime)
+{
+
 }
 
 void Player::Render(const Renderer& pRenderer)
