@@ -17,7 +17,6 @@ class Projectile : public Entity
 		virtual void Render(SAGE::SpriteBatch& pSpriteBatch) override = 0;
 
 	public:
-		HGF::Texture Texture;
 		HGF::Vector2 Position;
 		float Speed;
 		float LifeTime;

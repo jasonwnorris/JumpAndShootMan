@@ -7,7 +7,7 @@
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 
-class Map;
+class TiledMap;
 class Player;
 class Renderer
 {

@@ -12,35 +12,22 @@ EntityManager::EntityManager()
 
 EntityManager::~EntityManager()
 {
-	std::for_each(mEntities.begin(), mEntities.end(), [](Entity* entity) { delete entity; });
-
 	mEntities.clear();
 }
 
 void EntityManager::Update(float pDeltaTime)
 {
-	mEntities.erase(std::remove_if(mEntities.begin(), mEntities.end(), [](Entity* entity) {
-		if (!entity->IsAlive())
-		{
-			delete entity;
+	mEntities.erase(std::remove_if(mEntities.begin(), mEntities.end(), [](std::weak_ptr<Entity> entity) { return !entity.lock()->IsAlive(); }), mEntities.end());
 
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}), mEntities.end());
-
-	std::for_each(mEntities.begin(), mEntities.end(), [&](Entity* entity) { entity->Update(pDeltaTime); });
+	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Update(pDeltaTime); });
 }
 
 void EntityManager::Render(const Renderer& pRenderer)
 {
-	std::for_each(mEntities.begin(), mEntities.end(), [&](Entity* entity) { entity->Render(pRenderer); });
+	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Render(pRenderer); });
 }
 
 void EntityManager::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
-	std::for_each(mEntities.begin(), mEntities.end(), [&](Entity* entity) { entity->Render(pSpriteBatch); });
+	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Render(pSpriteBatch); });
 }

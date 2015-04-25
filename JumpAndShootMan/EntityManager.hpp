@@ -6,6 +6,7 @@
 // Project Includes
 #include "Entity.hpp"
 // STL Includes
+#include <memory>
 #include <vector>
 
 class EntityManager
@@ -14,23 +15,21 @@ class EntityManager
 		EntityManager();
 		~EntityManager();
 
-		template<typename T> T* Create();
+		template<typename T> std::shared_ptr<T> Create();
 
 		void Update(float pDeltaTime);
 		void Render(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
 
 	private:
-		bool RemoveDead(Entity* pEntity);
-
-		std::vector<Entity*> mEntities;
+		std::vector<std::shared_ptr<Entity>> mEntities;
 };
 
-template<typename T> T* EntityManager::Create()
+template<typename T> std::shared_ptr<T> EntityManager::Create()
 {
 	static_assert(std::is_base_of<Entity, T>::value, "Invalid Type");
 
-	T* entity = new T(this);
+	std::shared_ptr<T> entity = std::make_shared<T>(this);
 
 	mEntities.push_back(entity);
 

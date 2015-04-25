@@ -32,6 +32,7 @@ int JumpShootGame::Initialize()
 	options.Width = mWindowWidth;
 	options.Height = mWindowHeight;
 	options.Mode = HGF::WindowMode::Windowed;
+	//options.VerticalSync = false;
 
 	if (!mWindow.Initialize(options))
 		return -1;
@@ -63,11 +64,14 @@ int JumpShootGame::Initialize()
 		return -1;
 	mSpriteEffect.SetUniform("uTextureSampler", 0);
 
+	if (!mSpriteFont.Load("data/img/font.png", 26.0f, 16.0f))
+		return -1;
+
 	mFrameCount = 0;
 	mPreviousTicks = 0;
 	mCurrentTicks = SDL_GetTicks();
 
-	if (!mMap.Load("data/maps/first.txt"))
+	if (!mTiledMap.Load("data/maps/first.txt"))
 		return -1;
 
 	mPlayer = mEntityManager.Create<Player>();
@@ -114,22 +118,22 @@ int JumpShootGame::Update(float pDeltaTime)
 	}
 
 	// exit
-	if (HGF::Keyboard::IsKeyPressed(SDLK_ESCAPE))
+	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Escape))
 	{
 		mRunning = false;
 	}
 
 	// debug
-	if (HGF::Keyboard::IsKeyPressed(SDLK_BACKSPACE))
+	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Backspace))
 	{
 		mPlayer->Position = HGF::Vector2(100.0f, 100.0f);
 		mPlayer->IsGrounded = false;
 	}
-	if (HGF::Keyboard::IsKeyPressed(SDLK_p))
+	if (HGF::Keyboard::IsKeyPressed(HGF::Key::P))
 	{
 		Globals::IsDebugDrawOn = !Globals::IsDebugDrawOn;
 	}
-	if (HGF::Keyboard::IsKeyPressed(SDLK_l))
+	if (HGF::Keyboard::IsKeyPressed(HGF::Key::L))
 	{
 		mPlayer->IsDebugFly = !mPlayer->IsDebugFly;
 		mPlayer->Velocity = HGF::Vector2::Zero;
@@ -140,20 +144,20 @@ int JumpShootGame::Update(float pDeltaTime)
 	if (mPlayer->IsDebugFly)
 	{
 		float mult = 50.0f;
-		if (HGF::Keyboard::IsKeyDown(SDLK_UP))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Up))
 		{
 			mPlayer->Position.Y -= mPlayer->MovementSpeed * mult;
 		}
-		if (HGF::Keyboard::IsKeyDown(SDLK_DOWN))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Down))
 		{
 			mPlayer->Position.Y += mPlayer->MovementSpeed * mult;
 		}
-		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Left))
 		{
 			mPlayer->Position.X -= mPlayer->MovementSpeed * mult;
 			mPlayer->IsFacingLeft = true;
 		}
-		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Right))
 		{
 			mPlayer->Position.X += mPlayer->MovementSpeed * mult;
 			mPlayer->IsFacingLeft = false;
@@ -161,22 +165,22 @@ int JumpShootGame::Update(float pDeltaTime)
 	}
 	else
 	{
-		if (HGF::Keyboard::IsKeyPressed(SDLK_z) && mPlayer->IsGrounded)
+		if (HGF::Keyboard::IsKeyPressed(HGF::Key::Z) && mPlayer->IsGrounded)
 		{
 			mPlayer->Velocity.Y = 0.0f;
 			mPlayer->Acceleration.Y -= mPlayer->JumpingSpeed;
 			mPlayer->IsGrounded = false;
 		}
-		if (HGF::Keyboard::IsKeyPressed(SDLK_x))
+		if (HGF::Keyboard::IsKeyPressed(HGF::Key::X))
 		{
 			mPlayer->Fire();
 		}
-		if (HGF::Keyboard::IsKeyDown(SDLK_LEFT))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Left))
 		{
 			mPlayer->Acceleration.X -= mPlayer->MovementSpeed;
 			mPlayer->IsFacingLeft = true;
 		}
-		if (HGF::Keyboard::IsKeyDown(SDLK_RIGHT))
+		if (HGF::Keyboard::IsKeyDown(HGF::Key::Right))
 		{
 			mPlayer->Acceleration.X += mPlayer->MovementSpeed;
 			mPlayer->IsFacingLeft = false;
@@ -215,22 +219,24 @@ int JumpShootGame::Render()
 	mSpriteEffect.SetModelView(modelViewMatrix);
 	mSpriteEffect.Use();
 
+	std::string text = "Hello World!";
+	HGF::Vector2 origin;
+	mSpriteFont.MeasureString(text, origin);
+
 	mSpriteBatch.Begin(SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
-	mMap.Render(mSpriteBatch);
+	mTiledMap.Render(mSpriteBatch);
+	mSpriteBatch.DrawString(mSpriteFont, "Jump 'n' Shoot Man!", HGF::Vector2(340.0f, 100.0f), HGF::Color::White, origin / 4.0f, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
 	mEntityManager.Render(mSpriteBatch);
 	mSpriteBatch.End();
 #else
-	float rot = 0.0f;
-	float zoom = 1.0f;
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f);
 	glTranslatef(-mPlayer->Position.X, -mPlayer->Position.Y, 0.0f);
-	glRotatef(rot, 0.0f, 0.0f, 1.0f);
-	glScalef(zoom, zoom, 0.0f);
+	glRotatef(mRotation, 0.0f, 0.0f, 1.0f);
+	glScalef(mZoom, mZoom, 0.0f);
 
-	mMap.Render(mRenderer);
+	mTiledMap.Render(mRenderer);
 	mEntityManager.Render(mRenderer);
 #endif
 
@@ -242,11 +248,11 @@ int JumpShootGame::Render()
 		mGeometryEffect.Use();
 
 		mGeometryBatch.Begin();
-		mMap.RenderDebug(mGeometryBatch);
+		mTiledMap.RenderDebug(mGeometryBatch);
 		mPlayer->RenderDebug(mGeometryBatch);
 		mGeometryBatch.End();
 #else
-		mMap.RenderDebug(mRenderer);
+		mTiledMap.RenderDebug(mRenderer);
 		mPlayer->RenderDebug(mRenderer);
 #endif
 	}
@@ -260,7 +266,7 @@ void JumpShootGame::UpdateRaycast()
 {
 	for (int i = 0; i < Player::MaxRayCount; i += 3)
 	{
-		mMap.Raycast(mPlayer->Position + mPlayer->RaycastInfos[i].Position, mPlayer->RaycastInfos[i].Direction, mPlayer->RaycastInfos[i].HasInterest, mPlayer->RaycastHits[i]);
+		mTiledMap.Raycast(mPlayer->Position + mPlayer->RaycastInfos[i].Position, mPlayer->RaycastInfos[i].Direction, mPlayer->RaycastInfos[i].HasInterest, mPlayer->RaycastHits[i]);
 
 		if (mPlayer->RaycastHits[i].Distance < mPlayer->RaycastInfos[i].Threshold)
 		{
@@ -274,7 +280,7 @@ void JumpShootGame::UpdateRaycast()
 			bool hit[2];
 			for (int j = 0; j < 2; ++j)
 			{
-				mMap.Raycast(mPlayer->Position + mPlayer->RaycastInfos[i + j + 1].Position, mPlayer->RaycastInfos[i].Direction, mPlayer->RaycastInfos[i + j + 1].HasInterest, mPlayer->RaycastHits[i + j + 1]);
+				mTiledMap.Raycast(mPlayer->Position + mPlayer->RaycastInfos[i + j + 1].Position, mPlayer->RaycastInfos[i].Direction, mPlayer->RaycastInfos[i + j + 1].HasInterest, mPlayer->RaycastHits[i + j + 1]);
 				hit[j] = mPlayer->RaycastHits[i + j + 1].Distance < mPlayer->RaycastInfos[i + j + 1].Distance;
 			}
 

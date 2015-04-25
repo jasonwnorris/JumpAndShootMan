@@ -1,7 +1,7 @@
-// Map.hpp
+// TiledMap.hpp
 
-#ifndef __MAP_HPP__
-#define __MAP_HPP__
+#ifndef __TILEDMAP_HPP__
+#define __TILEDMAP_HPP__
 
 // SAGE Includes
 #include <SAGE\GeometryBatch.hpp>
@@ -14,6 +14,7 @@
 #include "Renderer.hpp"
 #include "Raycast.hpp"
 // STL Includes
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,11 +42,11 @@ struct Tile
 };
 
 class Renderer;
-class Map
+class TiledMap
 {
 	public:
-		Map();
-		~Map();
+		TiledMap();
+		~TiledMap();
 
 		bool Load(const std::string& pFilename);
 
@@ -65,7 +66,7 @@ class Map
 		int mHeight;
 		Tile** mData;
 		int mBitMaskCount;
-		BitField* mBitMasks;
+		std::vector<std::unique_ptr<BitField>> mBitMasks;
 		bool mIsLoaded;
 };
 

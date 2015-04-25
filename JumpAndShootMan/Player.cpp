@@ -6,9 +6,7 @@
 #include "Renderer.hpp"
 #include "DirectionalProjectile.hpp"
 
-const int Player::MaxRayCount = 12;
-
-Player::Player(EntityManager* pManager) : Entity(pManager)
+Player::Player(EntityManager* pManager) : Entity(pManager), ITiledTiledMapCollider(nullptr)
 {
 	Position = HGF::Vector2(100.0f, 100.0f);
 	Velocity = HGF::Vector2::Zero;
@@ -28,8 +26,6 @@ Player::Player(EntityManager* pManager) : Entity(pManager)
 
 Player::~Player()
 {
-	delete [] RaycastInfos;
-	delete [] RaycastHits;
 }
 
 bool Player::Load(const std::string& pFilename)
@@ -44,80 +40,77 @@ bool Player::Load(const std::string& pFilename)
 	float leftrightdistance = 46.0f / 2.0f;
 	float thresholdAddition = 25.0f;
 
-	RaycastInfos = new RaycastInfo[MaxRayCount];
 	// Up
-	RaycastInfos[MRK_HEAD_LEFT].Position = HGF::Vector2(Dimensions.X * -1.0f / 4.0f, 0.0f);
-	RaycastInfos[MRK_HEAD_LEFT].Direction = Direction::Up;
-	RaycastInfos[MRK_HEAD_LEFT].Distance = updowndistance;
-	RaycastInfos[MRK_HEAD_LEFT].Threshold = updowndistance;
-	RaycastInfos[MRK_HEAD_LEFT].HasInterest = false;
-	RaycastInfos[MRK_HEAD_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	RaycastInfos[MRK_HEAD_CENTER].Direction = Direction::Up;
-	RaycastInfos[MRK_HEAD_CENTER].Distance = updowndistance;
-	RaycastInfos[MRK_HEAD_CENTER].Threshold = updowndistance + thresholdAddition;
-	RaycastInfos[MRK_HEAD_CENTER].HasInterest = true;
-	RaycastInfos[MRK_HEAD_RIGHT].Position = HGF::Vector2(Dimensions.X * 1.0f / 4.0f, 0.0f);
-	RaycastInfos[MRK_HEAD_RIGHT].Direction = Direction::Up;
-	RaycastInfos[MRK_HEAD_RIGHT].Distance = updowndistance;
-	RaycastInfos[MRK_HEAD_RIGHT].Threshold = updowndistance;
-	RaycastInfos[MRK_HEAD_RIGHT].HasInterest = false;
+	RaycastInfos[RayIndex::UpLeft].Position = HGF::Vector2(Dimensions.X * -1.0f / 4.0f, 0.0f);
+	RaycastInfos[RayIndex::UpLeft].Direction = Direction::Up;
+	RaycastInfos[RayIndex::UpLeft].Distance = updowndistance;
+	RaycastInfos[RayIndex::UpLeft].Threshold = updowndistance;
+	RaycastInfos[RayIndex::UpLeft].HasInterest = false;
+	RaycastInfos[RayIndex::UpCenter].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[RayIndex::UpCenter].Direction = Direction::Up;
+	RaycastInfos[RayIndex::UpCenter].Distance = updowndistance;
+	RaycastInfos[RayIndex::UpCenter].Threshold = updowndistance + thresholdAddition;
+	RaycastInfos[RayIndex::UpCenter].HasInterest = true;
+	RaycastInfos[RayIndex::UpRight].Position = HGF::Vector2(Dimensions.X * 1.0f / 4.0f, 0.0f);
+	RaycastInfos[RayIndex::UpRight].Direction = Direction::Up;
+	RaycastInfos[RayIndex::UpRight].Distance = updowndistance;
+	RaycastInfos[RayIndex::UpRight].Threshold = updowndistance;
+	RaycastInfos[RayIndex::UpRight].HasInterest = false;
 	// Down
-	RaycastInfos[MRK_FOOT_LEFT].Position = HGF::Vector2(Dimensions.X * -3.0f / 10.0f, 0.0f);
-	RaycastInfos[MRK_FOOT_LEFT].Direction = Direction::Down;
-	RaycastInfos[MRK_FOOT_LEFT].Distance = updowndistance;
-	RaycastInfos[MRK_FOOT_LEFT].Threshold = updowndistance;
-	RaycastInfos[MRK_FOOT_LEFT].HasInterest = false;
-	RaycastInfos[MRK_HOTSPOT].Position = HGF::Vector2(0.0f, 0.0f);
-	RaycastInfos[MRK_HOTSPOT].Direction = Direction::Down;
-	RaycastInfos[MRK_HOTSPOT].Distance = updowndistance;
-	RaycastInfos[MRK_HOTSPOT].Threshold = updowndistance + thresholdAddition;
-	RaycastInfos[MRK_HOTSPOT].HasInterest = true;
-	RaycastInfos[MRK_FOOT_RIGHT].Position = HGF::Vector2(Dimensions.X * 3.0f / 10.0f, 0.0f);
-	RaycastInfos[MRK_FOOT_RIGHT].Direction = Direction::Down;
-	RaycastInfos[MRK_FOOT_RIGHT].Distance = updowndistance;
-	RaycastInfos[MRK_FOOT_RIGHT].Threshold = updowndistance;
-	RaycastInfos[MRK_FOOT_RIGHT].HasInterest = false;
+	RaycastInfos[RayIndex::DownLeft].Position = HGF::Vector2(Dimensions.X * -3.0f / 10.0f, 0.0f);
+	RaycastInfos[RayIndex::DownLeft].Direction = Direction::Down;
+	RaycastInfos[RayIndex::DownLeft].Distance = updowndistance;
+	RaycastInfos[RayIndex::DownLeft].Threshold = updowndistance;
+	RaycastInfos[RayIndex::DownLeft].HasInterest = false;
+	RaycastInfos[RayIndex::DownCenter].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[RayIndex::DownCenter].Direction = Direction::Down;
+	RaycastInfos[RayIndex::DownCenter].Distance = updowndistance;
+	RaycastInfos[RayIndex::DownCenter].Threshold = updowndistance + thresholdAddition;
+	RaycastInfos[RayIndex::DownCenter].HasInterest = true;
+	RaycastInfos[RayIndex::DownRight].Position = HGF::Vector2(Dimensions.X * 3.0f / 10.0f, 0.0f);
+	RaycastInfos[RayIndex::DownRight].Direction = Direction::Down;
+	RaycastInfos[RayIndex::DownRight].Distance = updowndistance;
+	RaycastInfos[RayIndex::DownRight].Threshold = updowndistance;
+	RaycastInfos[RayIndex::DownRight].HasInterest = false;
 	// Left
-	RaycastInfos[MRK_LEFT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
-	RaycastInfos[MRK_LEFT_TOP].Direction = Direction::Left;
-	RaycastInfos[MRK_LEFT_TOP].Distance = leftrightdistance;
-	RaycastInfos[MRK_LEFT_TOP].Threshold = leftrightdistance;
-	RaycastInfos[MRK_LEFT_TOP].HasInterest = false;
-	RaycastInfos[MRK_LEFT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	RaycastInfos[MRK_LEFT_CENTER].Direction = Direction::Left;
-	RaycastInfos[MRK_LEFT_CENTER].Distance = leftrightdistance;
-	RaycastInfos[MRK_LEFT_CENTER].Threshold = leftrightdistance + thresholdAddition;
-	RaycastInfos[MRK_LEFT_CENTER].HasInterest = false;
-	RaycastInfos[MRK_LEFT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
-	RaycastInfos[MRK_LEFT_BOTTOM].Direction = Direction::Left;
-	RaycastInfos[MRK_LEFT_BOTTOM].Distance = leftrightdistance;
-	RaycastInfos[MRK_LEFT_BOTTOM].Threshold = leftrightdistance;
-	RaycastInfos[MRK_LEFT_BOTTOM].HasInterest = false;
+	RaycastInfos[RayIndex::LeftTop].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
+	RaycastInfos[RayIndex::LeftTop].Direction = Direction::Left;
+	RaycastInfos[RayIndex::LeftTop].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::LeftTop].Threshold = leftrightdistance;
+	RaycastInfos[RayIndex::LeftTop].HasInterest = false;
+	RaycastInfos[RayIndex::LeftCenter].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[RayIndex::LeftCenter].Direction = Direction::Left;
+	RaycastInfos[RayIndex::LeftCenter].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::LeftCenter].Threshold = leftrightdistance + thresholdAddition;
+	RaycastInfos[RayIndex::LeftCenter].HasInterest = false;
+	RaycastInfos[RayIndex::LeftBottom].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
+	RaycastInfos[RayIndex::LeftBottom].Direction = Direction::Left;
+	RaycastInfos[RayIndex::LeftBottom].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::LeftBottom].Threshold = leftrightdistance;
+	RaycastInfos[RayIndex::LeftBottom].HasInterest = false;
 	// Right
-	RaycastInfos[MRK_RIGHT_TOP].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
-	RaycastInfos[MRK_RIGHT_TOP].Direction = Direction::Right;
-	RaycastInfos[MRK_RIGHT_TOP].Distance = leftrightdistance;
-	RaycastInfos[MRK_RIGHT_TOP].Threshold = leftrightdistance;
-	RaycastInfos[MRK_RIGHT_TOP].HasInterest = false;
-	RaycastInfos[MRK_RIGHT_CENTER].Position = HGF::Vector2(0.0f, 0.0f);
-	RaycastInfos[MRK_RIGHT_CENTER].Direction = Direction::Right;
-	RaycastInfos[MRK_RIGHT_CENTER].Distance = leftrightdistance;
-	RaycastInfos[MRK_RIGHT_CENTER].Threshold = leftrightdistance + thresholdAddition;
-	RaycastInfos[MRK_RIGHT_CENTER].HasInterest = false;
-	RaycastInfos[MRK_RIGHT_BOTTOM].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
-	RaycastInfos[MRK_RIGHT_BOTTOM].Direction = Direction::Right;
-	RaycastInfos[MRK_RIGHT_BOTTOM].Distance = leftrightdistance;
-	RaycastInfos[MRK_RIGHT_BOTTOM].Threshold = leftrightdistance;
-	RaycastInfos[MRK_RIGHT_BOTTOM].HasInterest = false;
-
-	RaycastHits = new RaycastHit[MaxRayCount];
+	RaycastInfos[RayIndex::RightTop].Position = HGF::Vector2(0.0f, Dimensions.Y * -1.0f / 3.0f);
+	RaycastInfos[RayIndex::RightTop].Direction = Direction::Right;
+	RaycastInfos[RayIndex::RightTop].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::RightTop].Threshold = leftrightdistance;
+	RaycastInfos[RayIndex::RightTop].HasInterest = false;
+	RaycastInfos[RayIndex::RightCenter].Position = HGF::Vector2(0.0f, 0.0f);
+	RaycastInfos[RayIndex::RightCenter].Direction = Direction::Right;
+	RaycastInfos[RayIndex::RightCenter].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::RightCenter].Threshold = leftrightdistance + thresholdAddition;
+	RaycastInfos[RayIndex::RightCenter].HasInterest = false;
+	RaycastInfos[RayIndex::RightBottom].Position = HGF::Vector2(0.0f, Dimensions.Y * 1.0f / 3.0f);
+	RaycastInfos[RayIndex::RightBottom].Direction = Direction::Right;
+	RaycastInfos[RayIndex::RightBottom].Distance = leftrightdistance;
+	RaycastInfos[RayIndex::RightBottom].Threshold = leftrightdistance;
+	RaycastInfos[RayIndex::RightBottom].HasInterest = false;
 
 	return true;
 }
 
 void Player::Fire()
 {
-	DirectionalProjectile* proj = mManager->Create<DirectionalProjectile>();
+	std::shared_ptr<DirectionalProjectile> proj = mManager->Create<DirectionalProjectile>();
 	proj->Position = Position;
 	proj->Speed = 250.0f;
 	proj->LifeTime = 2.5f;
@@ -140,7 +133,7 @@ void Player::RenderDebug(const Renderer& pRenderer)
 	pRenderer.RenderRectangle(Position, Dimensions, Dimensions / 2.0f, 0.0f, 1.0f, 0.0f);
 
 	// collision points
-	for (int i = 0; i < Player::MaxRayCount; ++i)
+	for (int i = 0; i < MaxRayCount; ++i)
 	{
 		RaycastInfo& col = RaycastInfos[i];
 		RaycastHit& hit = RaycastHits[i];
@@ -173,7 +166,7 @@ void Player::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
 	pGeometryBatch.Draw(HGF::Vector2(TL.X, BR.Y), HGF::Vector2(TL.X, TL.Y), HGF::Color::Green);
 
 	// collision points
-	for (int i = 0; i < Player::MaxRayCount; ++i)
+	for (int i = 0; i < MaxRayCount; ++i)
 	{
 		RaycastInfo& col = RaycastInfos[i];
 		RaycastHit& hit = RaycastHits[i];

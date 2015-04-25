@@ -1,11 +1,11 @@
-// Map.cpp
+// TiledMap.cpp
 
 // SDL Includes
 #include <SDL2\SDL.h>
 #include <SDL2\SDL_image.h>
 // Project Includes
 #include "Globals.hpp"
-#include "Map.hpp"
+#include "TiledMap.hpp"
 #include "Renderer.hpp"
 // JSON
 #include <json\json.h>
@@ -14,12 +14,12 @@
 #include <fstream>
 #include <iostream>
 
-Map::Map()
+TiledMap::TiledMap()
 {
 	mIsLoaded = false;
 }
 
-Map::~Map()
+TiledMap::~TiledMap()
 {
 	// Free map data.
 	for (int x = 0; x < mWidth; ++x)
@@ -34,14 +34,10 @@ Map::~Map()
 		delete [] mData;
 	}
 
-	// Free map bitmasks.
-	if (mBitMasks)
-	{
-		delete [] mBitMasks;
-	}
+	mBitMasks.clear();
 }
 
-bool Map::Load(const std::string& pFilename)
+bool TiledMap::Load(const std::string& pFilename)
 {
 	if (mIsLoaded)
 		return false;
@@ -105,12 +101,12 @@ bool Map::Load(const std::string& pFilename)
 		}
 		else
 		{
-			SDL_Log("[Map::Load] Failed to parse JSON file.");
+			SDL_Log("[TiledMap::Load] Failed to parse JSON file.");
 		}
 	}
 	else
 	{
-		SDL_Log("[Map::Load] Unsupported map file format: %s", ext);
+		SDL_Log("[TiledMap::Load] Unsupported map file format: %s", ext);
 	}
 
 	// Load tileset texture;
@@ -124,12 +120,13 @@ bool Map::Load(const std::string& pFilename)
 
 	// Establish bitmask count.
 	mBitMaskCount = bitWidth * bitHeight;
-	mBitMasks = new BitField[mBitMaskCount];
+	mBitMasks.resize(mBitMaskCount);
 
 	// Read the bitmask pixels.
 	for (int i = 0; i < mBitMaskCount; ++i)
 	{
-		mBitMasks[i].Resize(mTileset.Size, mTileset.Size);
+		mBitMasks[i] = std::make_unique<BitField>();
+		mBitMasks[i].get()->Resize(mTileset.Size, mTileset.Size);
 
 		for (int px = 0; px < mTileset.Size; ++px)
 		{
@@ -138,7 +135,7 @@ bool Map::Load(const std::string& pFilename)
 				Uint8 r, g, b, a;
 				bitmaskTexture.GetColor(i * mTileset.Size + px, py, r, g, b, a);
 
-				mBitMasks[i].SetBit(px, py, (r == 0 && g == 0 && b == 0));
+				mBitMasks[i].get()->SetBit(px, py, (r == 0 && g == 0 && b == 0));
 			}
 		}
 	}
@@ -248,7 +245,7 @@ bool Map::Load(const std::string& pFilename)
 	return mIsLoaded;
 }
 
-bool Map::TryGetTile(int pX, int pY, Tile& pTile)
+bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile)
 {
 	if (pX < 0 || pY < 0 || pX >= mWidth || pY >= mHeight)
 		return false;
@@ -258,12 +255,12 @@ bool Map::TryGetTile(int pX, int pY, Tile& pTile)
 	return pTile.TextureID >= 0;
 }
 
-bool Map::IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest)
+bool TiledMap::IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest)
 {
 	return pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Solid || (pHasInterest && pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Interesting);
 }
 
-bool Map::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY)
+bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY)
 {
 	if (pPixelX < 0 || pPixelY < 0 || pPixelX >= mTileset.Size || pPixelY >= mTileset.Size)
 		return true;
@@ -274,10 +271,10 @@ bool Map::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY)
 	bool horzFlip = (pTile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal;
 	bool vertFlip = (pTile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical;
 
-	return !mBitMasks[pTile.CollisionID].GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
+	return !mBitMasks[pTile.CollisionID].get()->GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
 }
 
-void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit)
+void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit)
 {
 	int x = (int)std::roundf(pPosition.X);
 	int y = (int)std::roundf(pPosition.Y);
@@ -428,7 +425,7 @@ void Map::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHas
 	}
 }
 
-void Map::Render(const Renderer& pRenderer)
+void TiledMap::Render(const Renderer& pRenderer)
 {
 	Tile tile;
 	for (int y = 0; y < mHeight; ++y)
@@ -448,7 +445,7 @@ void Map::Render(const Renderer& pRenderer)
 	}
 }
 
-void Map::RenderDebug(const Renderer& pRenderer)
+void TiledMap::RenderDebug(const Renderer& pRenderer)
 {
 	Tile tile;
 	for (int y = 0; y < mHeight; ++y)
@@ -487,7 +484,7 @@ void Map::RenderDebug(const Renderer& pRenderer)
 	}
 }
 
-void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
+void TiledMap::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	Tile tile;
 	for (int y = 0; y < mHeight; ++y)
@@ -510,7 +507,7 @@ void Map::Render(SAGE::SpriteBatch& pSpriteBatch)
 	}
 }
 
-void Map::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
+void TiledMap::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
 {
 	Tile tile;
 	for (int y = 0; y < mHeight; ++y)

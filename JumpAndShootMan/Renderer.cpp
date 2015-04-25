@@ -6,7 +6,7 @@
 #include <SDL2\SDL_image.h>
 #include <SDL2\SDL_opengl.h>
 // Project Includes
-#include "Map.hpp"
+#include "TiledMap.hpp"
 #include "Player.hpp"
 #include "Renderer.hpp"
 

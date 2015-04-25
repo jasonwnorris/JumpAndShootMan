@@ -10,13 +10,14 @@
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 // Project Includes
+#include "ITiledMapCollider.hpp"
 #include "EntityManager.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <vector>
 
 class Renderer;
-class Player : public Entity
+class Player : public Entity, public ITiledTiledMapCollider
 {
 	public:
 		Player(EntityManager* pManager);
@@ -30,23 +31,6 @@ class Player : public Entity
 		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
-
-		static const int MaxRayCount;
-		enum RayIndex
-		{
-			MRK_HOTSPOT,
-			MRK_FOOT_LEFT,
-			MRK_FOOT_RIGHT,
-			MRK_HEAD_CENTER,
-			MRK_HEAD_LEFT,
-			MRK_HEAD_RIGHT,
-			MRK_LEFT_CENTER,
-			MRK_LEFT_TOP,
-			MRK_LEFT_BOTTOM,
-			MRK_RIGHT_CENTER,
-			MRK_RIGHT_TOP,
-			MRK_RIGHT_BOTTOM,
-		};
 
 		HGF::Vector2 Position;
 		HGF::Vector2 Velocity;
@@ -62,8 +46,6 @@ class Player : public Entity
 		bool IsGrounded;
 		bool IsJumping;
 		bool IsDebugFly;
-		RaycastInfo* RaycastInfos;
-		RaycastHit* RaycastHits;
 
 	private:
 		HGF::Texture mTexture;

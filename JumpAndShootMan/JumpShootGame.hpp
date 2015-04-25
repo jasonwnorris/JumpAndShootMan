@@ -15,7 +15,7 @@
 #include <HGF\Window.hpp>
 // Project Includes
 #include "Renderer.hpp"
-#include "Map.hpp"
+#include "TiledMap.hpp"
 #include "Player.hpp"
 // STL Includes
 #include <map>
@@ -49,9 +49,10 @@ class JumpShootGame : public SAGE::Game
 		SAGE::SpriteBatch mSpriteBatch;
 		HGF::Effect mSpriteEffect;
 		Renderer mRenderer;
-		Map mMap;
+		SAGE::SpriteFont mSpriteFont;
+		TiledMap mTiledMap;
 		EntityManager mEntityManager;
-		Player* mPlayer;
+		std::shared_ptr<Player> mPlayer;
 };
 
 #endif
