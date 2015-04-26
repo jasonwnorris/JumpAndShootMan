@@ -18,7 +18,6 @@ class EntityManager
 		template<typename T> std::shared_ptr<T> Create();
 
 		void Update(float pDeltaTime);
-		void Render(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
 
 	private:

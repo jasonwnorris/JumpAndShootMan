@@ -17,7 +17,6 @@ class DirectionalProjectile : public Projectile
 		~DirectionalProjectile();
 
 		void Update(float pDeltaTime) override;
-		void Render(const Renderer& pRenderer) override;
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
 
 	public:

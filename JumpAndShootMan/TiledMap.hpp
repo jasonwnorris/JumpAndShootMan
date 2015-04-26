@@ -11,7 +11,6 @@
 #include <HGF\Texture.hpp>
 // Project Includes
 #include "BitField.hpp"
-#include "Renderer.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <memory>
@@ -55,8 +54,6 @@ class TiledMap
 		bool IsTraversable(const Tile& pTile, int pPixelX, int pPixelY);
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 
-		void Render(const Renderer& pRenderer);
-		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 		

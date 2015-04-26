@@ -27,8 +27,6 @@ class Player : public Entity, public ITiledTiledMapCollider
 		void Fire();
 
 		void Update(float pDeltaTime) override;
-		void Render(const Renderer& pRenderer) override;
-		void RenderDebug(const Renderer& pRenderer);
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
 		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
 

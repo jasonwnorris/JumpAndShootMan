@@ -3,7 +3,6 @@
 // Project Includes
 #include "Globals.hpp"
 #include "Player.hpp"
-#include "Renderer.hpp"
 #include "DirectionalProjectile.hpp"
 
 Player::Player(EntityManager* pManager) : Entity(pManager), ITiledTiledMapCollider(nullptr)
@@ -120,27 +119,6 @@ void Player::Fire()
 void Player::Update(float pDeltaTime)
 {
 
-}
-
-void Player::Render(const Renderer& pRenderer)
-{
-	pRenderer.RenderTexture(mTexture, Position, Dimensions, Dimensions / 2.0f, HGF::Vector2(12, 110), HGF::Vector2(118, 256), IsFacingLeft);
-}
-
-void Player::RenderDebug(const Renderer& pRenderer)
-{
-	// AABB
-	pRenderer.RenderRectangle(Position, Dimensions, Dimensions / 2.0f, 0.0f, 1.0f, 0.0f);
-
-	// collision points
-	for (int i = 0; i < MaxRayCount; ++i)
-	{
-		RaycastInfo& col = RaycastInfos[i];
-		RaycastHit& hit = RaycastHits[i];
-
-		pRenderer.RenderLine(Position + col.Position, hit.Position, 1.0f, 0.9f, 0.1f, 0.8f, 1.0f);
-		pRenderer.RenderPoint(hit.Position, 4.0f, 1.0f, 1.0f, 0.0f);
-	}
 }
 
 void Player::Render(SAGE::SpriteBatch& pSpriteBatch)

@@ -6,7 +6,6 @@
 // Project Includes
 #include "Globals.hpp"
 #include "TiledMap.hpp"
-#include "Renderer.hpp"
 // JSON
 #include <json\json.h>
 // STL Includes
@@ -422,65 +421,6 @@ void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool
 		default:
 			// what?
 			break;
-	}
-}
-
-void TiledMap::Render(const Renderer& pRenderer)
-{
-	Tile tile;
-	for (int y = 0; y < mHeight; ++y)
-	{
-		for (int x = 0; x < mWidth; ++x)
-		{
-			if (TryGetTile(x, y, tile))
-			{
-				HGF::Vector2 position(x * mTileset.Size, y * mTileset.Size);
-				HGF::Vector2 dimensions(mTileset.Size, mTileset.Size);
-				HGF::Vector2 min((tile.TextureID % mTileset.X) * mTileset.Size, (tile.TextureID / mTileset.X)  * mTileset.Size);
-				HGF::Vector2 max(((tile.TextureID % mTileset.X) + 1)  * mTileset.Size, ((tile.TextureID / mTileset.X) + 1)  * mTileset.Size);
-
-				pRenderer.RenderTexture(mTileset.Texture, position, dimensions, HGF::Vector2::Zero, min, max);
-			}
-		}
-	}
-}
-
-void TiledMap::RenderDebug(const Renderer& pRenderer)
-{
-	Tile tile;
-	for (int y = 0; y < mHeight; ++y)
-	{
-		for (int x = 0; x < mWidth; ++x)
-		{
-			if (TryGetTile(x, y, tile))
-			{
-				for (int i = 0; i < 4; ++i)
-				{
-					if (tile.Edges[i] == EdgeType::Solid || tile.Edges[i] == EdgeType::Interesting)
-					{
-						float r = tile.Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f;
-						float g = 0.0f;
-						float b = tile.Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f;
-
-						switch (i)
-						{
-						case Direction::Up:
-							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), 2.0f, r, g, b, 1.0f);
-							break;
-						case Direction::Down:
-							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
-							break;
-						case Direction::Left:
-							pRenderer.RenderLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
-							break;
-						case Direction::Right:
-							pRenderer.RenderLine(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), 2.0f, r, g, b, 1.0f);
-							break;
-						}
-					}
-				}
-			}
-		}
 	}
 }
 

@@ -13,7 +13,6 @@ class Projectile : public Entity
 		~Projectile();
 
 		virtual void Update(float pDeltaTime) override = 0;
-		virtual void Render(const Renderer& pRenderer) override = 0;
 		virtual void Render(SAGE::SpriteBatch& pSpriteBatch) override = 0;
 
 	public:

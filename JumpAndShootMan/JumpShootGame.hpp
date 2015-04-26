@@ -1,9 +1,7 @@
 // JumpShootGame.hpp
 
-#ifndef __GAME_HPP__
-#define __GAME_HPP__
-
-#define BATCH_RENDERING 1
+#ifndef __JUMPSHOOTGAME_HPP__
+#define __JUMPSHOOTGAME_HPP__
 
 #include "Globals.hpp"
 // SAGE Includes
@@ -14,7 +12,6 @@
 #include <HGF\Effect.hpp>
 #include <HGF\Window.hpp>
 // Project Includes
-#include "Renderer.hpp"
 #include "TiledMap.hpp"
 #include "Player.hpp"
 // STL Includes
@@ -44,11 +41,11 @@ class JumpShootGame : public SAGE::Game
 		int mWindowHeight;
 
 		HGF::Window mWindow;
+		SAGE::Camera2D mCamera;
 		SAGE::GeometryBatch mGeometryBatch;
 		HGF::Effect mGeometryEffect;
 		SAGE::SpriteBatch mSpriteBatch;
 		HGF::Effect mSpriteEffect;
-		Renderer mRenderer;
 		SAGE::SpriteFont mSpriteFont;
 		TiledMap mTiledMap;
 		EntityManager mEntityManager;

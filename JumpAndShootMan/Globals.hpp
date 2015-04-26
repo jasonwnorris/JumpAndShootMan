@@ -5,7 +5,6 @@
 
 #include <gl\glew.h>
 #include <SDL2\SDL.h>
-#include <SDL2\SDL_opengl.h>
 #include <SDL2\SDL_image.h>
 
 #define GLM_FORCE_RADIANS
@@ -17,7 +16,6 @@ class Globals
 {
 	public:
 		static bool IsDebugDrawOn;
-		static int DrawCount;
 };
 
 #endif

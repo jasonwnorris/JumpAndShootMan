@@ -1,22 +1,20 @@
 // JumpShootGame.cpp
 
-#include "Globals.hpp"
 // HGF Includes
 #include <HGF\Events.hpp>
 #include <HGF\Keyboard.hpp>
-// SDL Includes
-#include <SDL2\SDL_opengl.h>
 // Project Includes
 #include "JumpShootGame.hpp"
 // STL Includes
 #include <iostream>
+#include <time.h>
 
 JumpShootGame::JumpShootGame()
 {
 	Globals::IsDebugDrawOn = false;
 	
-	mWindowWidth = 1024;
-	mWindowHeight = 768;
+	mWindowWidth = 1280;
+	mWindowHeight = 720;
 }
 
 JumpShootGame::~JumpShootGame()
@@ -25,55 +23,50 @@ JumpShootGame::~JumpShootGame()
 
 int JumpShootGame::Initialize()
 {
+	// Hook the event for clicking window X.
 	HGF::Events::OnQuit.Add([&]{ mRunning = false; });
 
+	// Initialize the window.
 	HGF::WindowOptions options;
 	options.Title = "Jump 'n' Shoot Man";
 	options.Width = mWindowWidth;
 	options.Height = mWindowHeight;
 	options.Mode = HGF::WindowMode::Windowed;
 	//options.VerticalSync = false;
-
 	if (!mWindow.Initialize(options))
 		return -1;
 	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
 	mWindow.PrintInfo();
 
+	// Set up the camera.
+	mCamera.SetDimensions(mWindowWidth, mWindowHeight);
+
+	// Initialization for geometry batching.
 	if (!mGeometryBatch.Initialize())
 		return -1;
-
-	if (!mGeometryEffect.Initialize())
-		return -1;
-	if (!mGeometryEffect.Attach("data/shaders/positioncolor.vs.glsl", HGF::Effect::ShaderType::Vertex))
-		return -1;
-	if (!mGeometryEffect.Attach("data/shaders/positioncolor.fs.glsl", HGF::Effect::ShaderType::Fragment))
-		return -1;
-	if (!mGeometryEffect.Link())
+	if (!mGeometryEffect.Create(HGF::Effect::BasicType::PositionColor))
 		return -1;
 
+	// Initialization for sprite batching.
 	if (!mSpriteBatch.Initialize())
 		return -1;
+	if (!mSpriteEffect.Create(HGF::Effect::BasicType::PositionColorTexture))
+		return -1;
 
-	if (!mSpriteEffect.Initialize())
-		return -1;
-	if (!mSpriteEffect.Attach("data/shaders/positioncolortexture.vs.glsl", HGF::Effect::ShaderType::Vertex))
-		return -1;
-	if (!mSpriteEffect.Attach("data/shaders/positioncolortexture.fs.glsl", HGF::Effect::ShaderType::Fragment))
-		return -1;
-	if (!mSpriteEffect.Link())
-		return -1;
-	mSpriteEffect.SetUniform("uTextureSampler", 0);
-
+	// Load the sprite font.
 	if (!mSpriteFont.Load("data/img/font.png", 26.0f, 16.0f))
 		return -1;
 
+	// FPS tracking.
 	mFrameCount = 0;
 	mPreviousTicks = 0;
 	mCurrentTicks = SDL_GetTicks();
 
+	// Load the map.
 	if (!mTiledMap.Load("data/maps/first.txt"))
 		return -1;
 
+	// Create and load the player.
 	mPlayer = mEntityManager.Create<Player>();
 	if (!mPlayer->Load("data/img/player.png"))
 		return -1;
@@ -83,13 +76,7 @@ int JumpShootGame::Initialize()
 
 int JumpShootGame::Finalize()
 {
-	if (!mGeometryEffect.Finalize())
-		return -1;
-
 	if (!mGeometryBatch.Finalize())
-		return -1;
-
-	if (!mSpriteEffect.Finalize())
 		return -1;
 
 	if (!mSpriteBatch.Finalize())
@@ -107,12 +94,8 @@ int JumpShootGame::Update(float pDeltaTime)
 	mCurrentTicks = SDL_GetTicks();
 	if (mCurrentTicks > mPreviousTicks + 1000)
 	{
-#if BATCH_RENDERING
 		std::cout << "FPS: " << mFrameCount << " | Delta: "  << pDeltaTime << " | SB Calls: " << mSpriteBatch.GetDrawCallCount() << " | GB Calls: " << mGeometryBatch.GetDrawCallCount() << std::endl;
-#else
-		std::cout << "FPS: " << mFrameCount << " | Delta: " << pDeltaTime << " | Draw Calls: " << Globals::DrawCount / mFrameCount << std::endl;
-		Globals::DrawCount = 0;
-#endif
+		
 		mPreviousTicks = mCurrentTicks;
 		mFrameCount = 0;
 	}
@@ -201,6 +184,8 @@ int JumpShootGame::Update(float pDeltaTime)
 
 	mEntityManager.Update(pDeltaTime);
 
+	mCamera.SetPosition(mPlayer->Position);
+
 	return 0;
 }
 
@@ -208,53 +193,18 @@ int JumpShootGame::Render()
 {
 	mWindow.Clear();
 
-#if BATCH_RENDERING
-	glm::mat4 projectionMatrix(glm::ortho(0.0f, (float)mWindowWidth, (float)mWindowHeight, 0.0f, 1.0f, -1.0f));
-
-	glm::mat4 modelViewMatrix;
-	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f));
-	modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3(-mPlayer->Position.X, -mPlayer->Position.Y, 0.0f));
-
-	mSpriteEffect.SetProjection(projectionMatrix);
-	mSpriteEffect.SetModelView(modelViewMatrix);
-	mSpriteEffect.Use();
-
-	std::string text = "Hello World!";
-	HGF::Vector2 origin;
-	mSpriteFont.MeasureString(text, origin);
-
-	mSpriteBatch.Begin(SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
+	mSpriteBatch.Begin(mSpriteEffect, mCamera, SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended, SAGE::RasterizerState::None);
 	mTiledMap.Render(mSpriteBatch);
-	mSpriteBatch.DrawString(mSpriteFont, "Jump 'n' Shoot Man!", HGF::Vector2(340.0f, 100.0f), HGF::Color::White, origin / 4.0f, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
+	mSpriteBatch.DrawString(mSpriteFont, "Jump 'n' Shoot Man!", HGF::Vector2::Zero, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
 	mEntityManager.Render(mSpriteBatch);
 	mSpriteBatch.End();
-#else
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	glTranslatef((float)mWindowWidth / 2.0f, (float)mWindowHeight / 2.0f, 0.0f);
-	glTranslatef(-mPlayer->Position.X, -mPlayer->Position.Y, 0.0f);
-	glRotatef(mRotation, 0.0f, 0.0f, 1.0f);
-	glScalef(mZoom, mZoom, 0.0f);
-
-	mTiledMap.Render(mRenderer);
-	mEntityManager.Render(mRenderer);
-#endif
 
 	if (Globals::IsDebugDrawOn)
 	{
-#if BATCH_RENDERING
-		mGeometryEffect.SetProjection(projectionMatrix);
-		mGeometryEffect.SetModelView(modelViewMatrix);
-		mGeometryEffect.Use();
-
-		mGeometryBatch.Begin();
+		mGeometryBatch.Begin(mGeometryEffect, mCamera);
 		mTiledMap.RenderDebug(mGeometryBatch);
 		mPlayer->RenderDebug(mGeometryBatch);
 		mGeometryBatch.End();
-#else
-		mTiledMap.RenderDebug(mRenderer);
-		mPlayer->RenderDebug(mRenderer);
-#endif
 	}
 
 	mWindow.Flip();
@@ -337,4 +287,14 @@ void JumpShootGame::UpdateAdjustment(Direction pDirection, float pDistance)
 			mPlayer->Acceleration.X = 0.0f;
 			break;
 	}
+}
+
+int main(int argc, char** argv)
+{
+	srand((unsigned int)time(NULL));
+
+	JumpShootGame game;
+	game.Run();
+
+	return 0;
 }

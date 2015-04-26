@@ -36,11 +36,6 @@ void DirectionalProjectile::Update(float pDeltaTime)
 		mIsAlive = false;
 }
 
-void DirectionalProjectile::Render(const Renderer& pRenderer)
-{
-
-}
-
 void DirectionalProjectile::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	pSpriteBatch.Draw(DirProjTexture, Position, HGF::Rectangle::Empty, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);

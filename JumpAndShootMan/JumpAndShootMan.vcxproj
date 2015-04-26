@@ -54,6 +54,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -86,12 +87,10 @@
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="JumpShootGame.cpp" />
     <ClCompile Include="Globals.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="TiledMap.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="DirectionalProjectile.cpp" />
     <ClCompile Include="Projectile.cpp" />
-    <ClCompile Include="Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BitField.hpp" />
@@ -106,7 +105,6 @@
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="Projectile.hpp" />
     <ClInclude Include="Raycast.hpp" />
-    <ClInclude Include="Renderer.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

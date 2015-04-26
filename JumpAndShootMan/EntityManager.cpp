@@ -22,11 +22,6 @@ void EntityManager::Update(float pDeltaTime)
 	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Update(pDeltaTime); });
 }
 
-void EntityManager::Render(const Renderer& pRenderer)
-{
-	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Render(pRenderer); });
-}
-
 void EntityManager::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	std::for_each(mEntities.begin(), mEntities.end(), [&](std::weak_ptr<Entity> entity) { entity.lock()->Render(pSpriteBatch); });
