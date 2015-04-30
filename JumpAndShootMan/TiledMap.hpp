@@ -40,7 +40,6 @@ struct Tile
 	SAGE::Orientation Orientation;
 };
 
-class Renderer;
 class TiledMap
 {
 	public:
@@ -49,13 +48,13 @@ class TiledMap
 
 		bool Load(const std::string& pFilename);
 
-		bool TryGetTile(int pX, int pY, Tile& pTile);
-		bool IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest);
-		bool IsTraversable(const Tile& pTile, int pPixelX, int pPixelY);
-		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
+		bool TryGetTile(int pX, int pY, Tile& pTile) const;
+		bool IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest) const;
+		bool IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const;
+		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit) const;
 
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
-		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
+		void Render(SAGE::GeometryBatch& pGeometryBatch);
 		
 	private:
 		Tileset mTileset;

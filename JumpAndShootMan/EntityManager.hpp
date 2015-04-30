@@ -15,20 +15,21 @@ class EntityManager
 		EntityManager();
 		~EntityManager();
 
-		template<typename T> std::shared_ptr<T> Create();
+		template<typename T> T* Create(World* pWorld);
 
 		void Update(float pDeltaTime);
 		void Render(SAGE::SpriteBatch& pSpriteBatch);
+		void Render(SAGE::GeometryBatch& pGeometryBatch);
 
 	private:
-		std::vector<std::shared_ptr<Entity>> mEntities;
+		std::vector<Entity*> mEntities;
 };
 
-template<typename T> std::shared_ptr<T> EntityManager::Create()
+template<typename T> T* EntityManager::Create(World* pWorld)
 {
 	static_assert(std::is_base_of<Entity, T>::value, "Invalid Type");
 
-	std::shared_ptr<T> entity = std::make_shared<T>(this);
+	T* entity = new T(this, pWorld);
 
 	mEntities.push_back(entity);
 

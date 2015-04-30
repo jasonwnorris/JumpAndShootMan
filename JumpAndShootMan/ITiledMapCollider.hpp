@@ -4,38 +4,42 @@
 #define __ITILEDMAPCOLLIDER_HPP__
 
 // Project Includes
-#include "TiledMap.hpp"
+#include "World.hpp"
 
-enum RayIndex
+class ITiledMapCollider
 {
-	DownCenter,
-	DownLeft,
-	DownRight,
-	UpCenter,
-	UpLeft,
-	UpRight,
-	LeftCenter,
-	LeftTop,
-	LeftBottom,
-	RightCenter,
-	RightTop,
-	RightBottom,
-};
+	protected:
+		ITiledMapCollider(World* pWorld);
+		~ITiledMapCollider();
 
-class ITiledTiledMapCollider
-{
-	public:
-		ITiledTiledMapCollider(TiledMap* pTiledMap) { mTiledMap = pTiledMap; }
-		virtual ~ITiledTiledMapCollider() { mTiledMap = nullptr; }
+		void SetTriRay(Direction pDirection, HGF::Vector2& pPosition, float pSpread, float pMinimum, float pMaximum);
+		void CheckCollision();
+		void Render(SAGE::GeometryBatch& pGeometryBatch);
 
-	//protected:
-	public:
-		static const int MaxRayCount = 12;
-		RaycastInfo RaycastInfos[MaxRayCount];
-		RaycastHit RaycastHits[MaxRayCount];
+		virtual void OnCollision(Direction pDirection, float pDistance) = 0;
+		virtual void OnEmpty(Direction pDirection, float pDistance) = 0;
 
 	private:
-		TiledMap* mTiledMap;
+		static const int MaxRayCount = 12;		
+		enum RayIndex
+		{
+			DownCenter,
+			DownLeft,
+			DownRight,
+			UpCenter,
+			UpLeft,
+			UpRight,
+			LeftCenter,
+			LeftTop,
+			LeftBottom,
+			RightCenter,
+			RightTop,
+			RightBottom,
+		};
+
+		World* mWorld;
+		RaycastInfo RaycastInfos[MaxRayCount];
+		RaycastHit RaycastHits[MaxRayCount];
 };
 
 #endif

@@ -45,6 +45,15 @@
     <ClCompile Include="TiledMap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameplayScreen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ITiledMapCollider.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Player.hpp">
@@ -77,10 +86,16 @@
     <ClInclude Include="DirectionalProjectile.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ITiledMapCollider.hpp">
+    <ClInclude Include="TiledMap.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TiledMap.hpp">
+    <ClInclude Include="World.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameplayScreen.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ITiledMapCollider.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,7 +9,7 @@
 class Projectile : public Entity
 {
 	public:
-		Projectile(EntityManager* pManager);
+		Projectile(EntityManager* pManager, World* pWorld);
 		~Projectile();
 
 		virtual void Update(float pDeltaTime) override = 0;

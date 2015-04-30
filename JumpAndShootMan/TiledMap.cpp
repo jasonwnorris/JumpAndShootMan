@@ -109,7 +109,7 @@ bool TiledMap::Load(const std::string& pFilename)
 	}
 
 	// Load tileset texture;
-	if (!mTileset.Texture.Load(tilesetFilename.c_str()))
+	if (!mTileset.Texture.Load(tilesetFilename.c_str(), HGF::Interpolation::Nearest, HGF::Wrapping::ClampToBorder))
 		return false;
 
 	// Load bitmask texture.
@@ -244,7 +244,7 @@ bool TiledMap::Load(const std::string& pFilename)
 	return mIsLoaded;
 }
 
-bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile)
+bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile) const
 {
 	if (pX < 0 || pY < 0 || pX >= mWidth || pY >= mHeight)
 		return false;
@@ -254,12 +254,12 @@ bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile)
 	return pTile.TextureID >= 0;
 }
 
-bool TiledMap::IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest)
+bool TiledMap::IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest) const
 {
 	return pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Solid || (pHasInterest && pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Interesting);
 }
 
-bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY)
+bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const
 {
 	if (pPixelX < 0 || pPixelY < 0 || pPixelX >= mTileset.Size || pPixelY >= mTileset.Size)
 		return true;
@@ -273,7 +273,7 @@ bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY)
 	return !mBitMasks[pTile.CollisionID].get()->GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
 }
 
-void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit)
+void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit) const
 {
 	int x = (int)std::roundf(pPosition.X);
 	int y = (int)std::roundf(pPosition.Y);
@@ -447,7 +447,7 @@ void TiledMap::Render(SAGE::SpriteBatch& pSpriteBatch)
 	}
 }
 
-void TiledMap::RenderDebug(SAGE::GeometryBatch& pGeometryBatch)
+void TiledMap::Render(SAGE::GeometryBatch& pGeometryBatch)
 {
 	Tile tile;
 	for (int y = 0; y < mHeight; ++y)

@@ -16,6 +16,8 @@ class Globals
 {
 	public:
 		static bool IsDebugDrawOn;
+		static int ScreenWidth;
+		static int ScreenHeight;
 };
 
 #endif

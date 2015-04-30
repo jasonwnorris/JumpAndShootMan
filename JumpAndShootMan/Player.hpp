@@ -10,25 +10,27 @@
 #include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 // Project Includes
-#include "ITiledMapCollider.hpp"
 #include "EntityManager.hpp"
+#include "ITiledMapCollider.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <vector>
 
-class Renderer;
-class Player : public Entity, public ITiledTiledMapCollider
+class Player : public Entity, public ITiledMapCollider
 {
 	public:
-		Player(EntityManager* pManager);
+		Player(EntityManager* pManager, World* pWorld);
 		~Player();
 
 		bool Load(const std::string& pFilename);
 		void Fire();
 
+		void OnCollision(Direction pDirection, float pDistance) override;
+		void OnEmpty(Direction pDirection, float pDistance) override;
+
 		void Update(float pDeltaTime) override;
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
-		void RenderDebug(SAGE::GeometryBatch& pGeometryBatch);
+		void Render(SAGE::GeometryBatch& pGeometryBatch) override;
 
 		HGF::Vector2 Position;
 		HGF::Vector2 Velocity;
@@ -47,6 +49,9 @@ class Player : public Entity, public ITiledTiledMapCollider
 
 	private:
 		HGF::Texture mTexture;
+		float mMinimumJumpTime;
+		float mMaximumJumpTime;
+		float mJumpTime;
 };
 
 #endif

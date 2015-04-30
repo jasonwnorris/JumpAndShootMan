@@ -6,16 +6,8 @@
 #include "Globals.hpp"
 // SAGE Includes
 #include <SAGE\Game.hpp>
-#include <SAGE\GeometryBatch.hpp>
-#include <SAGE\SpriteBatch.hpp>
-// HGF Includes
-#include <HGF\Effect.hpp>
-#include <HGF\Window.hpp>
 // Project Includes
-#include "TiledMap.hpp"
-#include "Player.hpp"
-// STL Includes
-#include <map>
+#include "GameplayScreen.hpp"
 
 class JumpShootGame : public SAGE::Game
 {
@@ -27,7 +19,8 @@ class JumpShootGame : public SAGE::Game
 		int Initialize() override;
 		int Finalize() override;
 		int Update(float pDeltaTime) override;
-		int Render() override;
+		int Render(SAGE::SpriteBatch& pSpriteBatch) override;
+		int Render(SAGE::GeometryBatch& pGeometryBatch) override;
 
 	private:
 		void UpdateRaycast();
@@ -37,19 +30,10 @@ class JumpShootGame : public SAGE::Game
 		Uint32 mPreviousTicks;
 		Uint32 mCurrentTicks;
 
-		int mWindowWidth;
-		int mWindowHeight;
+		int mSBDrawCalls;
+		int mGBDrawCalls;
 
-		HGF::Window mWindow;
-		SAGE::Camera2D mCamera;
-		SAGE::GeometryBatch mGeometryBatch;
-		HGF::Effect mGeometryEffect;
-		SAGE::SpriteBatch mSpriteBatch;
-		HGF::Effect mSpriteEffect;
-		SAGE::SpriteFont mSpriteFont;
-		TiledMap mTiledMap;
-		EntityManager mEntityManager;
-		std::shared_ptr<Player> mPlayer;
+		GameplayScreen mScreen;
 };
 
 #endif
