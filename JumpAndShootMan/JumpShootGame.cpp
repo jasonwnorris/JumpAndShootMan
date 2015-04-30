@@ -29,14 +29,9 @@ int JumpShootGame::Initialize()
 	HGF::Events::OnQuit.Add([&]() { Quit(); });
 
 	HGF::WindowOptions options;
-	options.Title = "Jump 'n' Shoot Man";
-	options.Width = Globals::ScreenWidth;
-	options.Height = Globals::ScreenHeight;
-	options.Mode = HGF::WindowMode::Windowed;
-	//options.VerticalSync = false;
-
-	if (!mWindow.Reinitialize(options))
-		return -1;
+	if (HGF::WindowOptions::FromFile("data/window.json", options))
+		if (!mWindow.Reinitialize(options))
+			return -1;
 	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
 	mWindow.PrintInfo();
 
