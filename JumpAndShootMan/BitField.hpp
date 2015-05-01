@@ -20,7 +20,7 @@ class BitField
 
 		void Resize(int pWidth, int pHeight);
 
-		bool GetBit(int pX, int pY);
+		bool GetBit(int pX, int pY) const;
 		void SetBit(int pX, int pY, bool pValue);
 
 		Uint8 GetByte(int pIndex);

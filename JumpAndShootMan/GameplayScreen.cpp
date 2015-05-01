@@ -29,12 +29,9 @@ int GameplayScreen::Initialize()
 	if (!mSpriteEffect.Create(HGF::Effect::BasicType::PositionColorTexture))
 		return -1;
 
-	// Load the sprite font.
-	if (!mSpriteFont.Load("data/img/font.png", 26.0f, 16.0f))
-		return -1;
-
 	// Initialize the world.
-	mWorld.Initialize();
+	if (mWorld.Initialize() < 0)
+		return -1;
 
 	// Create and load the player.
 	mPlayer = mWorld.Create<Player>();
@@ -139,7 +136,6 @@ int GameplayScreen::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
 	pSpriteBatch.Begin(mSpriteEffect, mCamera, SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended, SAGE::RasterizerState::None);
 	mWorld.Render(pSpriteBatch);
-	pSpriteBatch.DrawString(mSpriteFont, "Jump 'n' Shoot Man!", HGF::Vector2::Zero, HGF::Color::White, HGF::Vector2::Zero, 0.0f, HGF::Vector2::One, SAGE::Orientation::None);
 	pSpriteBatch.End();
 
 	return 0;

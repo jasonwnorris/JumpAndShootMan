@@ -60,10 +60,9 @@ class TiledMap
 		Tileset mTileset;
 		int mWidth;
 		int mHeight;
-		Tile** mData;
+		std::vector<std::vector<Tile>> mData;
 		int mBitMaskCount;
-		std::vector<std::unique_ptr<BitField>> mBitMasks;
-		bool mIsLoaded;
+		std::vector<BitField> mBitMasks;
 };
 
 #endif

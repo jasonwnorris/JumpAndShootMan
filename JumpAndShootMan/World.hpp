@@ -15,19 +15,27 @@ class World
 
 		const TiledMap* GetMap() const;
 
-		void Initialize();
-		void Finalize();
+		int Initialize();
+		int Finalize();
 
-		void Update(float pDeltaTime);
-		void Render(SAGE::SpriteBatch& pSpriteBatch);
-		void Render(SAGE::GeometryBatch& pGeometryBatch);
+		int Update(float pDeltaTime);
+		int Render(SAGE::SpriteBatch& pSpriteBatch);
+		int Render(SAGE::GeometryBatch& pGeometryBatch);
 
 		template<typename T> T* Create();
 		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
 
 	private:
+		SAGE::SpriteFont mSpriteFont;
 		TiledMap mTiledMap;
 		EntityManager mEntityManager;
+
+		float mTime;
+		std::string mText;
+		HGF::Vector2 mPosition;
+		HGF::Vector2 mOrigin;
+		float mRotation;
+		float mScale;
 };
 
 template<typename T> T* World::Create()

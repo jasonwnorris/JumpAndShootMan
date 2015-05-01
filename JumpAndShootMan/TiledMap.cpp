@@ -15,32 +15,17 @@
 
 TiledMap::TiledMap()
 {
-	mIsLoaded = false;
 }
 
 TiledMap::~TiledMap()
 {
-	// Free map data.
-	for (int x = 0; x < mWidth; ++x)
-	{
-		if (mData[x])
-		{
-			delete [] mData[x];
-		}
-	}
-	if (mData)
-	{
-		delete [] mData;
-	}
-
+	mData.clear();
 	mBitMasks.clear();
 }
 
 bool TiledMap::Load(const std::string& pFilename)
 {
-	if (mIsLoaded)
-		return false;
-
+	// Open the file.
 	std::ifstream file;
 	file.open(pFilename);
 	if (!file.is_open())
@@ -48,55 +33,83 @@ bool TiledMap::Load(const std::string& pFilename)
 
 	std::string tilesetFilename, bitmaskFilename;
 	int bitWidth, bitHeight, bitSize;
+	bool isLoaded = false;
 
+	// Check file extension.
 	std::string ext = pFilename.substr(pFilename.find_last_of('.') + 1);
 	if (ext == "txt")
 	{
+		int version;
+
+		file >> version;
 		file >> mWidth >> mHeight;
 		file >> tilesetFilename;
 		file >> mTileset.X >> mTileset.Y >> mTileset.Size;
 		file >> bitmaskFilename;
 		file >> bitWidth >> bitHeight >> bitSize;
 
-		mIsLoaded = true;
+		mData.resize(mWidth, std::vector<Tile>(mHeight));
+
+		// Load tile values.
+		for (int y = 0; y < mHeight; ++y)
+		{
+			for (int x = 0; x < mWidth; ++x)
+			{
+				int tex, col, ori;
+				file >> tex >> col >> ori;
+
+				Tile& tile = mData[x][y];
+				tile.TextureID = tex;
+				tile.CollisionID = col;
+				tile.Orientation = static_cast<SAGE::Orientation>(ori);
+			}
+		}
+
+		isLoaded = true;
 	}
 	else if (ext == "json")
 	{
 		Json::Value root;
 		Json::Reader reader;
-
-		// "Tiled" editor output
 		if (reader.parse(file, root, false))
 		{
+			int version = root["version"].asInt();
 			mWidth = root["width"].asInt();
 			mHeight = root["height"].asInt();
+			const Json::Value tileset = root["tileset"];
+			const Json::Value bitset = root["bitset"];
+			const Json::Value data = root["data"];
 
-			const Json::Value tilesets = root["tilesets"];
-			for (Json::Value::UInt i = 0; i < tilesets.size(); ++i)
+			mTileset.X = tileset.get("x", 0).asInt();
+			mTileset.Y = tileset.get("y", 0).asInt();
+			mTileset.Size = tileset.get("size", 0).asInt();
+			tilesetFilename = tileset.get("path", "").asString();
+
+			bitWidth = bitset.get("x", 0).asInt();
+			bitHeight = bitset.get("y", 0).asInt();
+			bitSize = bitset.get("size", 0).asInt();
+			bitmaskFilename = bitset.get("path", "").asString();
+
+			mData.resize(mWidth, std::vector<Tile>(mHeight));
+
+			// Load tile values.
+			for (int y = 0; y < mHeight; ++y)
 			{
-				std::string name = tilesets[i]["name"].asString();
-				std::string path = tilesets[i]["image"].asString();
-				int imageWidth = tilesets[i]["imagewidth"].asInt();
-				int imageHeight = tilesets[i]["imageheight"].asInt();
-				int tileSize = tilesets[i]["tilewidth"].asInt();
+				const Json::Value row = data[y];
 
-				if (name == "Texture")
+				for (int x = 0; x < mWidth; ++x)
 				{
-					tilesetFilename = path;
-					mTileset.X = imageWidth / tileSize;
-					mTileset.Y = imageHeight / tileSize;
-					mTileset.Size = tileSize;
-				}
-				else if (name == "Bitmask")
-				{
-					bitmaskFilename = path;
-					bitWidth = imageWidth / tileSize;
-					bitHeight = imageHeight / tileSize;
-					bitSize = tileSize;
+					const Json::Value item = row[x];
+					int index = 0;
+
+					Tile& tile = mData[x][y];
+					tile.TextureID = item[index++].asInt();
+					tile.CollisionID = item[index++].asInt();
+					tile.Orientation = static_cast<SAGE::Orientation>(item[index].asInt());
 				}
 			}
 
-			mIsLoaded = true;
+			isLoaded = true;
 		}
 		else
 		{
@@ -108,140 +121,116 @@ bool TiledMap::Load(const std::string& pFilename)
 		SDL_Log("[TiledMap::Load] Unsupported map file format: %s", ext);
 	}
 
-	// Load tileset texture;
-	if (!mTileset.Texture.Load(tilesetFilename.c_str(), HGF::Interpolation::Nearest, HGF::Wrapping::ClampToBorder))
-		return false;
-
-	// Load bitmask texture.
-	HGF::Texture bitmaskTexture;
-	if (!bitmaskTexture.Load(bitmaskFilename.c_str()))
-		return false;
-
-	// Establish bitmask count.
-	mBitMaskCount = bitWidth * bitHeight;
-	mBitMasks.resize(mBitMaskCount);
-
-	// Read the bitmask pixels.
-	for (int i = 0; i < mBitMaskCount; ++i)
-	{
-		mBitMasks[i] = std::make_unique<BitField>();
-		mBitMasks[i].get()->Resize(mTileset.Size, mTileset.Size);
-
-		for (int px = 0; px < mTileset.Size; ++px)
-		{
-			for (int py = 0; py < mTileset.Size; ++py)
-			{
-				Uint8 r, g, b, a;
-				bitmaskTexture.GetColor(i * mTileset.Size + px, py, r, g, b, a);
-
-				mBitMasks[i].get()->SetBit(px, py, (r == 0 && g == 0 && b == 0));
-			}
-		}
-	}
-
-	// Allocate tile memory.
-	mData = new Tile*[mWidth];
-	for (int x = 0; x < mWidth; ++x)
-	{
-		mData[x] = new Tile[mHeight];
-	}
-
-	// Load tile values.
-	for (int y = 0; y < mHeight; ++y)
-	{
-		for (int x = 0; x < mWidth; ++x)
-		{
-			Tile& tile = mData[x][y];
-			int orientation;
-
-			file >> tile.TextureID >> tile.CollisionID >> orientation;
-
-			// Assign orientation. (This could be cleaner.)
-			switch (orientation)
-			{
-			default:
-			case 1:
-				tile.Orientation = SAGE::Orientation::None;
-				break;
-			case 2:
-				tile.Orientation = SAGE::Orientation::FlipHorizontal;
-				break;
-			case 4:
-				tile.Orientation = SAGE::Orientation::FlipVertical;
-				break;
-			case 6:
-				tile.Orientation = SAGE::Orientation::FlipBoth;
-				break;
-			}
-
-			// Assign edge type depending on collision. (Temporary)
-			switch (tile.CollisionID)
-			{
-			case 0:
-				for (int i = 0; i < 4; ++i)
-					tile.Edges[i] = EdgeType::Solid;
-				break;
-			case 1:
-			case 3:
-				tile.Edges[Direction::Up] = EdgeType::Interesting;
-				tile.Edges[Direction::Down] = EdgeType::Solid;
-				tile.Edges[Direction::Left] = EdgeType::Interesting;
-				tile.Edges[Direction::Right] = EdgeType::Solid;
-				break;
-			case 2:
-			case 4:
-				tile.Edges[Direction::Up] = EdgeType::Interesting;
-				tile.Edges[Direction::Down] = EdgeType::Solid;
-				tile.Edges[Direction::Left] = EdgeType::Interesting;
-				tile.Edges[Direction::Right] = EdgeType::Interesting;
-				break;
-			default:
-				for (int i = 0; i < 4; ++i)
-					tile.Edges[i] = EdgeType::Empty;
-				break;
-			}
-
-			// Flip edges for orientation.
-			if ((tile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical)
-				std::swap(tile.Edges[Direction::Up], tile.Edges[Direction::Down]);
-			if ((tile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal)
-				std::swap(tile.Edges[Direction::Left], tile.Edges[Direction::Right]);
-		}
-	}
-
-	// Resolve collision edges.
-	for (int y = 0; y < mHeight; ++y)
-	{
-		for (int x = 0; x < mWidth; ++x)
-		{
-			Tile& tile = mData[x][y];
-			Tile& tileHorz = mData[x + 1][y];
-			Tile& tileVert = mData[x][y + 1];
-
-			if (x + 1 != mWidth)
-			{
-				if ((tile.Edges[Direction::Right] == EdgeType::Solid || tile.Edges[Direction::Right] == EdgeType::Interesting) &&
-					(tileHorz.Edges[Direction::Left] == EdgeType::Solid || tileHorz.Edges[Direction::Left] == EdgeType::Interesting))
-				{
-					tile.Edges[Direction::Right] = EdgeType::Empty;
-					tileHorz.Edges[Direction::Left] = EdgeType::Empty;
-				}
-			}
-			if (y + 1 != mHeight)
-			{
-				if ((tile.Edges[Direction::Down] == EdgeType::Solid || tile.Edges[Direction::Down] == EdgeType::Interesting) &&
-					(tileVert.Edges[Direction::Up] == EdgeType::Solid || tileVert.Edges[Direction::Up] == EdgeType::Interesting))
-				{
-					tile.Edges[Direction::Down] = EdgeType::Empty;
-					tileVert.Edges[Direction::Up] = EdgeType::Empty;
-				}
-			}
-		}
-	}
-
 	file.close();
 
-	return mIsLoaded;
+	if (isLoaded)
+	{
+		// Load tileset texture;
+		if (!mTileset.Texture.Load(tilesetFilename.c_str(), HGF::Interpolation::Nearest, HGF::Wrapping::ClampToBorder))
+			return false;
+
+		// Load bitmask texture.
+		HGF::Texture bitmaskTexture;
+		if (!bitmaskTexture.Load(bitmaskFilename.c_str()))
+			return false;
+
+		// Establish bitmask count.
+		mBitMaskCount = bitWidth * bitHeight;
+		mBitMasks.resize(mBitMaskCount);
+
+		// Read the bitmask pixels.
+		for (int i = 0; i < mBitMaskCount; ++i)
+		{
+			mBitMasks[i].Resize(mTileset.Size, mTileset.Size);
+
+			for (int px = 0; px < mTileset.Size; ++px)
+			{
+				for (int py = 0; py < mTileset.Size; ++py)
+				{
+					Uint8 r, g, b, a;
+					bitmaskTexture.GetColor(i * mTileset.Size + px, py, r, g, b, a);
+
+					mBitMasks[i].SetBit(px, py, (r == 0 && g == 0 && b == 0));
+				}
+			}
+		}
+
+		// Assign attibutes from values.
+		for (int y = 0; y < mHeight; ++y)
+		{
+			for (int x = 0; x < mWidth; ++x)
+			{
+				Tile& tile = mData[x][y];
+
+				// Assign edge type depending on collision. (Temporary)
+				switch (tile.CollisionID)
+				{
+					case 0:
+						for (int i = 0; i < 4; ++i)
+							tile.Edges[i] = EdgeType::Solid;
+						break;
+					case 1:
+					case 3:
+						tile.Edges[Direction::Up] = EdgeType::Interesting;
+						tile.Edges[Direction::Down] = EdgeType::Solid;
+						tile.Edges[Direction::Left] = EdgeType::Interesting;
+						tile.Edges[Direction::Right] = EdgeType::Solid;
+						break;
+					case 2:
+					case 4:
+						tile.Edges[Direction::Up] = EdgeType::Interesting;
+						tile.Edges[Direction::Down] = EdgeType::Solid;
+						tile.Edges[Direction::Left] = EdgeType::Interesting;
+						tile.Edges[Direction::Right] = EdgeType::Interesting;
+						break;
+					default:
+						for (int i = 0; i < 4; ++i)
+							tile.Edges[i] = EdgeType::Empty;
+						break;
+				}
+
+				// Flip edges for orientation.
+				if ((tile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical)
+					std::swap(tile.Edges[Direction::Up], tile.Edges[Direction::Down]);
+				if ((tile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal)
+					std::swap(tile.Edges[Direction::Left], tile.Edges[Direction::Right]);
+			}
+		}
+
+		// Resolve collision edges.
+		for (int y = 0; y < mHeight; ++y)
+		{
+			for (int x = 0; x < mWidth; ++x)
+			{
+				Tile& tile = mData[x][y];
+
+				if (x + 1 != mWidth)
+				{
+					Tile& tileHorz = mData[x + 1][y];
+
+					if ((tile.Edges[Direction::Right] == EdgeType::Solid || tile.Edges[Direction::Right] == EdgeType::Interesting) &&
+						(tileHorz.Edges[Direction::Left] == EdgeType::Solid || tileHorz.Edges[Direction::Left] == EdgeType::Interesting))
+					{
+						tile.Edges[Direction::Right] = EdgeType::Empty;
+						tileHorz.Edges[Direction::Left] = EdgeType::Empty;
+					}
+				}
+				if (y + 1 != mHeight)
+				{
+					Tile& tileVert = mData[x][y + 1];
+
+					if ((tile.Edges[Direction::Down] == EdgeType::Solid || tile.Edges[Direction::Down] == EdgeType::Interesting) &&
+						(tileVert.Edges[Direction::Up] == EdgeType::Solid || tileVert.Edges[Direction::Up] == EdgeType::Interesting))
+					{
+						tile.Edges[Direction::Down] = EdgeType::Empty;
+						tileVert.Edges[Direction::Up] = EdgeType::Empty;
+					}
+				}
+			}
+		}
+	}
+
+	return isLoaded;
 }
 
 bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile) const
@@ -270,7 +259,7 @@ bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const
 	bool horzFlip = (pTile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal;
 	bool vertFlip = (pTile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical;
 
-	return !mBitMasks[pTile.CollisionID].get()->GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
+	return !mBitMasks[pTile.CollisionID].GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
 }
 
 void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit) const

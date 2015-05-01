@@ -28,7 +28,6 @@ class GameplayScreen : public SAGE::Screen
 		Player* mPlayer;
 		HGF::Effect mGeometryEffect;
 		HGF::Effect mSpriteEffect;
-		SAGE::SpriteFont mSpriteFont;
 };
 
 #endif

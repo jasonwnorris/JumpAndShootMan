@@ -39,7 +39,7 @@ void BitField::Resize(int pWidth, int pHeight)
 	mData.resize(mSize);
 }
 
-bool BitField::GetBit(int pX, int pY)
+bool BitField::GetBit(int pX, int pY) const
 {
 	if (pX < 0 || pX >= mWidth || pY < 0 || pY >= mHeight)
 		return false;
