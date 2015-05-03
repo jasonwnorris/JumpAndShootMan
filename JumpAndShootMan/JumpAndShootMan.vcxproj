@@ -81,6 +81,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AnimatedSprite.cpp" />
     <ClCompile Include="BitField.cpp" />
     <ClCompile Include="Direction.cpp" />
     <ClCompile Include="Entity.cpp" />

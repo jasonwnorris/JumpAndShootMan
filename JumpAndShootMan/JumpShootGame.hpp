@@ -23,17 +23,12 @@ class JumpShootGame : public SAGE::Game
 		int Render(SAGE::GeometryBatch& pGeometryBatch) override;
 
 	private:
-		void UpdateRaycast();
-		void UpdateAdjustment(Direction pDirection, float pDistance);
-
+		GameplayScreen mScreen;
 		int mFrameCount;
 		Uint32 mPreviousTicks;
 		Uint32 mCurrentTicks;
-
 		int mSBDrawCalls;
 		int mGBDrawCalls;
-
-		GameplayScreen mScreen;
 };
 
 #endif

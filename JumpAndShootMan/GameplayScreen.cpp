@@ -35,7 +35,7 @@ int GameplayScreen::Initialize()
 
 	// Create and load the player.
 	mPlayer = mWorld.Create<Player>();
-	if (!mPlayer->Load("data/img/player.png"))
+	if (!mPlayer->Load("data/img/player_sheet.png"))
 		return -1;
 
 	return 0;
@@ -67,7 +67,7 @@ int GameplayScreen::Update(float pDeltaTime)
 		mPlayer->Velocity = HGF::Vector2::Zero;
 		mPlayer->Acceleration = HGF::Vector2::Zero;
 	}
-
+	
 	// handle input
 	if (mPlayer->IsDebugFly)
 	{

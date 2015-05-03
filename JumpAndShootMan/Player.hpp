@@ -7,9 +7,9 @@
 #include <SAGE\GeometryBatch.hpp>
 #include <SAGE\SpriteBatch.hpp>
 // HGF Includes
-#include <HGF\Texture.hpp>
 #include <HGF\Vector2.hpp>
 // Project Includes
+#include "AnimatedSprite.hpp"
 #include "EntityManager.hpp"
 #include "ITiledMapCollider.hpp"
 #include "Raycast.hpp"
@@ -35,20 +35,18 @@ class Player : public Entity, public ITiledMapCollider
 		HGF::Vector2 Position;
 		HGF::Vector2 Velocity;
 		HGF::Vector2 Acceleration;
-		bool IsFacingLeft;
+		float Rotation;
+		HGF::Vector2 Scale;
 		float MovementSpeed;
 		float JumpingSpeed;
 		float Gravity;
-		HGF::Rectangle Source;
-		HGF::Vector2 Scale;
-		HGF::Vector2 Origin;
-		HGF::Vector2 Dimensions;
+		bool IsFacingLeft;
 		bool IsGrounded;
 		bool IsJumping;
 		bool IsDebugFly;
 
 	private:
-		HGF::Texture mTexture;
+		AnimatedSprite mSprite;
 		float mMinimumJumpTime;
 		float mMaximumJumpTime;
 		float mJumpTime;
