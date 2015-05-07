@@ -159,6 +159,6 @@ void ITiledMapCollider::Render(SAGE::GeometryBatch& pGeometryBatch)
 		RaycastInfo& col = RaycastInfos[i];
 		RaycastHit& hit = RaycastHits[i];
 
-		pGeometryBatch.Draw(col.Position, hit.Position, HGF::Color(0.9f, 0.1f, 0.8f));
+		pGeometryBatch.DrawLine(col.Position, hit.Position, HGF::Color(0.9f, 0.1f, 0.8f));
 	}
 }

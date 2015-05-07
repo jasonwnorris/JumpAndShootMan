@@ -68,10 +68,7 @@ void DirectionalProjectile::Render(SAGE::GeometryBatch& pGeometryBatch)
 {
 	HGF::Vector2 TL(Position.X - Dimensions.X / 2.0f, Position.Y - Dimensions.Y / 2.0f);
 	HGF::Vector2 BR(Position.X + Dimensions.X / 2.0f, Position.Y + Dimensions.Y / 2.0f);
-	pGeometryBatch.Draw(HGF::Vector2(TL.X, TL.Y), HGF::Vector2(BR.X, TL.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(BR.X, TL.Y), HGF::Vector2(BR.X, BR.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(BR.X, BR.Y), HGF::Vector2(TL.X, BR.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(TL.X, BR.Y), HGF::Vector2(TL.X, TL.Y), HGF::Color::Green);
+	pGeometryBatch.DrawRectangle(TL, BR, HGF::Color::Green);
 
 	ITiledMapCollider::Render(pGeometryBatch);
 }

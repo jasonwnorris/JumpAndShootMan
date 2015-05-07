@@ -1,5 +1,7 @@
 // Player.cpp
 
+// HGF Includes
+#include <HGF\Keyboard.hpp>
 // Project Includes
 #include "Globals.hpp"
 #include "Player.hpp"
@@ -10,15 +12,12 @@ Player::Player(EntityManager* pManager, World* pWorld) : Entity(pManager, pWorld
 	Position = HGF::Vector2(100.0f, 100.0f);
 	Velocity = HGF::Vector2::Zero;
 	Acceleration = HGF::Vector2::Zero;
-	IsFacingLeft = false;
+	Rotation = 0.0f;
+	Scale = HGF::Vector2::One * 0.5f;
 	MovementSpeed = 0.195f;
 	JumpingSpeed = 1.75f;
 	Gravity = 0.055f;
-	Source = HGF::Rectangle(9, 107, 110, 150);
-	Scale = HGF::Vector2(0.5f, 0.5f);
-	//Scale = HGF::Vector2::One;
-	Origin = HGF::Vector2(Source.Width / 2.0f, Source.Height / 2.0f);
-	Dimensions = HGF::Vector2(Source.Width * Scale.X, Source.Height * Scale.Y);
+	IsFacingLeft = false;
 	IsGrounded = false;
 	IsJumping = false;
 	IsDebugFly = false;
@@ -30,8 +29,10 @@ Player::~Player()
 
 bool Player::Load(const std::string& pFilename)
 {
-	if (!mTexture.Load(pFilename.c_str(), HGF::Interpolation::Nearest, HGF::Wrapping::ClampToBorder))
+	if (!mSprite.Initialize(pFilename, "data/player.json"))
 		return false;
+
+	mSprite.SetState("Movement", "Idle");
 
 	if (!DirectionalProjectile::DirProjTexture.Load("data/img/projectile.png", HGF::Interpolation::Nearest, HGF::Wrapping::ClampToBorder))
 		return false;
@@ -110,26 +111,40 @@ void Player::OnEmpty(Direction pDirection, float pDistance)
 
 void Player::Update(float pDeltaTime)
 {
-	float vertMin = Dimensions.Y / 2.0f;
+	// Exception: Adding a new entity during the Update loop.
+
+	const HGF::Rectangle& dimensions = mSprite.GetRegion();
+	float vertMin = dimensions.Height / 2.0f * Scale.Y;
 	float vertMax = vertMin + 5.0f;
-	float horzMin = Dimensions.X / 2.0f;
+	float horzMin = dimensions.Width / 2.0f * Scale.X;
 	float horzMax = horzMin;
 
-	SetTriRay(Direction::Up, Position, Dimensions.X / 2.0f, vertMin, vertMax);
-	SetTriRay(Direction::Down, Position, Dimensions.X / 1.5f, vertMin, vertMax);
-	SetTriRay(Direction::Left, Position, Dimensions.Y / 2.0f, horzMin, horzMax);
-	SetTriRay(Direction::Right, Position, Dimensions.Y / 2.0f, horzMin, horzMax);
+	SetTriRay(Direction::Up, Position, dimensions.Width / 2.0f * Scale.X, vertMin, vertMax);
+	SetTriRay(Direction::Down, Position, dimensions.Width / 1.5f * Scale.X, vertMin, vertMax);
+	SetTriRay(Direction::Left, Position, dimensions.Height / 2.0f * Scale.Y, horzMin, horzMax);
+	SetTriRay(Direction::Right, Position, dimensions.Height / 2.0f * Scale.Y, horzMin, horzMax);
 
 	CheckCollision();
+
+	if (IsGrounded)
+	{
+		mSprite.SetState("Movement", "Idle");
+	}
+	else
+	{
+		mSprite.SetState("Movement", "Jumping");
+	}
+
+	mSprite.Update(pDeltaTime);
 }
 
 void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
 {	
-	pSpriteBatch.Draw(mTexture,
+	pSpriteBatch.Draw(mSprite.GetTexture(),
 					  Position,
-					  Source,
+					  mSprite.GetRegion(),
 					  HGF::Color::White,
-					  Origin,
+					  mSprite.GetOrigin(),
 					  0.0f,
 					  Scale,
 					  IsFacingLeft ? SAGE::Orientation::FlipHorizontal : SAGE::Orientation::None);
@@ -138,12 +153,10 @@ void Player::Render(SAGE::SpriteBatch& pSpriteBatch)
 void Player::Render(SAGE::GeometryBatch& pGeometryBatch)
 {
 	// AABB
-	HGF::Vector2 TL(Position.X - Dimensions.X / 2.0f, Position.Y - Dimensions.Y / 2.0f);
-	HGF::Vector2 BR(Position.X + Dimensions.X / 2.0f, Position.Y + Dimensions.Y / 2.0f);
-	pGeometryBatch.Draw(HGF::Vector2(TL.X, TL.Y), HGF::Vector2(BR.X, TL.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(BR.X, TL.Y), HGF::Vector2(BR.X, BR.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(BR.X, BR.Y), HGF::Vector2(TL.X, BR.Y), HGF::Color::Green);
-	pGeometryBatch.Draw(HGF::Vector2(TL.X, BR.Y), HGF::Vector2(TL.X, TL.Y), HGF::Color::Green);
+	const HGF::Rectangle& dimensions = mSprite.GetRegion();
+	HGF::Vector2 TL(Position.X - dimensions.Width / 2.0f * Scale.X, Position.Y - dimensions.Height / 2.0f * Scale.Y);
+	HGF::Vector2 BR(Position.X + dimensions.Width / 2.0f * Scale.X, Position.Y + dimensions.Height / 2.0f * Scale.Y);
+	pGeometryBatch.DrawRectangle(TL, BR, HGF::Color::Green);
 
 	// Collision Rays
 	ITiledMapCollider::Render(pGeometryBatch);
