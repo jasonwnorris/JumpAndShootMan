@@ -39,9 +39,8 @@ int JumpShootGame::Initialize()
 	mPreviousTicks = 0;
 	mCurrentTicks = SDL_GetTicks();
 
-	// TODO: Use a screen manager.
-	if (mScreen.Initialize() < 0)
-		return -1;
+	GameplayScreen* screen = new GameplayScreen(&mScreenManager);
+	mScreenManager.Push(screen);
 
 	return 0;
 }
@@ -49,10 +48,6 @@ int JumpShootGame::Initialize()
 int JumpShootGame::Finalize()
 {
 	if (SAGE::Game::Finalize() < 0)
-		return -1;
-
-	// TODO: Use a screen manager.
-	if (mScreen.Finalize() < 0)
 		return -1;
 
 	return 0;
@@ -75,14 +70,14 @@ int JumpShootGame::Update(float pDeltaTime)
 	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Escape))
 		Quit();
 
-	mScreen.Update(pDeltaTime);
+	mScreenManager.Update(pDeltaTime);
 
 	return 0;
 }
 
 int JumpShootGame::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
-	mScreen.Render(pSpriteBatch);
+	mScreenManager.Render(pSpriteBatch);
 
 	mSBDrawCalls += pSpriteBatch.GetDrawCallCount();
 
@@ -92,7 +87,9 @@ int JumpShootGame::Render(SAGE::SpriteBatch& pSpriteBatch)
 int JumpShootGame::Render(SAGE::GeometryBatch& pGeometryBatch)
 {
 	if (Globals::IsDebugDrawOn)
-		mScreen.Render(pGeometryBatch);
+	{
+		mScreenManager.Render(pGeometryBatch);
+	}
 
 	mGBDrawCalls += pGeometryBatch.GetDrawCallCount();
 

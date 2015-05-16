@@ -11,22 +11,18 @@
 // Project Includes
 #include "AnimatedSprite.hpp"
 #include "EntityManager.hpp"
-#include "ITiledMapCollider.hpp"
 #include "Raycast.hpp"
 // STL Includes
 #include <vector>
 
-class Player : public Entity, public ITiledMapCollider
+class Player : public Entity
 {
 	public:
 		Player(EntityManager* pManager, World* pWorld);
 		~Player();
 
 		bool Load(const std::string& pFilename);
-		void Fire();
-
-		void OnCollision(Direction pDirection, float pDistance) override;
-		void OnEmpty(Direction pDirection, float pDistance) override;
+		void FireWeapon();
 
 		void Update(float pDeltaTime) override;
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
@@ -43,9 +39,26 @@ class Player : public Entity, public ITiledMapCollider
 		bool IsFacingLeft;
 		bool IsGrounded;
 		bool IsJumping;
-		bool IsDebugFly;
 
 	private:
+		enum RayIndex
+		{
+			UP_CENTER,
+			UP_LEFT,
+			UP_RIGHT,
+			DOWN_CENTER,
+			DOWN_LEFT,
+			DOWN_RIGHT,
+			LEFT_CENTER,
+			LEFT_TOP,
+			LEFT_BOTTOM,
+			RIGHT_CENTER,
+			RIGHT_TOP,
+			RIGHT_BOTTOM,
+		};
+		Ray mRays[12];
+		RaycastData mRaycastDatas[12];
+
 		AnimatedSprite mSprite;
 		float mMinimumJumpTime;
 		float mMaximumJumpTime;

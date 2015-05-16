@@ -23,19 +23,11 @@ class World
 		int Render(SAGE::GeometryBatch& pGeometryBatch);
 
 		template<typename T> T* Create();
-		void Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit);
+		void Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, int pLayerMask, RaycastData& pRaycastData);
 
 	private:
-		SAGE::SpriteFont mSpriteFont;
 		TiledMap mTiledMap;
 		EntityManager mEntityManager;
-
-		float mTime;
-		std::string mText;
-		HGF::Vector2 mPosition;
-		HGF::Vector2 mOrigin;
-		float mRotation;
-		float mScale;
 };
 
 template<typename T> T* World::Create()

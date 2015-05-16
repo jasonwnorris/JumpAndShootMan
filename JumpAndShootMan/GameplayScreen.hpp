@@ -12,7 +12,7 @@
 class GameplayScreen : public SAGE::Screen
 {
 	public:
-		GameplayScreen();
+		GameplayScreen(SAGE::ScreenManager* pManager);
 		~GameplayScreen();
 
 		int Initialize() override;
@@ -24,10 +24,12 @@ class GameplayScreen : public SAGE::Screen
 
 	private:
 		SAGE::Camera2D mCamera;
-		World mWorld;
-		Player* mPlayer;
 		HGF::Effect mGeometryEffect;
 		HGF::Effect mSpriteEffect;
+		SAGE::SpriteFont mSpriteFont;
+		World mWorld;
+		Player* mPlayer;
+		std::string mData;
 };
 
 #endif

@@ -6,6 +6,7 @@
 #include "Globals.hpp"
 // SAGE Includes
 #include <SAGE\Game.hpp>
+#include <SAGE\ScreenManager.hpp>
 // Project Includes
 #include "GameplayScreen.hpp"
 
@@ -23,7 +24,7 @@ class JumpShootGame : public SAGE::Game
 		int Render(SAGE::GeometryBatch& pGeometryBatch) override;
 
 	private:
-		GameplayScreen mScreen;
+		SAGE::ScreenManager mScreenManager;
 		int mFrameCount;
 		Uint32 mPreviousTicks;
 		Uint32 mCurrentTicks;

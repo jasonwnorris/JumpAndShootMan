@@ -13,96 +13,147 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Data">
+      <UniqueIdentifier>{bd5bb951-90dc-47df-a97e-4a7022e0485e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Data">
+      <UniqueIdentifier>{f2e76456-11c8-4612-81aa-52cc7851327c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics">
+      <UniqueIdentifier>{babfe15a-2bac-45c3-a084-629a857f4e61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Collision">
+      <UniqueIdentifier>{bd88f714-125c-40f9-8523-37ba9f69bb0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Gameplay">
+      <UniqueIdentifier>{e1a790c9-5602-46d9-a44d-48aa09e3909f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ECS">
+      <UniqueIdentifier>{cc6e7c2e-5120-45f9-bdfb-cfc0f13e1583}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{607bae9b-e0c5-4792-abb6-85fd6700ba12}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Collision">
+      <UniqueIdentifier>{66e4cc51-c035-4c03-8362-ff31ae416190}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Gameplay">
+      <UniqueIdentifier>{4925f39d-20b1-461d-9fcd-06b286130a84}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ECS">
+      <UniqueIdentifier>{8777db8b-6f73-410e-94e3-5fae3693a8c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Screens">
+      <UniqueIdentifier>{f699b4f5-497e-4f19-a11e-2c56248a9288}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Screens">
+      <UniqueIdentifier>{16e0d047-80ff-44e4-be8a-971ad356d9d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Globals.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JumpShootGame.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Direction.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="AnimatedSprite.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="BitField.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Source Files</Filter>
+    </ClCompile>
+    </ClCompile>
+    </ClCompile>
     </ClCompile>
     <ClCompile Include="EntityManager.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
     <ClCompile Include="DirectionalProjectile.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
     <ClCompile Include="Projectile.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
-    <ClCompile Include="TiledMap.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="Direction.cpp">
+      <Filter>Source Files\Collision</Filter>
     </ClCompile>
     <ClCompile Include="World.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="TiledMap.cpp">
+      <Filter>Source Files\Gameplay</Filter>
+    </ClCompile>
+    <ClCompile Include="JumpShootGame.cpp">
+      <Filter>Source Files\Gameplay</Filter>
     </ClCompile>
     <ClCompile Include="GameplayScreen.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Screens</Filter>
     </ClCompile>
-    <ClCompile Include="ITiledMapCollider.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ISerializable.cpp">
+      <Filter>Source Files\Data</Filter>
     </ClCompile>
-    <ClCompile Include="AnimatedSprite.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Globals.cpp">
+      <Filter>Source Files\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="IMap.cpp">
+      <Filter>Source Files\Gameplay</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Player.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Direction.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Globals.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Raycast.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="JumpShootGame.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BitField.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="EntityManager.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="Entity.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
-    <ClInclude Include="Projectile.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ISerializable.h">
+      <Filter>Header Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="DirectionalProjectile.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="BitField.hpp">
+      <Filter>Header Files\Data</Filter>
     </ClInclude>
-    <ClInclude Include="TiledMap.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Raycast.hpp">
+      <Filter>Header Files\Collision</Filter>
     </ClInclude>
     <ClInclude Include="World.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="TiledMap.hpp">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="IMap.hpp">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Direction.hpp">
+      <Filter>Header Files\Collision</Filter>
     </ClInclude>
     <ClInclude Include="GameplayScreen.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ITiledMapCollider.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Screens</Filter>
     </ClInclude>
     <ClInclude Include="AnimatedSprite.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="DirectionalProjectile.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="JumpShootGame.hpp">
+      <Filter>Header Files\Gameplay</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.hpp">
+      <Filter>Header Files\Data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -5,24 +5,22 @@
 
 // HGF Includes
 #include <HGF\Vector2.hpp>
-// Project Includes
-#include "Direction.hpp"
 
-struct RaycastInfo
+struct Ray
 {
 	HGF::Vector2 Position;
-	Direction Direction;
-	float Distance;
-	float Threshold;
-	bool HasInterest;
+	HGF::Vector2 Direction;
+	int Mask;
 };
 
-struct RaycastHit
+struct RaycastData
 {
-	HGF::Vector2 Position;
+	HGF::Vector2 StartPosition;
+	HGF::Vector2 EndPosition;
+	HGF::Vector2 Direction;
 	float Distance;
-	int TileX;
-	int TileY;
+	HGF::Vector2 Normal;
+	bool IsValid;
 };
 
 #endif

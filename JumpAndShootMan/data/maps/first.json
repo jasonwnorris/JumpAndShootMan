@@ -9,8 +9,8 @@
 		"path": "data/img/tiles.png"
 	},
 	"bitset": {
-		"x": 5,
-		"y": 1,
+		"x": 6,
+		"y": 2,
 		"size": 32,
 		"path": "data/img/bitmasks.png"
 	},

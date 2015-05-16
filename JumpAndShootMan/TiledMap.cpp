@@ -165,35 +165,35 @@ bool TiledMap::Load(const std::string& pFilename)
 				// Assign edge type depending on collision. (Temporary)
 				switch (tile.CollisionID)
 				{
-					case 0:
-						for (int i = 0; i < 4; ++i)
-							tile.Edges[i] = EdgeType::Solid;
-						break;
-					case 1:
-					case 3:
-						tile.Edges[Direction::Up] = EdgeType::Interesting;
-						tile.Edges[Direction::Down] = EdgeType::Solid;
-						tile.Edges[Direction::Left] = EdgeType::Interesting;
-						tile.Edges[Direction::Right] = EdgeType::Solid;
-						break;
-					case 2:
-					case 4:
-						tile.Edges[Direction::Up] = EdgeType::Interesting;
-						tile.Edges[Direction::Down] = EdgeType::Solid;
-						tile.Edges[Direction::Left] = EdgeType::Interesting;
-						tile.Edges[Direction::Right] = EdgeType::Interesting;
-						break;
-					default:
-						for (int i = 0; i < 4; ++i)
-							tile.Edges[i] = EdgeType::Empty;
-						break;
+				case 0:
+					for (int i = 0; i < 4; ++i)
+						tile.Edges[i] = EdgeMask::Solid;
+					break;
+				case 1:
+				case 3:
+					tile.Edges[EdgeSide::Top] = EdgeMask::Interesting;
+					tile.Edges[EdgeSide::Bottom] = EdgeMask::Solid;
+					tile.Edges[EdgeSide::Left] = EdgeMask::Interesting;
+					tile.Edges[EdgeSide::Right] = EdgeMask::Solid;
+					break;
+				case 2:
+				case 4:
+					tile.Edges[EdgeSide::Top] = EdgeMask::Interesting;
+					tile.Edges[EdgeSide::Bottom] = EdgeMask::Solid;
+					tile.Edges[EdgeSide::Left] = EdgeMask::Interesting;
+					tile.Edges[EdgeSide::Right] = EdgeMask::Interesting;
+					break;
+				default:
+					for (int i = 0; i < 4; ++i)
+						tile.Edges[i] = EdgeMask::Empty;
+					break;
 				}
 
 				// Flip edges for orientation.
 				if ((tile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical)
-					std::swap(tile.Edges[Direction::Up], tile.Edges[Direction::Down]);
+					std::swap(tile.Edges[EdgeSide::Top], tile.Edges[EdgeSide::Bottom]);
 				if ((tile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal)
-					std::swap(tile.Edges[Direction::Left], tile.Edges[Direction::Right]);
+					std::swap(tile.Edges[EdgeSide::Left], tile.Edges[EdgeSide::Right]);
 			}
 		}
 
@@ -208,22 +208,22 @@ bool TiledMap::Load(const std::string& pFilename)
 				{
 					Tile& tileHorz = mData[x + 1][y];
 
-					if ((tile.Edges[Direction::Right] == EdgeType::Solid || tile.Edges[Direction::Right] == EdgeType::Interesting) &&
-						(tileHorz.Edges[Direction::Left] == EdgeType::Solid || tileHorz.Edges[Direction::Left] == EdgeType::Interesting))
+					if ((tile.Edges[EdgeSide::Right] == EdgeMask::Solid || tile.Edges[EdgeSide::Right] == EdgeMask::Interesting) &&
+						(tileHorz.Edges[EdgeSide::Left] == EdgeMask::Solid || tileHorz.Edges[EdgeSide::Left] == EdgeMask::Interesting))
 					{
-						tile.Edges[Direction::Right] = EdgeType::Empty;
-						tileHorz.Edges[Direction::Left] = EdgeType::Empty;
+						tile.Edges[EdgeSide::Right] = EdgeMask::Empty;
+						tileHorz.Edges[EdgeSide::Left] = EdgeMask::Empty;
 					}
 				}
 				if (y + 1 != mHeight)
 				{
 					Tile& tileVert = mData[x][y + 1];
 
-					if ((tile.Edges[Direction::Down] == EdgeType::Solid || tile.Edges[Direction::Down] == EdgeType::Interesting) &&
-						(tileVert.Edges[Direction::Up] == EdgeType::Solid || tileVert.Edges[Direction::Up] == EdgeType::Interesting))
+					if ((tile.Edges[EdgeSide::Bottom] == EdgeMask::Solid || tile.Edges[EdgeSide::Bottom] == EdgeMask::Interesting) &&
+						(tileVert.Edges[EdgeSide::Top] == EdgeMask::Solid || tileVert.Edges[EdgeSide::Top] == EdgeMask::Interesting))
 					{
-						tile.Edges[Direction::Down] = EdgeType::Empty;
-						tileVert.Edges[Direction::Up] = EdgeType::Empty;
+						tile.Edges[EdgeSide::Bottom] = EdgeMask::Empty;
+						tileVert.Edges[EdgeSide::Top] = EdgeMask::Empty;
 					}
 				}
 			}
@@ -233,36 +233,7 @@ bool TiledMap::Load(const std::string& pFilename)
 	return isLoaded;
 }
 
-bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile) const
-{
-	if (pX < 0 || pY < 0 || pX >= mWidth || pY >= mHeight)
-		return false;
-
-	pTile = mData[pX][pY];
-
-	return pTile.TextureID >= 0;
-}
-
-bool TiledMap::IsEnterable(const Tile& pTile, Direction pDirection, bool pHasInterest) const
-{
-	return pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Solid || (pHasInterest && pTile.Edges[OppositeDirection(pDirection)] == EdgeType::Interesting);
-}
-
-bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const
-{
-	if (pPixelX < 0 || pPixelY < 0 || pPixelX >= mTileset.Size || pPixelY >= mTileset.Size)
-		return true;
-
-	if (pTile.CollisionID < 0)
-		return true;
-
-	bool horzFlip = (pTile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal;
-	bool vertFlip = (pTile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical;
-
-	return !mBitMasks[pTile.CollisionID].GetBit(horzFlip ? mTileset.Size - pPixelX : pPixelX, vertFlip ? mTileset.Size - pPixelY : pPixelY);
-}
-
-void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool pHasInterest, RaycastHit& pRaycastHit) const
+void TiledMap::Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, int pLayerMasks, RaycastData& pRaycastData) const
 {
 	int x = (int)std::roundf(pPosition.X);
 	int y = (int)std::roundf(pPosition.Y);
@@ -271,146 +242,123 @@ void TiledMap::Raycast(const HGF::Vector2& pPosition, Direction pDirection, bool
 	int pixelX = x % mTileset.Size;
 	int pixelY = y % mTileset.Size;
 
-	float maxDistance = 1000.0f;
-	float left = 0.0f;
 	float top = 0.0f;
-	float right = (float)(mWidth * mTileset.Size);
 	float bottom = (float)(mHeight * mTileset.Size);
+	float right = (float)(mWidth * mTileset.Size);
+	float left = 0.0f;
 
-	pRaycastHit.Position = HGF::Vector2::Zero;
-	pRaycastHit.Distance = maxDistance;
+	pRaycastData.StartPosition = pPosition;
+	pRaycastData.Direction = pDirection;
 
-	if (pPosition.X < left || pPosition.X > right || pPosition.Y < top || pPosition.Y > bottom || x < 0 || x >= mWidth * mTileset.Size || y < 0 || y >= mHeight * mTileset.Size)
+	// Capture outside cases.
+	if ((pDirection == HGF::Vector2::Up && (pPosition.Y < top || pPosition.X < left || pPosition.X > right)) ||
+		(pDirection == HGF::Vector2::Down && (pPosition.Y > bottom || pPosition.X < left || pPosition.X > right)) ||
+		(pDirection == HGF::Vector2::Left && (pPosition.X < left || pPosition.Y < top || pPosition.Y > bottom)) ||
+		(pDirection == HGF::Vector2::Right && (pPosition.X > right || pPosition.Y < top || pPosition.Y > bottom)))
 	{
-		switch (pDirection)
-		{
-			case Direction::Up:
-				pRaycastHit.Position = HGF::Vector2(pPosition.X, pPosition.Y - maxDistance);
-				break;
-			case Direction::Down:
-				pRaycastHit.Position = HGF::Vector2(pPosition.X, pPosition.Y + maxDistance);
-				break;
-			case Direction::Left:
-				pRaycastHit.Position = HGF::Vector2(pPosition.X - maxDistance, pPosition.Y);
-				break;
-			case Direction::Right:
-				pRaycastHit.Position = HGF::Vector2(pPosition.X + maxDistance, pPosition.Y);
-				break;
-		}
+		pRaycastData.IsValid = false;
 		return;
 	}
 
 	Tile tile;
-	switch (pDirection)
+	if (pDirection == HGF::Vector2::Up)
 	{
-		case Direction::Up:
-			for (int ty = tileY; ty >= 0; --ty)
+		for (int ty = tileY; ty >= 0; --ty)
+		{
+			if (TryGetTile(tileX, ty, tile))
 			{
-				if (TryGetTile(tileX, ty, tile))
+				if (IsEnterable(tile, EdgeSide::Bottom, pLayerMasks))
 				{
-					if (IsEnterable(tile, pDirection, pHasInterest))
+					for (int py = mTileset.Size - 1; py >= 0; --py)
 					{
-						for (int py = mTileset.Size - 1; py >= 0; --py)
+						if (!IsTraversable(tile, pixelX, py))
 						{
-							if (!IsTraversable(tile, pixelX, py))
-							{
-								pRaycastHit.Position = HGF::Vector2(pPosition.X, (float)(ty * mTileset.Size + py));
-								pRaycastHit.Distance = pPosition.Y - pRaycastHit.Position.Y;
-								pRaycastHit.TileX = tileX;
-								pRaycastHit.TileY = ty;
-								return;
-							}
+							pRaycastData.EndPosition = HGF::Vector2(pPosition.X, (float)(ty * mTileset.Size + py));
+							pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+							return;
 						}
 					}
 				}
 			}
-			pRaycastHit.Position = HGF::Vector2(pPosition.X, top);
-			pRaycastHit.Distance = pPosition.Y - top;
-			pRaycastHit.TileX = tileX;
-			pRaycastHit.TileY = 0;
-			break;
-		case Direction::Down:
-			for (int ty = tileY; ty < mHeight; ++ty)
-			{
-				if (TryGetTile(tileX, ty, tile))
-				{
-					if (IsEnterable(tile, pDirection, pHasInterest))
-					{
-						for (int py = 0; py < mTileset.Size; ++py)
-						{
-							if (!IsTraversable(tile, pixelX, py))
-							{
-								pRaycastHit.Position = HGF::Vector2(pPosition.X, (float)(ty * mTileset.Size + py));
-								pRaycastHit.Distance = pRaycastHit.Position.Y - pPosition.Y;
-								pRaycastHit.TileX = tileX;
-								pRaycastHit.TileY = ty;
-								return;
-							}
-						}
-					}
-				}
-			}
-			pRaycastHit.Position = HGF::Vector2(pPosition.X, bottom);
-			pRaycastHit.Distance = bottom - pPosition.Y;
-			pRaycastHit.TileX = tileX;
-			pRaycastHit.TileY = mHeight - 1;
-			break;
-		case Direction::Left:
-			for (int tx = tileX; tx >= 0; --tx)
-			{
-				if (TryGetTile(tx, tileY, tile))
-				{
-					if (IsEnterable(tile, pDirection, pHasInterest))
-					{
-						for (int px = mTileset.Size - 1; px >= 0; --px)
-						{
-							if (!IsTraversable(tile, px, pixelY))
-							{
-								pRaycastHit.Position = HGF::Vector2((float)(tx * mTileset.Size + px), pPosition.Y);
-								pRaycastHit.Distance = pPosition.X - pRaycastHit.Position.X;
-								pRaycastHit.TileX = tileY;
-								pRaycastHit.TileY = tx;
-								return;
-							}
-						}
-					}
-				}
-			}
-			pRaycastHit.Position = HGF::Vector2(left, pPosition.Y);
-			pRaycastHit.Distance = pPosition.X - left;
-			pRaycastHit.TileX = 0;
-			pRaycastHit.TileY = tileY;
-			break;
-		case Direction::Right:
-			for (int tx = tileX; tx < mWidth; ++tx)
-			{
-				if (TryGetTile(tx, tileY, tile))
-				{
-					if (IsEnterable(tile, pDirection, pHasInterest))
-					{
-						for (int px = 0; px < mTileset.Size; ++px)
-						{
-							if (!IsTraversable(tile, px, pixelY))
-							{
-								pRaycastHit.Position = HGF::Vector2((float)(tx * mTileset.Size + px), pPosition.Y);
-								pRaycastHit.Distance = pRaycastHit.Position.X - pPosition.X;
-								pRaycastHit.TileX = tileY;
-								pRaycastHit.TileY = tx;
-								return;
-							}
-						}
-					}
-				}
-			}
-			pRaycastHit.Position = HGF::Vector2(right, pPosition.Y);
-			pRaycastHit.Distance = right - pPosition.X;
-			pRaycastHit.TileX = mWidth - 1;
-			pRaycastHit.TileY = tileY;
-			break;
-		default:
-			// what?
-			break;
+		}
+		pRaycastData.EndPosition = HGF::Vector2(pPosition.X, top);
+		pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
 	}
+	else if (pDirection == HGF::Vector2::Down)
+	{
+		for (int ty = tileY; ty < mHeight; ++ty)
+		{
+			if (TryGetTile(tileX, ty, tile))
+			{
+				if (IsEnterable(tile, EdgeSide::Top, pLayerMasks))
+				{
+					for (int py = 0; py < mTileset.Size; ++py)
+					{
+						if (!IsTraversable(tile, pixelX, py))
+						{
+							pRaycastData.EndPosition = HGF::Vector2(pPosition.X, (float)(ty * mTileset.Size + py));
+							pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+							return;
+						}
+					}
+				}
+			}
+		}
+		pRaycastData.EndPosition = HGF::Vector2(pPosition.X, bottom);
+		pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+	}
+	else if (pDirection == HGF::Vector2::Left)
+	{
+		for (int tx = tileX; tx >= 0; --tx)
+		{
+			if (TryGetTile(tx, tileY, tile))
+			{
+				if (IsEnterable(tile, EdgeSide::Right, pLayerMasks))
+				{
+					for (int px = mTileset.Size - 1; px >= 0; --px)
+					{
+						if (!IsTraversable(tile, px, pixelY))
+						{
+							pRaycastData.EndPosition = HGF::Vector2((float)(tx * mTileset.Size + px), pPosition.Y);
+							pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+							return;
+
+						}
+					}
+				}
+			}
+		}
+		pRaycastData.EndPosition = HGF::Vector2(left, pPosition.Y);
+		pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+		pRaycastData.IsValid = false;
+	}
+	else if (pDirection == HGF::Vector2::Right)
+	{
+		for (int tx = tileX; tx < mWidth; ++tx)
+		{
+			if (TryGetTile(tx, tileY, tile))
+			{
+				if (IsEnterable(tile, EdgeSide::Left, pLayerMasks))
+				{
+					for (int px = 0; px < mTileset.Size; ++px)
+					{
+						if (!IsTraversable(tile, px, pixelY))
+						{
+							pRaycastData.EndPosition = HGF::Vector2((float)(tx * mTileset.Size + px), pPosition.Y);
+							pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+							return;
+						}
+					}
+				}
+			}
+		}
+		pRaycastData.EndPosition = HGF::Vector2(right, pPosition.Y);
+		pRaycastData.Distance = HGF::Vector2::Distance(pRaycastData.StartPosition, pRaycastData.EndPosition);
+	}
+}
+
+void TiledMap::Update(float pDeltaTime)
+{
 }
 
 void TiledMap::Render(SAGE::SpriteBatch& pSpriteBatch)
@@ -447,28 +395,64 @@ void TiledMap::Render(SAGE::GeometryBatch& pGeometryBatch)
 			{
 				for (int i = 0; i < 4; ++i)
 				{
-					if (tile.Edges[i] == EdgeType::Solid || tile.Edges[i] == EdgeType::Interesting)
+					if (tile.Edges[i] != EdgeMask::Empty)
 					{
-						HGF::Color color(tile.Edges[i] == EdgeType::Interesting ? 0.0f : 0.8f, 0.0f, tile.Edges[i] == EdgeType::Interesting ? 0.8f : 0.0f);
+						HGF::Color color(tile.Edges[i] == EdgeMask::Interesting ? 0.0f : 0.8f, 0.0f, tile.Edges[i] == EdgeMask::Interesting ? 0.8f : 0.0f);
 
 						switch (i)
 						{
-						case Direction::Up:
-							pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), color);
-							break;
-						case Direction::Down:
-							pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
-							break;
-						case Direction::Left:
-							pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), color);
-							break;
-						case Direction::Right:
-							pGeometryBatch.DrawLine(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
-							break;
+							case EdgeSide::Top:
+								pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), color);
+								break;
+							case EdgeSide::Bottom:
+								pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
+								break;
+							case EdgeSide::Left:
+								pGeometryBatch.DrawLine(HGF::Vector2(x * mTileset.Size, y * mTileset.Size), HGF::Vector2(x * mTileset.Size, (y + 1) * mTileset.Size), color);
+								break;
+							case EdgeSide::Right:
+								pGeometryBatch.DrawLine(HGF::Vector2((x + 1) * mTileset.Size, y * mTileset.Size), HGF::Vector2((x + 1) * mTileset.Size, (y + 1) * mTileset.Size), color);
+								break;
 						}
 					}
 				}
 			}
 		}
 	}
+}
+
+bool TiledMap::TryGetTile(int pX, int pY, Tile& pTile) const
+{
+	if (pX < 0 || pY < 0 || pX >= mWidth || pY >= mHeight)
+		return false;
+
+	pTile = mData[pX][pY];
+
+	return pTile.TextureID >= 0;
+}
+
+bool TiledMap::IsEnterable(const Tile& pTile, EdgeSide pEdge, int pMask) const
+{
+	if (pMask == EdgeMask::Interesting)
+	{
+		return pTile.Edges[pEdge] == EdgeMask::Solid || pTile.Edges[pEdge] == EdgeMask::Interesting;
+	}
+	else if (pMask == EdgeMask::Solid)
+	{
+		return pTile.Edges[pEdge] == EdgeMask::Solid;
+	}	
+}
+
+bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const
+{
+	if (pPixelX < 0 || pPixelY < 0 || pPixelX >= mTileset.Size || pPixelY >= mTileset.Size)
+		return true;
+
+	if (pTile.CollisionID < 0)
+		return true;
+
+	bool horzFlip = (pTile.Orientation & SAGE::Orientation::FlipHorizontal) == SAGE::Orientation::FlipHorizontal;
+	bool vertFlip = (pTile.Orientation & SAGE::Orientation::FlipVertical) == SAGE::Orientation::FlipVertical;
+
+	return !mBitMasks[pTile.CollisionID].GetBit(horzFlip ? mTileset.Size - pPixelX - 1 : pPixelX, vertFlip ? mTileset.Size - pPixelY - 1 : pPixelY);
 }

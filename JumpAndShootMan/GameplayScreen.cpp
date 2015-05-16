@@ -6,7 +6,7 @@
 // Project Includes
 #include "GameplayScreen.hpp"
 
-GameplayScreen::GameplayScreen()
+GameplayScreen::GameplayScreen(SAGE::ScreenManager* pManager) : SAGE::Screen(pManager)
 {
 }
 
@@ -27,6 +27,10 @@ int GameplayScreen::Initialize()
 
 	// Initialization for sprite batching.
 	if (!mSpriteEffect.Create(HGF::Effect::BasicType::PositionColorTexture))
+		return -1;
+
+	// Load the sprite font.
+	if (!mSpriteFont.Load("data/img/font.png", 26.0f, 16.0f))
 		return -1;
 
 	// Initialize the world.
@@ -52,90 +56,37 @@ int GameplayScreen::Finalize()
 int GameplayScreen::Update(float pDeltaTime)
 {
 	// debug
-	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Backspace))
-	{
-		mPlayer->Position = HGF::Vector2(100.0f, 100.0f);
-		mPlayer->IsGrounded = false;
-	}
 	if (HGF::Keyboard::IsKeyPressed(HGF::Key::P))
 	{
 		Globals::IsDebugDrawOn = !Globals::IsDebugDrawOn;
-	}
-	if (HGF::Keyboard::IsKeyPressed(HGF::Key::L))
-	{
-		mPlayer->IsDebugFly = !mPlayer->IsDebugFly;
-		mPlayer->Velocity = HGF::Vector2::Zero;
-		mPlayer->Acceleration = HGF::Vector2::Zero;
-	}
-	
-	// handle input
-	if (mPlayer->IsDebugFly)
-	{
-		float mult = 50.0f;
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Up))
-		{
-			mPlayer->Position.Y -= mPlayer->MovementSpeed * mult;
-		}
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Down))
-		{
-			mPlayer->Position.Y += mPlayer->MovementSpeed * mult;
-		}
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Left))
-		{
-			mPlayer->Position.X -= mPlayer->MovementSpeed * mult;
-			mPlayer->IsFacingLeft = true;
-		}
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Right))
-		{
-			mPlayer->Position.X += mPlayer->MovementSpeed * mult;
-			mPlayer->IsFacingLeft = false;
-		}
-	}
-	else
-	{
-		if (HGF::Keyboard::IsKeyPressed(HGF::Key::Z) && mPlayer->IsGrounded)
-		{
-			mPlayer->Velocity.Y = 0.0f;
-			mPlayer->Acceleration.Y -= mPlayer->JumpingSpeed;
-			mPlayer->IsGrounded = false;
-		}
-		if (HGF::Keyboard::IsKeyPressed(HGF::Key::X))
-		{
-			mPlayer->Fire();
-		}
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Left))
-		{
-			mPlayer->Acceleration.X -= mPlayer->MovementSpeed;
-			mPlayer->IsFacingLeft = true;
-		}
-		if (HGF::Keyboard::IsKeyDown(HGF::Key::Right))
-		{
-			mPlayer->Acceleration.X += mPlayer->MovementSpeed;
-			mPlayer->IsFacingLeft = false;
-		}
-
-		// update movement
-		if (!mPlayer->IsGrounded)
-		{
-			mPlayer->Acceleration.Y += mPlayer->Gravity;
-		}
-		mPlayer->Velocity += mPlayer->Acceleration;
-		mPlayer->Position += mPlayer->Velocity;
-		mPlayer->Velocity.X *= 0.75f;
-		mPlayer->Acceleration *= 0.75f;
 	}
 
 	mWorld.Update(pDeltaTime);
 
 	mCamera.SetPosition(mPlayer->Position);
 
+	mData = "On Ground: ";
+	if (mPlayer->IsGrounded)
+		mData += "true";
+	else
+		mData += "false";
+	mData += "\nIs Jumping: ";
+	if (mPlayer->IsJumping)
+		mData += "true";
+	else
+		mData += "false";
+
 	return 0;
 }
 
 int GameplayScreen::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
-	pSpriteBatch.Begin(mSpriteEffect, mCamera, SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended, SAGE::RasterizerState::None);
+	pSpriteBatch.Begin(mSpriteEffect, mCamera, SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
 	mWorld.Render(pSpriteBatch);
+	pSpriteBatch.End();
+
+	pSpriteBatch.Begin(mSpriteEffect, SAGE::Camera2D::DefaultCamera, SAGE::SortMode::BackToFront, SAGE::BlendMode::AlphaBlended);
+	pSpriteBatch.DrawString(mSpriteFont, mData, HGF::Vector2(-620.0f, -340.0f), HGF::Color::White);
 	pSpriteBatch.End();
 
 	return 0;

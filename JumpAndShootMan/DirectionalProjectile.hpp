@@ -4,10 +4,9 @@
 #define __DIRECTIONALPROJECTILE_HPP__
 
 // Project Includes
-#include "ITiledMapCollider.hpp"
 #include "Projectile.hpp"
 
-class DirectionalProjectile : public Projectile, public ITiledMapCollider
+class DirectionalProjectile : public Projectile
 {
 	public:
 		static HGF::Texture DirProjTexture;
@@ -16,15 +15,12 @@ class DirectionalProjectile : public Projectile, public ITiledMapCollider
 		DirectionalProjectile(EntityManager* pManager, World* pWorld);
 		~DirectionalProjectile();
 
-		void OnCollision(Direction pDirection, float pDistance) override;
-		void OnEmpty(Direction pDirection, float pDistance) override;
-
 		void Update(float pDeltaTime) override;
 		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
 		void Render(SAGE::GeometryBatch& pGeometryBatch) override;
 
 	public:
-		Direction FiredDirection;
+		HGF::Vector2 FiredDirection;
 		HGF::Vector2 Dimensions;
 };
 

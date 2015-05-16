@@ -23,6 +23,7 @@ class EntityManager
 
 	private:
 		std::vector<Entity*> mEntities;
+		std::vector<Entity*> mEntitiesToAdd;
 };
 
 template<typename T> T* EntityManager::Create(World* pWorld)
@@ -31,7 +32,7 @@ template<typename T> T* EntityManager::Create(World* pWorld)
 
 	T* entity = new T(this, pWorld);
 
-	mEntities.push_back(entity);
+	mEntitiesToAdd.push_back(entity);
 
 	return entity;
 }
