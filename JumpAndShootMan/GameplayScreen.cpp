@@ -66,7 +66,7 @@ int GameplayScreen::Update(float pDeltaTime)
 	mCamera.SetPosition(mPlayer->Position);
 
 	mData = "On Ground: ";
-	if (mPlayer->IsGrounded)
+	if (mPlayer->IsOnGround)
 		mData += "true";
 	else
 		mData += "false";

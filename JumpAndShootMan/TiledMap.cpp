@@ -440,7 +440,9 @@ bool TiledMap::IsEnterable(const Tile& pTile, EdgeSide pEdge, int pMask) const
 	else if (pMask == EdgeMask::Solid)
 	{
 		return pTile.Edges[pEdge] == EdgeMask::Solid;
-	}	
+	}
+
+	return false;
 }
 
 bool TiledMap::IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const
