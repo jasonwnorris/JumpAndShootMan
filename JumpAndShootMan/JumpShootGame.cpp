@@ -13,8 +13,8 @@ JumpShootGame::JumpShootGame()
 {
 	Globals::IsDebugDrawOn = false;
 
-	mSBDrawCalls = 0;
-	mGBDrawCalls = 0;
+	m_SBDrawCalls = 0;
+	m_GBDrawCalls = 0;
 }
 
 JumpShootGame::~JumpShootGame()
@@ -35,12 +35,12 @@ int JumpShootGame::Initialize()
 	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
 	mWindow.PrintInfo();
 
-	mFrameCount = 0;
-	mPreviousTicks = 0;
-	mCurrentTicks = SDL_GetTicks();
+	m_FrameCount = 0;
+	m_PreviousTicks = 0;
+	m_CurrentTicks = SDL_GetTicks();
 
-	GameplayScreen* screen = new GameplayScreen(&mScreenManager);
-	mScreenManager.Push(screen);
+	GameplayScreen* screen = new GameplayScreen(&m_ScreenManager);
+	m_ScreenManager.Push(screen);
 
 	return 0;
 }
@@ -55,31 +55,31 @@ int JumpShootGame::Finalize()
 
 int JumpShootGame::Update(float pDeltaTime)
 {
-	mFrameCount++;
-	mCurrentTicks = SDL_GetTicks();
-	if (mCurrentTicks > mPreviousTicks + 1000)
+	m_FrameCount++;
+	m_CurrentTicks = SDL_GetTicks();
+	if (m_CurrentTicks > m_PreviousTicks + 1000)
 	{
-		std::cout << "FPS: " << mFrameCount << " | Delta: " << pDeltaTime << " | SB Calls / sec: " << mSBDrawCalls / mFrameCount << " | GB Calls / sec: " << mGBDrawCalls / mFrameCount << std::endl;
+		std::cout << "FPS: " << m_FrameCount << " | Delta: " << pDeltaTime << " | SB Calls / sec: " << m_SBDrawCalls / m_FrameCount << " | GB Calls / sec: " << m_GBDrawCalls / m_FrameCount << std::endl;
 		
-		mPreviousTicks = mCurrentTicks;
-		mFrameCount = 0;
-		mSBDrawCalls = 0;
-		mGBDrawCalls = 0;
+		m_PreviousTicks = m_CurrentTicks;
+		m_FrameCount = 0;
+		m_SBDrawCalls = 0;
+		m_GBDrawCalls = 0;
 	}
 
 	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Escape))
 		Quit();
 
-	mScreenManager.Update(pDeltaTime);
+	m_ScreenManager.Update(pDeltaTime);
 
 	return 0;
 }
 
 int JumpShootGame::Render(SAGE::SpriteBatch& pSpriteBatch)
 {
-	mScreenManager.Render(pSpriteBatch);
+	m_ScreenManager.Render(pSpriteBatch);
 
-	mSBDrawCalls += pSpriteBatch.GetDrawCallCount();
+	m_SBDrawCalls += pSpriteBatch.GetDrawCallCount();
 
 	return 0;
 }
@@ -88,10 +88,10 @@ int JumpShootGame::Render(SAGE::GeometryBatch& pGeometryBatch)
 {
 	if (Globals::IsDebugDrawOn)
 	{
-		mScreenManager.Render(pGeometryBatch);
+		m_ScreenManager.Render(pGeometryBatch);
 	}
 
-	mGBDrawCalls += pGeometryBatch.GetDrawCallCount();
+	m_GBDrawCalls += pGeometryBatch.GetDrawCallCount();
 
 	return 0;
 }

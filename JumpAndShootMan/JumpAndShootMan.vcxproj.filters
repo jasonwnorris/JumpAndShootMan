@@ -51,33 +51,26 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AnimatedSprite.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="BitField.cpp">
       <Filter>Source Files\Data</Filter>
     </ClCompile>
+    <ClCompile Include="IUpdateRenderComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
+    <ClCompile Include="IUpdateComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
+    <ClCompile Include="IRenderComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
     </ClCompile>
-    </ClCompile>
-    <ClCompile Include="EntityManager.cpp">
+    <ClCompile Include="IComponent.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
     <ClCompile Include="Entity.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
-    <ClCompile Include="DirectionalProjectile.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="Projectile.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>Source Files\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="Direction.cpp">
-      <Filter>Source Files\Collision</Filter>
     </ClCompile>
     <ClCompile Include="World.cpp">
       <Filter>Source Files\Gameplay</Filter>
@@ -100,14 +93,48 @@
     <ClCompile Include="IMap.cpp">
       <Filter>Source Files\Gameplay</Filter>
     </ClCompile>
+    <ClCompile Include="TransformComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="MapColliderComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteRenderComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="IFixedUpdateComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="InputComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="ProjectileComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformerMotorComponent_old.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformerMotorComponent.cpp">
+      <Filter>Source Files\ECS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="IUpdateRenderComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
+    <ClInclude Include="IUpdateComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
+    <ClInclude Include="IRenderComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
-    </ClInclude>
-    </ClInclude>
-    <ClInclude Include="EntityManager.hpp">
+    <ClInclude Include="IComponent.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="Entity.hpp">
@@ -131,22 +158,10 @@
     <ClInclude Include="IMap.hpp">
       <Filter>Header Files\Gameplay</Filter>
     </ClInclude>
-    <ClInclude Include="Direction.hpp">
-      <Filter>Header Files\Collision</Filter>
-    </ClInclude>
     <ClInclude Include="GameplayScreen.hpp">
       <Filter>Header Files\Screens</Filter>
     </ClInclude>
-    <ClInclude Include="AnimatedSprite.hpp">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="DirectionalProjectile.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
     <ClInclude Include="Player.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="Projectile.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="JumpShootGame.hpp">
@@ -154,6 +169,39 @@
     </ClInclude>
     <ClInclude Include="Globals.hpp">
       <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="TransformComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="MapColliderComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteRenderComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="IFixedUpdateComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="InputComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectileComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="IDestroyable.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformerMotorComponent_old.hpp">
+      <Filter>Header Files\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="PlatformerMotorComponent.hpp">
+      <Filter>Header Files\ECS</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

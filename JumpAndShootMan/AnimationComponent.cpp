@@ -1,56 +1,47 @@
-// AnimatedSprite.cpp
+// AnimationComponent.cpp
 
 // Project Includes
-#include "AnimatedSprite.hpp"
+#include "AnimationComponent.hpp"
 // JsonCpp Includes
 #include <json\json.h>
 // STL Includes
 #include <algorithm>
-#include <iostream>
 #include <fstream>
 
-AnimatedSprite::AnimatedSprite()
+AnimationComponent::AnimationComponent(Entity* p_Owner) : IFixedUpdateComponent(p_Owner)
 {
-	mIndex = 0;
-	mFrame = 0;
-	mTime = 0.0f;
-	mIsDirty = false;
+	m_Name = "AnimationComponent";
 }
 
-AnimatedSprite::~AnimatedSprite()
+AnimationComponent::~AnimationComponent()
 {
 }
 
-const HGF::Texture& AnimatedSprite::GetTexture() const
+const HGF::Rectangle& AnimationComponent::GetRegion() const
 {
-	return mTexture;
+	return m_FrameInfoList[m_AnimationInfoList[m_Index].Frames[m_Frame].Index].Region;
 }
 
-const HGF::Rectangle& AnimatedSprite::GetRegion() const
+const HGF::Vector2& AnimationComponent::GetOrigin() const
 {
-	return mFrameInfoList[mAnimationInfoList[mIndex].Frames[mFrame].Index].Region;
+	return m_FrameInfoList[m_AnimationInfoList[m_Index].Frames[m_Frame].Index].Origin;
 }
 
-const HGF::Vector2& AnimatedSprite::GetOrigin() const
-{
-	return mFrameInfoList[mAnimationInfoList[mIndex].Frames[mFrame].Index].Origin;
-}
-
-bool AnimatedSprite::SetState(const std::string& pName, const std::string& pValue)
+bool AnimationComponent::SetState(const std::string& p_Name, const std::string& p_Value)
 {
 	// Determine if the provided combination is valid.
 	// (This is gross and I should probably change it.)
-	auto iter = std::find_if(mStateInfoList.begin(), mStateInfoList.end(), [pName, pValue](const StateInfo& pStateInfo) {
-		return pStateInfo.Name == pName && std::find(pStateInfo.Values.begin(), pStateInfo.Values.end(), pValue) != pStateInfo.Values.end();
+	auto iter = std::find_if(m_StateInfoList.begin(), m_StateInfoList.end(), [p_Name, p_Value](const StateInfo& pStateInfo) {
+		return pStateInfo.Name == p_Name && std::find(pStateInfo.Values.begin(), pStateInfo.Values.end(), p_Value) != pStateInfo.Values.end();
 	});
 
 	// Change the animation if it's a different, valid state.
-	if (iter != mStateInfoList.end())
+	if (iter != m_StateInfoList.end())
 	{
-		if (mCurrentStates[pName] != pValue)
+		if (m_CurrentStates[p_Name] != p_Value)
 		{
-			mCurrentStates[pName] = pValue;
-			mIsDirty = true;
+			m_CurrentStates[p_Name] = p_Value;
+			m_IsDirty = true;
 
 			return true;
 		}
@@ -59,17 +50,12 @@ bool AnimatedSprite::SetState(const std::string& pName, const std::string& pValu
 	return false;
 }
 
-bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::string& pDataFilename)
+bool AnimationComponent::Load(const std::string& p_Filename)
 {
-	if (!mTexture.Load(pTextureFilename, HGF::Interpolation::Nearest, HGF::Wrapping::ClampToEdge))
-		return false;
-
-	Uint32 start = SDL_GetTicks();
-
 	bool success = true;
 
 	// Load configuration file.
-	std::ifstream file(pDataFilename);
+	std::ifstream file(p_Filename);
 	if (file.is_open())
 	{
 		std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -77,9 +63,6 @@ bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::
 		Json::Reader reader;
 		if (reader.parse(contents, data))
 		{
-			//Json::StyledWriter writer;
-			//std::cout << writer.write(root) << std::endl;
-
 			// Read state information.
 			Json::Value states = data.get("States", Json::Value::null);
 			if (states != Json::Value::null)
@@ -99,7 +82,7 @@ bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::
 						}
 					}
 
-					mStateInfoList.push_back(stateInfo);
+					m_StateInfoList.push_back(stateInfo);
 				}
 			}
 
@@ -129,7 +112,7 @@ bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::
 						frameInfo.Region.Height = region.get("Height", 0).asInt();
 					}
 
-					mFrameInfoList.push_back(frameInfo);
+					m_FrameInfoList.push_back(frameInfo);
 				}
 			}
 
@@ -169,7 +152,7 @@ bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::
 						}
 					}
 
-					mAnimationInfoList.push_back(animationInfo);
+					m_AnimationInfoList.push_back(animationInfo);
 				}
 
 			}
@@ -185,46 +168,39 @@ bool AnimatedSprite::Initialize(const std::string& pTextureFilename, const std::
 	}
 	file.close();
 
-	Uint32 end = SDL_GetTicks();
-
-	std::cout << "Read JSON file '" << pDataFilename << "' in " << (end - start) << " milliseconds." << std::endl;
-
 	return success;
 }
 
-bool AnimatedSprite::Finalize()
+bool AnimationComponent::FixedUpdate(float p_DeltaTime)
 {
-	return true;
-}
-
-void AnimatedSprite::Update(float pDeltaTime)
-{
-	if (mIsDirty)
+	if (m_IsDirty)
 	{
 		ChangeAnimation();
 	}
 	else
 	{
-		mTime += pDeltaTime;
+		m_Time += p_DeltaTime;
 	}
 
-	if (mTime > mAnimationInfoList[mIndex].Frames[mFrame].Time)
+	if (m_Time > m_AnimationInfoList[m_Index].Frames[m_Frame].Time)
 	{
-		mFrame = (mFrame + 1) % mAnimationInfoList[mIndex].Frames.size();
-		mTime = 0.0f;
+		m_Frame = (m_Frame + 1) % m_AnimationInfoList[m_Index].Frames.size();
+		m_Time = 0.0f;
 	}
+
+	return true;
 }
 
-bool AnimatedSprite::ChangeAnimation()
+bool AnimationComponent::ChangeAnimation()
 {
-	for (int i = 0; i < (int)mAnimationInfoList.size(); ++i)
+	for (int i = 0; i < (int)m_AnimationInfoList.size(); ++i)
 	{
-		if (mAnimationInfoList[i].Conditions == mCurrentStates)
+		if (m_AnimationInfoList[i].Conditions == m_CurrentStates)
 		{
-			mIndex = i;
-			mFrame = 0;
-			mTime = 0.0f;
-			mIsDirty = false;
+			m_Index = i;
+			m_Frame = 0;
+			m_Time = 0.0f;
+			m_IsDirty = false;
 
 			return true;
 		}

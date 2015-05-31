@@ -19,17 +19,17 @@ class JumpShootGame : public SAGE::Game
 	protected:
 		int Initialize() override;
 		int Finalize() override;
-		int Update(float pDeltaTime) override;
-		int Render(SAGE::SpriteBatch& pSpriteBatch) override;
-		int Render(SAGE::GeometryBatch& pGeometryBatch) override;
+		int Update(float p_DeltaTime) override;
+		int Render(SAGE::SpriteBatch& p_SpriteBatch) override;
+		int Render(SAGE::GeometryBatch& p_GeometryBatch) override;
 
 	private:
-		SAGE::ScreenManager mScreenManager;
-		int mFrameCount;
-		Uint32 mPreviousTicks;
-		Uint32 mCurrentTicks;
-		int mSBDrawCalls;
-		int mGBDrawCalls;
+		SAGE::ScreenManager m_ScreenManager;
+		int m_FrameCount;
+		Uint32 m_PreviousTicks;
+		Uint32 m_CurrentTicks;
+		int m_SBDrawCalls;
+		int m_GBDrawCalls;
 };
 
 #endif

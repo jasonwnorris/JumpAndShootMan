@@ -2,25 +2,39 @@
 
 // Project Includes
 #include "Entity.hpp"
+#include "World.hpp"
+// STL Includes
+#include <algorithm>
 
-Entity::Entity(EntityManager* pManager, World* pWorld)
+Entity::Entity(World* p_World)
 {
-	mManager = pManager;
-	mWorld = pWorld;
-	mIsAlive = true;
+	m_World = p_World;
 }
 
 Entity::~Entity()
 {
-	mManager = nullptr;
-	mWorld = nullptr;
+	m_World = nullptr;
+	m_Parent = nullptr;
+	m_Children.clear();
+	m_Components.clear();
 }
 
-void Entity::Render(SAGE::GeometryBatch& pGeometryBatch)
+World* Entity::GetWorld() const
 {
+	return m_World;
 }
 
-bool Entity::IsAlive() const
+void Entity::Destroy()
 {
-	return mIsAlive;
+	IDestroyable::Destroy();
+
+	// Destory attached components;
+	for (std::map<std::type_index, IComponent*>::iterator iter = m_Components.begin(); iter != m_Components.end(); ++iter)
+	{
+		iter->second->Destroy();
+	}
+
+	// TODO: Remove parent attachment.
+
+	// TODO: Remove children attachments.
 }

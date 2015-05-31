@@ -3,7 +3,7 @@
 // Project Includes
 #include "IMap.hpp"
 
-void IMap::Raycast(const Ray& pRay, RaycastData& pRaycastData) const
+void IMap::Raycast(const Ray& p_Ray, RaycastData& p_RaycastData) const
 {
-	Raycast(pRay.Position, pRay.Direction, pRay.Mask, pRaycastData);
+	Raycast(p_Ray.Position, p_Ray.Direction, p_Ray.Mask, p_RaycastData);
 }

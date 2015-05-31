@@ -23,11 +23,11 @@ class TiledMap : public IMap
 		TiledMap();
 		~TiledMap();
 
-		bool Load(const std::string& pFilename) override;
-		void Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, int pLayerMasks, RaycastData& pRaycastData) const override;
-		void Update(float pDeltaTime) override;
-		void Render(SAGE::SpriteBatch& pSpriteBatch) override;
-		void Render(SAGE::GeometryBatch& pGeometryBatch) override;
+		bool Load(const std::string& p_Filename) override;
+		void Raycast(const HGF::Vector2& p_Position, const HGF::Vector2& p_Direction, int p_LayerMasks, RaycastData& p_RaycastData) const override;
+		void Update(float p_DeltaTime) override;
+		void Render(SAGE::SpriteBatch& p_SpriteBatch) override;
+		void Render(SAGE::GeometryBatch& p_GeometryBatch) override;
 		
 	private:
 		enum EdgeMask
@@ -61,16 +61,16 @@ class TiledMap : public IMap
 			SAGE::Orientation Orientation;
 		};
 
-		bool TryGetTile(int pX, int pY, Tile& pTile) const;
-		bool IsEnterable(const Tile& pTile, EdgeSide pEdge, int pMask) const;
-		bool IsTraversable(const Tile& pTile, int pPixelX, int pPixelY) const;
+		bool TryGetTile(int p_X, int p_Y, Tile& p_Tile) const;
+		bool IsEnterable(const Tile& p_Tile, EdgeSide p_Edge, int p_Mask) const;
+		bool IsTraversable(const Tile& p_Tile, int p_PixelX, int p_PixelY) const;
 
-		Tileset mTileset;
-		int mWidth;
-		int mHeight;
-		std::vector<std::vector<Tile>> mData;
-		int mBitMaskCount;
-		std::vector<BitField> mBitMasks;
+		Tileset m_Tileset;
+		int m_Width;
+		int m_Height;
+		std::vector<std::vector<Tile>> m_Data;
+		int m_BitMaskCount;
+		std::vector<BitField> m_BitMasks;
 };
 
 #endif

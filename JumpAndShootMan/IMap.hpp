@@ -15,12 +15,12 @@ class IMap
 		IMap() { }
 		virtual ~IMap() { }
 
-		virtual bool Load(const std::string& pFilename) = 0;
-		void Raycast(const Ray& pRay, RaycastData& pRaycastData) const;
-		virtual void Raycast(const HGF::Vector2& pPosition, const HGF::Vector2& pDirection, int pLayerMasks, RaycastData& pRaycastData) const = 0;
-		virtual void Update(float pDeltaTime) = 0;
-		virtual void Render(SAGE::SpriteBatch& pSpriteBatch) = 0;
-		virtual void Render(SAGE::GeometryBatch& pGeometryBatch) { }
+		virtual bool Load(const std::string& p_Filename) = 0;
+		void Raycast(const Ray& p_Ray, RaycastData& p_RaycastData) const;
+		virtual void Raycast(const HGF::Vector2& p_Position, const HGF::Vector2& p_Direction, int p_LayerMasks, RaycastData& p_RaycastData) const = 0;
+		virtual void Update(float p_DeltaTime) = 0;
+		virtual void Render(SAGE::SpriteBatch& p_SpriteBatch) = 0;
+		virtual void Render(SAGE::GeometryBatch& p_GeometryBatch) { }
 };
 
 #endif

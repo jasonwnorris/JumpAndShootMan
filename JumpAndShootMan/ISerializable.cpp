@@ -5,14 +5,14 @@
 // STL Includes
 #include <fstream>
 
-bool ISerializable::SerializeToFile(const std::string& pFilename) const
+bool ISerializable::SerializeToFile(const std::string& p_Filename) const
 {
 	Json::Value root;
 	if (!Serialize(root))
 		return false;
 
 	std::ofstream file;
-	file.open(pFilename, std::ofstream::out | std::ofstream::trunc);
+	file.open(p_Filename, std::ofstream::out | std::ofstream::trunc);
 	if (!file.is_open())
 		return false;
 
@@ -23,10 +23,10 @@ bool ISerializable::SerializeToFile(const std::string& pFilename) const
 	return true;
 }
 
-bool ISerializable::DeserializeFromFile(const std::string& pFilename)
+bool ISerializable::DeserializeFromFile(const std::string& p_Filename)
 {
 	std::ifstream file;
-	file.open(pFilename, std::ifstream::in);
+	file.open(p_Filename, std::ifstream::in);
 	if (!file.is_open())
 		return false;
 

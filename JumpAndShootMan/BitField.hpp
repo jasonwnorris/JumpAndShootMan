@@ -12,26 +12,26 @@ class BitField
 {
 	public:
 		BitField();
-		BitField(int pWidth, int pHeight);
+		BitField(int p_Width, int p_Height);
 		~BitField();
 
 		int GetCount() const;
 		int GetSize() const;
 
-		void Resize(int pWidth, int pHeight);
+		void Resize(int p_Width, int p_Height);
 
-		bool GetBit(int pX, int pY) const;
-		void SetBit(int pX, int pY, bool pValue);
+		bool GetBit(int p_X, int p_Y) const;
+		void SetBit(int p_X, int p_Y, bool p_Value);
 
-		Uint8 GetByte(int pIndex);
-		void SetByte(int pIndex, Uint8 pValue);
+		Uint8 GetByte(int p_Index);
+		void SetByte(int p_Index, Uint8 p_Value);
 
 	private:
-		int mWidth;
-		int mHeight;
-		int mCount;
-		int mSize;
-		std::vector<Uint8> mData;
+		int m_Width;
+		int m_Height;
+		int m_Count;
+		int m_Size;
+		std::vector<Uint8> m_Data;
 };
 
 #endif
