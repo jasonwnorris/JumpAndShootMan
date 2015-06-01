@@ -4,7 +4,10 @@
 #include <HGF\MathUtil.hpp>
 // Project Includes
 #include "Entity.hpp"
+#include "World.hpp"
 #include "PlatformerMotorComponent.hpp"
+#include "ProjectileComponent.hpp"
+#include "SpriteRenderComponent.hpp"
 
 PlatformerMotorComponent::PlatformerMotorComponent(Entity* p_Owner) : IFixedUpdateComponent(p_Owner)
 {
@@ -21,10 +24,10 @@ PlatformerMotorComponent::PlatformerMotorComponent(Entity* p_Owner) : IFixedUpda
 
 	m_JumpGraceTime = 0.0f;
 	m_JumpGraceDuration = 0.5f;
-	m_MinimumJumpTime = 0.25f;
-	m_MaximumJumpTime = 0.65f;
+	m_MinimumJumpTime = 0.1f;
+	m_MaximumJumpTime = 0.25f;
 	m_TotalJumpTime = 0.0f;
-	m_JumpingAcceleration = 10.0f;
+	m_JumpingAcceleration = 100.0f;
 
 	m_HasSprintHeld = false;
 	m_HasRequestedJump = false;
@@ -36,16 +39,16 @@ PlatformerMotorComponent::PlatformerMotorComponent(Entity* p_Owner) : IFixedUpda
 	m_Gravity = 25.0f;
 	m_NormalizedHorizontalMovement = 0.0f;
 	m_NormalizedVerticalMovement = 0.0f;
-	m_MaximumMovementSpeedOnGround = 3.0f;
-	m_MaximumMovementSpeedInAir = 3.0f;
-	m_MaximumFallSpeed = 3.0f;
-	m_MaximumFastFallSpeed = 4.5f;
+	m_MaximumMovementSpeedOnGround = 6.5f;
+	m_MaximumMovementSpeedInAir = 7.5f;
+	m_MaximumFallSpeed = 7.5f;
+	m_MaximumFastFallSpeed = 12.5f;
 
 	m_GroundSpeed = 0.0f;
-	m_GroundAcceleration = 3.0f;
-	m_GroundDeceleration = 4.5f;
-	m_GroundFriction = 2.75f;
-	m_AirAcceleration = 3.0f;
+	m_GroundAcceleration = 5.0f;
+	m_GroundDeceleration = 8.5f;
+	m_GroundFriction = 6.75f;
+	m_AirAcceleration = 5.0f;
 
 	m_CollisionDistanceUp = 35.0f;
 	m_CollisionDistanceDown = 35.0f;
@@ -169,6 +172,22 @@ void PlatformerMotorComponent::JumpHeld(bool p_IsHeld)
 	m_HasExtendedJumpHeld = p_IsHeld;
 }
 
+void PlatformerMotorComponent::Fire()
+{
+	Entity* e = m_Owner->GetWorld()->CreateEntity<Entity>();
+
+	TransformComponent* tc = e->AddComponent<TransformComponent>();
+	tc->SetPosition(m_Entity_TransformComponent->GetPosition());
+
+	ProjectileComponent* pc = e->AddComponent<ProjectileComponent>();
+	pc->SetLifeTime(2.5f);
+	pc->SetDirection(m_IsFacingLeft ? HGF::Vector2::Left : HGF::Vector2::Right);
+	pc->SetSpeed(500.0f);
+
+	SpriteRenderComponent* src = e->AddComponent<SpriteRenderComponent>();
+	src->Load("data/img/projectile.png");
+}
+
 void PlatformerMotorComponent::Dash()
 {
 	m_HasRequestedDash = true;
@@ -197,11 +216,17 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 	// Check Jump
 	if (m_HasRequestedJump && CanJump())
 	{
+		if (m_TerrainState == TerrainState::Air)
+		{
+			++m_AirJumpCount;
+		}
+
 		m_TerrainState = TerrainState::Air;
 		m_MotionState = MotionState::Jumping;
 		m_TotalJumpTime = 0.0f;
-		m_HasRequestedJump = false;
+		m_Entity_PhysicsComponent->SetVelocityY(0.0f);
 	}
+	m_HasRequestedJump = false;
 
 	// Check Dash
 	if (m_HasRequestedDash && CanDash())
@@ -271,21 +296,23 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 	}
 	else if (m_TerrainState == TerrainState::Air)
 	{
+		// Vertical movement.
 		if (m_MotionState == MotionState::Jumping)
 		{
 			// Lift from jumping.
-			m_Entity_PhysicsComponent->SetVelocityY(m_Entity_PhysicsComponent->GetVelocityY() - m_JumpingAcceleration * p_DeltaTime);
+			m_Entity_PhysicsComponent->SetVelocityY(m_Entity_PhysicsComponent->GetVelocityY() -
+				                                    m_JumpingAcceleration * sqrtf(m_MaximumJumpTime - fminf(m_TotalJumpTime, m_MaximumJumpTime)) * p_DeltaTime);
 
 			// Increment jumping time.
 			m_TotalJumpTime += p_DeltaTime;
-			if (m_TotalJumpTime > m_MaximumJumpTime)
+			if (m_TotalJumpTime > m_MaximumJumpTime || (m_TotalJumpTime > m_MinimumJumpTime && !m_HasExtendedJumpHeld))
 			{
 				m_MotionState = MotionState::Falling;
 			}
 		}
 		else if (m_MotionState == MotionState::Falling)
 		{
-			if (HGF::MathUtil::Abs(m_Entity_PhysicsComponent->GetVelocityY()) > m_MaximumFallSpeed)
+			if (HGF::MathUtil::Abs(m_Entity_PhysicsComponent->GetVelocityY() + m_Gravity * p_DeltaTime) > m_MaximumFallSpeed)
 			{
 				// Enforce terminal velocity.
 				m_Entity_PhysicsComponent->SetVelocityY(m_MaximumFallSpeed * HGF::MathUtil::SignOf(m_Entity_PhysicsComponent->GetVelocityY()));
@@ -296,7 +323,11 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 				m_Entity_PhysicsComponent->SetVelocityY(m_Entity_PhysicsComponent->GetVelocityY() + m_Gravity * p_DeltaTime);
 			}
 		}
-		
+		else if (m_MotionState == MotionState::FastFalling)
+		{
+		}
+
+		// Horizontal movement.
 		if (HGF::MathUtil::Abs(m_Entity_PhysicsComponent->GetVelocityX()) > m_MaximumMovementSpeedInAir)
 		{
 			// Enforce speed limit.
@@ -323,6 +354,7 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 		{
 			m_TerrainState = TerrainState::Ground;
 			m_MotionState = MotionState::Idle;
+			m_AirJumpCount = 0;
 			m_Entity_TransformComponent->TranslateY(downDistance - m_CollisionDistanceDown);
 			m_Entity_PhysicsComponent->SetVelocityY(0.0f);
 		}

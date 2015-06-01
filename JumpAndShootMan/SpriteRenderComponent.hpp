@@ -20,7 +20,7 @@ class SpriteRenderComponent : public IRenderComponent
 
 	private:
 		TransformComponent* m_Entity_TransformComponent;
-		HGF::Texture m_Texture;
+		HGF::Texture* m_Texture;
 };
 
 #endif

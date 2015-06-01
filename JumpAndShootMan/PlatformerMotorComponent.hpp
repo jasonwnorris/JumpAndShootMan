@@ -51,6 +51,7 @@ class PlatformerMotorComponent : public IFixedUpdateComponent
 		void SprintHeld(bool p_IsHeld);
 		void Jump();
 		void JumpHeld(bool p_IsHeld);
+		void Fire();
 		void Dash();
 		void Fall();
 		void Reset(const HGF::Vector2& p_Position = HGF::Vector2::Zero);

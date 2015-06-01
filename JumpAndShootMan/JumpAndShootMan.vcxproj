@@ -101,6 +101,7 @@
     <ClCompile Include="PlatformerMotorComponent.cpp" />
     <ClCompile Include="ProjectileComponent.cpp" />
     <ClCompile Include="SpriteRenderComponent.cpp" />
+    <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="TiledMap.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="TransformComponent.cpp" />
@@ -129,6 +130,7 @@
     <ClInclude Include="ProjectileComponent.hpp" />
     <ClInclude Include="Raycast.hpp" />
     <ClInclude Include="SpriteRenderComponent.hpp" />
+    <ClInclude Include="TextureManager.hpp" />
     <ClInclude Include="TiledMap.hpp" />
     <ClInclude Include="Player.hpp" />
     <ClInclude Include="TransformComponent.hpp" />

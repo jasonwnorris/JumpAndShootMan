@@ -3,6 +3,6 @@
 	"width": 1280,
 	"height": 720,
 	"mode": 4,
-	"vsync": true,
+	"vsync": false,
 	"hidden": false
 }

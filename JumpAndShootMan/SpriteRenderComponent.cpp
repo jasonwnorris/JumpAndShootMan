@@ -5,6 +5,7 @@
 #include "AnimationComponent.hpp"
 #include "PlatformerMotorComponent.hpp"
 #include "SpriteRenderComponent.hpp"
+#include "TextureManager.hpp"
 // JsonCpp Includes
 #include <json\json.h>
 // STL Includes
@@ -25,7 +26,9 @@ SpriteRenderComponent::~SpriteRenderComponent()
 
 bool SpriteRenderComponent::Load(const std::string& p_Filename)
 {
-	return m_Texture.Load(p_Filename, HGF::Interpolation::Nearest, HGF::Wrapping::ClampToEdge);
+	m_Texture = TextureManager::Load(p_Filename, HGF::Interpolation::Nearest, HGF::Wrapping::ClampToEdge);
+
+	return m_Texture != nullptr;
 }
 
 bool SpriteRenderComponent::Render(SAGE::GeometryBatch& p_GeometryBatch) const
@@ -45,8 +48,8 @@ bool SpriteRenderComponent::Render(SAGE::GeometryBatch& p_GeometryBatch) const
 	}
 	else
 	{
-		width = m_Texture.GetWidth();
-		height = m_Texture.GetHeight();
+		width = m_Texture->GetWidth();
+		height = m_Texture->GetHeight();
 	}
 
 	p_GeometryBatch.DrawRectangle(HGF::Vector2(position.X - width / 2.0f * scale.X, position.Y - height / 2.0f * scale.Y),
@@ -72,8 +75,8 @@ bool SpriteRenderComponent::Render(SAGE::SpriteBatch& p_SpriteBatch) const
 	}
 	else
 	{
-		region.Width = m_Texture.GetWidth();
-		region.Height = m_Texture.GetHeight();
+		region.Width = m_Texture->GetWidth();
+		region.Height = m_Texture->GetHeight();
 		origin.X = 0.0f;
 		origin.Y = 0.0f;
 	}
@@ -82,7 +85,7 @@ bool SpriteRenderComponent::Render(SAGE::SpriteBatch& p_SpriteBatch) const
 	PlatformerMotorComponent* pmc = m_Owner->GetComponent<PlatformerMotorComponent>();
 	if (pmc != nullptr)
 	{
-		p_SpriteBatch.Draw(m_Texture,
+		p_SpriteBatch.Draw(*m_Texture,
 			position,
 			region,
 			HGF::Color::White,
@@ -93,7 +96,7 @@ bool SpriteRenderComponent::Render(SAGE::SpriteBatch& p_SpriteBatch) const
 	}
 	else
 	{
-		p_SpriteBatch.Draw(m_Texture,
+		p_SpriteBatch.Draw(*m_Texture,
 			position,
 			region,
 			HGF::Color::White,

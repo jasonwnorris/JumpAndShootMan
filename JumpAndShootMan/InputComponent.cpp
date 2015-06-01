@@ -7,7 +7,6 @@
 #include "ProjectileComponent.hpp"
 #include "SpriteRenderComponent.hpp"
 #include "Entity.hpp"
-#include "World.hpp"
 
 InputComponent::InputComponent(Entity* p_Owner) : IUpdateComponent(p_Owner)
 {
@@ -52,15 +51,7 @@ bool InputComponent::Update(float p_DeltaTime)
 	// Input: Firing
 	if (HGF::Keyboard::IsKeyPressed(fireKey))
 	{
-		Entity* e = m_Owner->GetWorld()->CreateEntity<Entity>();
-
-		TransformComponent* tc = e->AddComponent<TransformComponent>();
-		tc->SetPosition(m_Entity_TransformComponent->GetPosition());
-
-		ProjectileComponent* pc = e->AddComponent<ProjectileComponent>();
-
-		SpriteRenderComponent* src = e->AddComponent<SpriteRenderComponent>();
-		src->Load("data/img/projectile.png");
+		m_Entity_PlatformerMotorComponent->Fire();
 	}
 
 	// Input: Dashing
