@@ -41,8 +41,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;C:\Libraries\GLM_0_9_5_4\include;C:\Libraries\jsoncpp_0_5_0\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Libraries\SDL2_2_0_3\lib\x86;C:\Libraries\GLEW_1_11_0\lib\Release\Win32;C:\Libraries\jsoncpp_0_5_0\lib\Debug;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\Debug;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Libraries\SDL2_2_0_3\include;C:\Libraries\GLEW_1_11_0\include;C:\Libraries\OpenAL_1_16_0\include;C:\Libraries\GLM_0_9_5_4\include;C:\Libraries\jsoncpp_0_5_0\include;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\HybridGameFramework\include;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\SuperAwesomeGameEngine\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Libraries\SDL2_2_0_3\lib\x86;C:\Libraries\GLEW_1_11_0\lib\Release\Win32;C:\Libraries\OpenAL_1_16_0\libs\Win32;C:\Libraries\jsoncpp_0_5_0\lib\Debug;F:\Documents\GitHub\HybridGameFramework\HybridGameFramework\Debug;F:\Documents\GitHub\SuperAwesomeGameEngine\SuperAwesomeGameEngine\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -59,7 +59,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;OpenGL32.lib;glu32.lib;glew32.lib;jsoncpp.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;OpenGL32.lib;glu32.lib;glew32.lib;OpenAL32.lib;jsoncpp.lib;HybridGameFramework.lib;SuperAwesomeGameEngine.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>msvcrt.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
@@ -82,6 +82,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AnimationComponent.cpp" />
+    <ClCompile Include="AudioListenerComponent.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
+    <ClCompile Include="AudioSourceComponent.cpp" />
     <ClCompile Include="BitField.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="GameplayScreen.cpp" />
@@ -97,7 +100,6 @@
     <ClCompile Include="Globals.cpp" />
     <ClCompile Include="MapColliderComponent.cpp" />
     <ClCompile Include="PhysicsComponent.cpp" />
-    <ClCompile Include="PlatformerMotorComponent_old.cpp" />
     <ClCompile Include="PlatformerMotorComponent.cpp" />
     <ClCompile Include="ProjectileComponent.cpp" />
     <ClCompile Include="SpriteRenderComponent.cpp" />
@@ -109,6 +111,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AnimationComponent.hpp" />
+    <ClInclude Include="AudioListenerComponent.hpp" />
+    <ClInclude Include="IInitializable.hpp" />
+    <ClInclude Include="ISingleton.hpp" />
+    <ClInclude Include="SoundManager.hpp" />
+    <ClInclude Include="AudioSourceComponent.hpp" />
     <ClInclude Include="BitField.hpp" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="GameplayScreen.hpp" />
@@ -125,7 +132,6 @@
     <ClInclude Include="Globals.hpp" />
     <ClInclude Include="MapColliderComponent.hpp" />
     <ClInclude Include="PhysicsComponent.hpp" />
-    <ClInclude Include="PlatformerMotorComponent_old.hpp" />
     <ClInclude Include="PlatformerMotorComponent.hpp" />
     <ClInclude Include="ProjectileComponent.hpp" />
     <ClInclude Include="Raycast.hpp" />

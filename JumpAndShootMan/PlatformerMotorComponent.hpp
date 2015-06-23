@@ -10,6 +10,8 @@
 #include "TransformComponent.hpp"
 #include "PhysicsComponent.hpp"
 #include "MapColliderComponent.hpp"
+#include "AudioSourceComponent.hpp"
+#include "AnimationComponent.hpp"
 // STL Includes
 #include <string>
 
@@ -67,6 +69,7 @@ class PlatformerMotorComponent : public IFixedUpdateComponent
 		TransformComponent* m_Entity_TransformComponent;
 		PhysicsComponent* m_Entity_PhysicsComponent;
 		MapColliderComponent* m_Entity_MapColliderComponent;
+		AnimationComponent* m_Entity_AnimationComponent;
 
 		TerrainState m_TerrainState;
 		MotionState m_MotionState;

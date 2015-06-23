@@ -19,9 +19,6 @@
     <Filter Include="Source Files\Data">
       <UniqueIdentifier>{f2e76456-11c8-4612-81aa-52cc7851327c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Graphics">
-      <UniqueIdentifier>{babfe15a-2bac-45c3-a084-629a857f4e61}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Collision">
       <UniqueIdentifier>{bd88f714-125c-40f9-8523-37ba9f69bb0b}</UniqueIdentifier>
     </Filter>
@@ -30,9 +27,6 @@
     </Filter>
     <Filter Include="Header Files\ECS">
       <UniqueIdentifier>{cc6e7c2e-5120-45f9-bdfb-cfc0f13e1583}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Graphics">
-      <UniqueIdentifier>{607bae9b-e0c5-4792-abb6-85fd6700ba12}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Collision">
       <UniqueIdentifier>{66e4cc51-c035-4c03-8362-ff31ae416190}</UniqueIdentifier>
@@ -49,22 +43,28 @@
     <Filter Include="Header Files\Screens">
       <UniqueIdentifier>{16e0d047-80ff-44e4-be8a-971ad356d9d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ECS\Interface">
+      <UniqueIdentifier>{885d5faa-837e-4e58-966e-79fe5e74d62e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ECS\Interface">
+      <UniqueIdentifier>{a398d727-791c-456c-8b05-8550e2b1d88c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ECS\Audio">
+      <UniqueIdentifier>{dddfdb25-5bda-473a-b46e-a280b7735596}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ECS\Audio">
+      <UniqueIdentifier>{e5e5ae82-6fba-4b86-8fbd-d87787cf841c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Resources">
+      <UniqueIdentifier>{babfe15a-2bac-45c3-a084-629a857f4e61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Resouces">
+      <UniqueIdentifier>{607bae9b-e0c5-4792-abb6-85fd6700ba12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BitField.cpp">
       <Filter>Source Files\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="IUpdateRenderComponent.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="IUpdateComponent.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="IRenderComponent.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
-    <ClCompile Include="IComponent.cpp">
-      <Filter>Source Files\ECS</Filter>
     </ClCompile>
     <ClCompile Include="Entity.cpp">
       <Filter>Source Files\ECS</Filter>
@@ -105,9 +105,6 @@
     <ClCompile Include="PhysicsComponent.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
-    <ClCompile Include="IFixedUpdateComponent.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
     <ClCompile Include="InputComponent.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
@@ -117,29 +114,38 @@
     <ClCompile Include="AnimationComponent.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
-    <ClCompile Include="PlatformerMotorComponent_old.cpp">
-      <Filter>Source Files\ECS</Filter>
-    </ClCompile>
     <ClCompile Include="PlatformerMotorComponent.cpp">
       <Filter>Source Files\ECS</Filter>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp">
-      <Filter>Source Files\Graphics</Filter>
+      <Filter>Source Files\Resouces</Filter>
+    </ClCompile>
+    <ClCompile Include="IComponent.cpp">
+      <Filter>Source Files\ECS\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="IFixedUpdateComponent.cpp">
+      <Filter>Source Files\ECS\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="IRenderComponent.cpp">
+      <Filter>Source Files\ECS\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="IUpdateComponent.cpp">
+      <Filter>Source Files\ECS\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="IUpdateRenderComponent.cpp">
+      <Filter>Source Files\ECS\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioListenerComponent.cpp">
+      <Filter>Source Files\ECS\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioSourceComponent.cpp">
+      <Filter>Source Files\ECS\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="SoundManager.cpp">
+      <Filter>Source Files\Resouces</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IUpdateRenderComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="IUpdateComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="IRenderComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="IComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
     <ClInclude Include="Entity.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
@@ -185,29 +191,53 @@
     <ClInclude Include="PhysicsComponent.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
-    <ClInclude Include="IFixedUpdateComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
     <ClInclude Include="InputComponent.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="ProjectileComponent.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
-    <ClInclude Include="IDestroyable.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
     <ClInclude Include="AnimationComponent.hpp">
-      <Filter>Header Files\ECS</Filter>
-    </ClInclude>
-    <ClInclude Include="PlatformerMotorComponent_old.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="PlatformerMotorComponent.hpp">
       <Filter>Header Files\ECS</Filter>
     </ClInclude>
     <ClInclude Include="TextureManager.hpp">
-      <Filter>Header Files\Graphics</Filter>
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="IComponent.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="IDestroyable.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="IFixedUpdateComponent.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="IRenderComponent.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="IUpdateComponent.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="IUpdateRenderComponent.hpp">
+      <Filter>Header Files\ECS\Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioSourceComponent.hpp">
+      <Filter>Header Files\ECS\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioListenerComponent.hpp">
+      <Filter>Header Files\ECS\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="SoundManager.hpp">
+      <Filter>Header Files\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="ISingleton.hpp">
+      <Filter>Header Files\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="IInitializable.hpp">
+      <Filter>Header Files\Data</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

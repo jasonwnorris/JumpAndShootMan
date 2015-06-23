@@ -8,6 +8,7 @@
 #include "PlatformerMotorComponent.hpp"
 #include "ProjectileComponent.hpp"
 #include "SpriteRenderComponent.hpp"
+#include "SoundManager.hpp"
 
 PlatformerMotorComponent::PlatformerMotorComponent(Entity* p_Owner) : IFixedUpdateComponent(p_Owner)
 {
@@ -16,7 +17,12 @@ PlatformerMotorComponent::PlatformerMotorComponent(Entity* p_Owner) : IFixedUpda
 	m_Entity_TransformComponent = m_Owner->GetComponent<TransformComponent>();
 	m_Entity_PhysicsComponent = m_Owner->GetComponent<PhysicsComponent>();
 	m_Entity_MapColliderComponent = m_Owner->GetComponent<MapColliderComponent>();
-	
+	m_Entity_AnimationComponent = m_Owner->GetComponent<AnimationComponent>();
+
+	SoundManager::GetInstance().Load("Jump", "data/audio/sfx/jump.wav");
+	SoundManager::GetInstance().Load("Hit", "data/audio/sfx/hit.wav");
+	SoundManager::GetInstance().Load("Shoot", "data/audio/sfx/shoot.wav");
+
 	m_TerrainState = TerrainState::Air;
 	m_MotionState = MotionState::Falling;
 
@@ -67,6 +73,7 @@ PlatformerMotorComponent::~PlatformerMotorComponent()
 	m_Entity_TransformComponent = nullptr;
 	m_Entity_PhysicsComponent = nullptr;
 	m_Entity_MapColliderComponent = nullptr;
+	m_Entity_AnimationComponent = nullptr;
 }
 
 bool PlatformerMotorComponent::IsFacingLeft() const
@@ -186,6 +193,8 @@ void PlatformerMotorComponent::Fire()
 
 	SpriteRenderComponent* src = e->AddComponent<SpriteRenderComponent>();
 	src->Load("data/img/projectile.png");
+
+	SoundManager::GetInstance().Play("Shoot");
 }
 
 void PlatformerMotorComponent::Dash()
@@ -225,6 +234,9 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 		m_MotionState = MotionState::Jumping;
 		m_TotalJumpTime = 0.0f;
 		m_Entity_PhysicsComponent->SetVelocityY(0.0f);
+		m_Entity_AnimationComponent->SetState("Movement", "Jumping");
+
+		SoundManager::GetInstance().Play("Jump");
 	}
 	m_HasRequestedJump = false;
 
@@ -357,6 +369,9 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 			m_AirJumpCount = 0;
 			m_Entity_TransformComponent->TranslateY(downDistance - m_CollisionDistanceDown);
 			m_Entity_PhysicsComponent->SetVelocityY(0.0f);
+			m_Entity_AnimationComponent->SetState("Movement", "Idle");
+
+			SoundManager::GetInstance().Play("Hit");
 		}
 	}
 	else if (m_TerrainState == TerrainState::Ground)
@@ -376,7 +391,11 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 	if (leftDistance < m_CollisionDistanceLeft)
 	{
 		m_Entity_TransformComponent->TranslateX(m_CollisionDistanceLeft - leftDistance);
-		m_Entity_PhysicsComponent->SetVelocityX(0.0f);
+
+		if (m_Entity_PhysicsComponent->GetVelocityX() < 0.0f)
+		{
+			m_Entity_PhysicsComponent->SetVelocityX(0.0f);
+		}
 
 		if (m_MotionState == MotionState::Falling)
 		{
@@ -399,7 +418,11 @@ bool PlatformerMotorComponent::FixedUpdate(float p_DeltaTime)
 	if (rightDistance < m_CollisionDistanceRight)
 	{
 		m_Entity_TransformComponent->TranslateX(rightDistance - m_CollisionDistanceRight);
-		m_Entity_PhysicsComponent->SetVelocityX(0.0f);
+
+		if (m_Entity_PhysicsComponent->GetVelocityX() > 0.0f)
+		{
+			m_Entity_PhysicsComponent->SetVelocityX(0.0f);
+		}
 
 		if (m_MotionState == MotionState::Falling)
 		{

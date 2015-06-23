@@ -19,7 +19,11 @@ HGF::Texture* TextureManager::Load(const std::string& p_Filename, HGF::Interpola
 	if (iter == s_TextureMap.end())
 	{
 		s_TextureMap[p_Filename] = new HGF::Texture();
-		s_TextureMap[p_Filename]->Load(p_Filename, p_Interpolation, p_Wrapping);
+		if (!s_TextureMap[p_Filename]->Load(p_Filename, p_Interpolation, p_Wrapping))
+		{
+			delete s_TextureMap[p_Filename];
+			return nullptr;
+		}
 	}
 
 	return s_TextureMap[p_Filename];

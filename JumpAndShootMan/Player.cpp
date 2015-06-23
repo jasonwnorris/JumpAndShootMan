@@ -21,17 +21,17 @@ Player::Player(World* p_World) : Entity(p_World)
 	// Requires: TransformComponent, [TiledMap]
 	m_MapColliderComponent = AddComponent<MapColliderComponent>();
 
-	// Requires: TransformComponent, PhysicsComponent, MapColliderComponent
-	m_PlatformerMotorComponent = AddComponent<PlatformerMotorComponent>();
-
 	// Requires: -
 	m_AnimationComponent = AddComponent<AnimationComponent>();
 	m_AnimationComponent->Load("data/player.json");
 	m_AnimationComponent->SetState("Movement", "Idle");
 
-	// Requires: TransformComponent, PlatformerMotorComponent, [AnimationComponent]
+	// Requires: TransformComponent, AnimationComponent
 	m_SpriteRenderComponent = AddComponent<SpriteRenderComponent>();
 	m_SpriteRenderComponent->Load("data/img/player_sheet.png");
+
+	// Requires: TransformComponent, PhysicsComponent, MapColliderComponent, AnimationComponent
+	m_PlatformerMotorComponent = AddComponent<PlatformerMotorComponent>();
 
 	// Requires: TransformComponent, PlatformerMotorComponent
 	m_InputComponent = AddComponent<InputComponent>();
@@ -40,16 +40,3 @@ Player::Player(World* p_World) : Entity(p_World)
 Player::~Player()
 {
 }
-
-// TODO: Implement somewhere?
-// Animation
-/*
-if (m_PlatformerMotorComponent->GetMotionState() == MotionState::Falling)
-{
-m_SpriteRenderComponent->SetState("Movement", "Jumping");
-}
-else
-{
-m_SpriteRenderComponent->SetState("Movement", "Idle");
-}
-*/

@@ -5,6 +5,7 @@
 #include <HGF\Keyboard.hpp>
 // Project Includes
 #include "JumpShootGame.hpp"
+#include "SoundManager.hpp"
 // STL Includes
 #include <iostream>
 #include <time.h>
@@ -24,23 +25,33 @@ JumpShootGame::~JumpShootGame()
 int JumpShootGame::Initialize()
 {
 	if (SAGE::Game::Initialize() < 0)
+	{
 		return -1;
+	}
 
 	HGF::Events::OnQuit.Add([&]() { Quit(); });
 
 	HGF::WindowOptions options;
 	if (HGF::WindowOptions::FromFile("data/window.json", options))
+	{
 		if (!mWindow.Reinitialize(options))
+		{
 			return -1;
+		}
+	}
 	mWindow.SetClearColor(HGF::Color(0.4f, 0.45f, 0.5f));
 	mWindow.PrintInfo();
+
+	if (!SoundManager::GetInstance().Initialize())
+	{
+		return -1;
+	}
 
 	m_FrameCount = 0;
 	m_PreviousTicks = 0;
 	m_CurrentTicks = SDL_GetTicks();
 
-	GameplayScreen* screen = new GameplayScreen(&m_ScreenManager);
-	m_ScreenManager.Push(screen);
+	m_ScreenManager.Push(new GameplayScreen(&m_ScreenManager));
 
 	return 0;
 }
@@ -48,7 +59,14 @@ int JumpShootGame::Initialize()
 int JumpShootGame::Finalize()
 {
 	if (SAGE::Game::Finalize() < 0)
+	{
 		return -1;
+	}
+
+	if (!SoundManager::GetInstance().Finalize())
+	{
+		return -1;
+	}
 
 	return 0;
 }
@@ -68,7 +86,9 @@ int JumpShootGame::Update(float pDeltaTime)
 	}
 
 	if (HGF::Keyboard::IsKeyPressed(HGF::Key::Escape))
+	{
 		Quit();
+	}
 
 	m_ScreenManager.Update(pDeltaTime);
 
